@@ -47,6 +47,7 @@
         <entry key="soundboard/src/main/res/layout/fragment_add_sounds.xml" value="0.31476449275362317" />
         <entry key="soundboard/src/main/res/layout/fragment_category_list.xml" value="0.35625" />
         <entry key="soundboard/src/main/res/layout/fragment_delete_category.xml" value="0.36354166666666665" />
+        <entry key="soundboard/src/main/res/layout/fragment_edit_category.xml" value="0.1" />
         <entry key="soundboard/src/main/res/layout/item_category.xml" value="0.33" />
         <entry key="soundboard/src/main/res/layout/item_sound.xml" value="0.5" />
         <entry key="soundboard/src/main/res/layout/repress_mode_header.xml" value="0.75" />

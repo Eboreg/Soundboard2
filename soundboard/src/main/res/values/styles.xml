@@ -13,23 +13,6 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
     <style name="Style.Soundboard" />
 
-    <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">0dp</item>
-        <item name="android:alpha">@dimen/sound_card_alpha</item>
-        <item name="android:visibility">invisible</item>
-        <item name="android:padding">@dimen/margin_normal</item>
-    </style>
-
-    <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.Light.ActionBar.Solid">
-        <item name="android:background">?attr/colorPrimary</item>
-        <item name="android:elevation">0dp</item>
-        <item name="android:minHeight">?attr/actionBarSize</item>
-        <item name="android:layout_height">?attr/actionBarSize</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:padding">2dp</item>
-    </style>
-
     <style name="Style.Soundboard.Button.TextButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="rippleColor">?attr/colorAccent</item>
         <item name="android:textColor">@color/alert_dialog_button</item>
@@ -40,13 +23,34 @@ Styles are a collection of view attributes; specific to a single type of widget"
         <item name="android:textColor">@color/color_on_surface_subdued</item>
     </style>
 
-    <style name="Style.Soundboard.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
-        <item name="android:textSize">@dimen/title_text</item>
+    <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:alpha">@dimen/sound_card_alpha</item>
+        <item name="android:visibility">invisible</item>
+        <item name="android:padding">@dimen/margin_normal</item>
     </style>
 
     <style name="Style.Soundboard.Spinner" parent="android:Widget.Material.Spinner">
         <item name="android:dropDownVerticalOffset">48dp</item>
         <item name="android:dropDownWidth">match_parent</item>
         <item name="android:popupBackground">?attr/colorBackgroundFloating</item>
+    </style>
+
+    <style name="Style.Soundboard.Spinner.Item" parent="android:Widget.Material.TextView.SpinnerItem">
+        <item name="android:padding">@dimen/margin_normal</item>
+    </style>
+
+    <style name="Style.Soundboard.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textSize">@dimen/title_text</item>
+    </style>
+
+    <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.Light.ActionBar.Solid">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:minHeight">?attr/actionBarSize</item>
+        <item name="android:layout_height">?attr/actionBarSize</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:padding">2dp</item>
     </style>
 </resources>

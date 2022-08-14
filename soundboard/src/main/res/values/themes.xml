@@ -14,6 +14,8 @@ concrete values for these named resources."
         <item name="actionBarStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="alertDialogTheme">@style/Theme.Soundboard.MaterialAlertDialog</item>
         <item name="android:dropDownSpinnerStyle">@style/Style.Soundboard.Spinner</item>
+        <item name="android:spinnerItemStyle">@style/Style.Soundboard.Spinner.Item</item>
+        <item name="android:spinnerStyle">@style/Style.Soundboard.Spinner</item>
         <item name="materialAlertDialogTheme">@style/Theme.Soundboard.MaterialAlertDialog</item>
     </style>
 

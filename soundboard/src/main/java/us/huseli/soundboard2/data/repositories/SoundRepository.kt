@@ -2,21 +2,22 @@ package us.huseli.soundboard2.data.repositories
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
+import us.huseli.soundboard2.helpers.LoggingObject
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SoundRepository @Inject constructor(private val soundDao: SoundDao, @ApplicationContext private val context: Context) {
+class SoundRepository @Inject constructor(private val soundDao: SoundDao, @ApplicationContext private val context: Context) :
+    LoggingObject {
+
     fun getSound(soundId: Int): Flow<SoundExtended?> = soundDao.flowGet(soundId)
 
     fun listByChecksums(checksums: List<String>): Flow<List<Sound>> = soundDao.flowListByChecksums(checksums)
@@ -43,11 +44,7 @@ class SoundRepository @Inject constructor(private val soundDao: SoundDao, @Appli
         val path = duplicate?.path ?: Functions.copyFileToLocal(context, soundFile.uri, soundFile.checksum).path
         val name = explicitName ?: duplicate?.name ?: soundFile.name
 
-        if (BuildConfig.DEBUG)
-            Log.d(
-                LOG_TAG,
-                "create(): soundFile=$soundFile, path=$path, name=$name, explicitName=$explicitName, volume=$volume, categoryId=$categoryId, duplicate=$duplicate"
-            )
+        log("create(): soundFile=$soundFile, path=$path, name=$name, explicitName=$explicitName, volume=$volume, categoryId=$categoryId, duplicate=$duplicate")
 
         soundDao.create(
             name,
@@ -59,9 +56,5 @@ class SoundRepository @Inject constructor(private val soundDao: SoundDao, @Appli
             categoryId = categoryId,
             order = soundDao.getNextOrder(categoryId)
         )
-    }
-
-    companion object {
-        const val LOG_TAG = "SoundRepository"
     }
 }

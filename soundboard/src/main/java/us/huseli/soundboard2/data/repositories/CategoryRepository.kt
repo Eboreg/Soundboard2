@@ -1,18 +1,20 @@
 package us.huseli.soundboard2.data.repositories
 
 import android.content.Context
-import android.util.Log
 import androidx.annotation.ColorInt
-import androidx.annotation.WorkerThread
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
-import us.huseli.soundboard2.BuildConfig
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.SoundSorting
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,7 +24,7 @@ class CategoryRepository @Inject constructor(
     private val soundDao: SoundDao,
     colorHelper: ColorHelper,
     @ApplicationContext private val context: Context
-) {
+) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
 
     val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
@@ -45,7 +47,7 @@ class CategoryRepository @Inject constructor(
 
     suspend fun toggleCategoryCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
 
-    suspend fun create(name: String, backgroundColor: Int) =
+    suspend fun create(name: CharSequence, backgroundColor: Int) =
         categoryDao.create(name, backgroundColor, categoryDao.getNextOrder())
 
     suspend fun delete(categoryId: Int, moveSoundsTo: Int?) {
@@ -66,15 +68,24 @@ class CategoryRepository @Inject constructor(
         else {
             val nextOrder = soundDao.getNextOrder(moveSoundsTo)
             sounds.forEachIndexed { idx, sound ->
-                if (BuildConfig.DEBUG)
-                    Log.d(LOG_TAG, "delete(): categoryId=$categoryId, moveSoundsTo=$moveSoundsTo, idx=$idx, sound=$sound, nextOrder=$nextOrder")
+                log("delete(): categoryId=$categoryId, moveSoundsTo=$moveSoundsTo, idx=$idx, sound=$sound, nextOrder=$nextOrder")
                 soundDao.move(sound.id, moveSoundsTo, nextOrder + idx)
             }
         }
         categoryDao.delete(categoryId)
     }
 
-    companion object {
-        const val LOG_TAG = "CategoryRepository"
+    suspend fun update(
+        categoryId: Int,
+        name: CharSequence,
+        backgroundColor: Int?,
+        soundSorting: SoundSorting
+    ) {
+        if (backgroundColor != null) categoryDao.update(categoryId, name, backgroundColor)
+        else categoryDao.update(categoryId, name)
+
+        if (soundSorting.parameter != SoundSorting.Parameter.UNDEFINED) {
+            soundDao.sortWithinCategory(categoryId, soundSorting)
+        }
     }
 }

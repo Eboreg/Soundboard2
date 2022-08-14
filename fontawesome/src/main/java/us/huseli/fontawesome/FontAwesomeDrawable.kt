@@ -8,7 +8,6 @@ import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.core.content.res.getResourceIdOrThrow
 import org.xmlpull.v1.XmlPullParser
@@ -16,6 +15,7 @@ import kotlin.math.ceil
 
 open class FontAwesomeDrawable : Drawable() {
     /** Some debug stuff */
+    @Suppress("unused")
     private val stateMap = mapOf(
         Pair(android.R.attr.state_above_anchor, "state_above_anchor"),
         Pair(android.R.attr.state_accelerated, "state_accelerated"),

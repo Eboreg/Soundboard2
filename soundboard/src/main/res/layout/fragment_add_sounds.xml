@@ -79,6 +79,7 @@
             android:id="@+id/category"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:selectedItemPosition="@{viewModel.selectedCategoryPosition}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/categoryLabel" />
@@ -111,6 +112,7 @@
                 android:textOn="@string/yes"
                 app:switchMinWidth="50sp"
                 app:switchPadding="@dimen/margin_large"
+                android:checked="@{viewModel.duplicateAdd}"
                 tools:text="Add duplicates" />
 
             <TextView

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 
 @Entity(
@@ -29,6 +30,41 @@ open class Sound(
     open val added: Date,
     open val trashed: Boolean,
 ) {
+    class Comparator(private val sorting: SoundSorting) : java.util.Comparator<Sound> {
+        override fun compare(o1: Sound?, o2: Sound?): Int {
+            val s1 = if (sorting.order == SoundSorting.Order.ASCENDING) o1 else o2
+            val s2 = if (sorting.order == SoundSorting.Order.ASCENDING) o2 else o1
+
+            return if (s1 == null && s2 == null) 0
+            else if (s1 == null) -1
+            else if (s2 == null) 1
+            else when(sorting.parameter) {
+                SoundSorting.Parameter.UNDEFINED -> 0
+                SoundSorting.Parameter.NAME -> {
+                    when {
+                        s1.name.lowercase(Locale.getDefault()) > s2.name.lowercase(Locale.getDefault()) -> 1
+                        s1.name.equals(s2.name, ignoreCase = true) -> 0
+                        else -> -1
+                    }
+                }
+                SoundSorting.Parameter.DURATION -> {
+                    when {
+                        s1.duration > s2.duration -> 1
+                        s1.duration == s2.duration -> 0
+                        else -> -1
+                    }
+                }
+                SoundSorting.Parameter.TIME_ADDED -> {
+                    when {
+                        s1.added > s2.added -> 1
+                        s1.added == s2.added -> 0
+                        else -> -1
+                    }
+                }
+            }
+        }
+    }
+
     override fun equals(other: Any?) = other is Sound && other.id == id
 
     override fun hashCode() = id

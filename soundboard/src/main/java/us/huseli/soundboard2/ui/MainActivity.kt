@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -19,30 +18,40 @@ import androidx.lifecycle.lifecycleScope
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import us.huseli.soundboard2.*
+import us.huseli.soundboard2.BuildConfig
+import us.huseli.soundboard2.Constants
+import us.huseli.soundboard2.Functions
+import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.viewmodels.AppViewModel
+import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
+import us.huseli.soundboard2.viewmodels.CategoryEditViewModel
 import us.huseli.soundboard2.viewmodels.SoundAddViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
-    class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
-        override fun createIntent(context: Context, input: String) =
-            super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-    }
-
+class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject {
     private lateinit var binding: ActivityMainBinding
     @Inject lateinit var categoryRepository: CategoryRepository
     @Inject lateinit var colorHelper: ColorHelper
     @Inject lateinit var soundRepository: SoundRepository
     private val appViewModel by viewModels<AppViewModel>()
     private val soundAddViewModel by viewModels<SoundAddViewModel>()
+    private val categoryDeleteViewModel by viewModels<CategoryDeleteViewModel>()
+    private val categoryEditViewModel by viewModels<CategoryEditViewModel>()
     private var categoryAdapter: CategoryAdapter? = null
     private val addSoundLauncher = registerForActivityResult(GetMultipleSounds()) { addSoundsFromUris(it) }
+
+    class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
+        override fun createIntent(context: Context, input: String) =
+            super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,21 +69,64 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
         if (BuildConfig.DEBUG) initDebug()
     }
 
-    /** Used when adding sounds from within app and sharing sounds from other apps */
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        /** Inflates top menu */
+        menuInflater.inflate(R.menu.appbar_menu, menu)
+
+        menu.findItem(R.id.actionSearch)?.also { item ->
+            val view = item.actionView
+            if (view is SearchView) initSearchAction(item, view)
+        }
+
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.actionAddSound -> addSoundLauncher.launch("audio/*")
+            R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
+        }
+        return true
+    }
+
+    override fun onColorSelected(dialogId: Int, color: Int) {
+        val fragment = supportFragmentManager.findFragmentByTag(Constants.FRAGMENT_TAGS[dialogId]) as ColorPickerDialogListener
+        log("onColorSelected: dialogId=$dialogId, color=$color, fragment=$fragment")
+        fragment.onColorSelected(dialogId, color)
+    }
+
+    override fun onDialogDismissed(dialogId: Int) {}
+
+    /** PUBLIC METHODS *******************************************************/
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun showFragment(fragmentClass: Class<out Fragment>, args: Bundle? = null) {
+        supportFragmentManager
+            .beginTransaction()
+            .add(fragmentClass, args, fragmentClass.simpleName)
+            .commit()
+    }
+
+    fun showCategoryDeleteFragment(categoryId: Int) {
+        categoryDeleteViewModel.setCategoryId(categoryId)
+        showFragment(CategoryDeleteFragment::class.java)
+    }
+
+    fun showCategoryEditFragment(categoryId: Int) {
+        categoryEditViewModel.setCategoryId(categoryId)
+        showFragment(CategoryEditFragment::class.java)
+    }
+
+    /** PRIVATE METHODS ******************************************************/
+
     private fun addSoundsFromUris(uris: List<Uri>) {
+        /** Used when adding sounds from within app and sharing sounds from other apps */
         soundAddViewModel.reset()
         lifecycleScope.launch {
             val soundFiles = Functions.extractMetadata(applicationContext, uris)
             soundAddViewModel.setSoundFiles(soundFiles)
         }
         showFragment(SoundAddFragment::class.java)
-    }
-
-    fun showFragment(fragmentClass: Class<out Fragment>, args: Bundle? = null) {
-        supportFragmentManager
-            .beginTransaction()
-            .add(fragmentClass, args, fragmentClass.simpleName)
-            .commit()
     }
 
     private fun initCategoryList() {
@@ -90,26 +142,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
             }
             appViewModel.categoryIds.observe(this) { categoryAdapter.submitList(it) }
         }
-    }
-
-    /** Inflates top menu */
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.appbar_menu, menu)
-
-        menu?.findItem(R.id.actionSearch)?.also { item ->
-            val view = item.actionView
-            if (view is SearchView) initSearchAction(item, view)
-        }
-
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.actionAddSound -> addSoundLauncher.launch("audio/*")
-            R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
-        }
-        return true
     }
 
     @SuppressLint("SetTextI18n")
@@ -171,17 +203,5 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener {
                 return true
             }
         })
-    }
-
-    override fun onColorSelected(dialogId: Int, color: Int) {
-        val fragment = supportFragmentManager.findFragmentByTag(Constants.FRAGMENT_TAGS[dialogId]) as ColorPickerDialogListener
-        if (BuildConfig.DEBUG) Log.d(LOG_TAG, "onColorSelected: dialogId=$dialogId, color=$color, fragment=$fragment")
-        fragment.onColorSelected(dialogId, color)
-    }
-
-    override fun onDialogDismissed(dialogId: Int) {}
-
-    companion object {
-        const val LOG_TAG = "MainActivity"
     }
 }

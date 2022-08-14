@@ -1,12 +1,12 @@
 package us.huseli.soundboard2.data.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
+import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 
 @Dao
@@ -50,4 +50,14 @@ interface SoundDao {
 
     @Query("UPDATE Sound SET categoryId = :categoryId, `order` = :order WHERE id = :soundId")
     suspend fun move(soundId: Int, categoryId: Int, order: Int)
+
+    @Transaction
+    suspend fun sortWithinCategory(categoryId: Int, soundSorting: SoundSorting) {
+        val sounds = listByCategory(categoryId)
+        sounds.sortedWith(Sound.Comparator(soundSorting))
+            .forEachIndexed { index, sound -> updateOrder(sound.id, index) }
+    }
+
+    @Query("UPDATE Sound SET `order` = :order WHERE id = :soundId")
+    suspend fun updateOrder(soundId: Int, order: Int)
 }

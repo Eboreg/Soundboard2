@@ -2,7 +2,6 @@ package us.huseli.soundboard2.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -45,10 +44,8 @@ class CategoryAdapter(
             binding.viewModel = viewModel
 
             binding.categoryCollapseButton.setOnClickListener { viewModel.toggleCollapsed() }
-
-            binding.categoryDeleteButton.setOnClickListener {
-                activity.showFragment(CategoryDeleteFragment::class.java, bundleOf("categoryId" to categoryId))
-            }
+            binding.categoryDeleteButton.setOnClickListener { activity.showCategoryDeleteFragment(categoryId) }
+            binding.categoryEditButton.setOnClickListener { activity.showCategoryEditFragment(categoryId) }
 
             val soundAdapter = SoundAdapter(activity, activity.viewModelStore, soundRepository, colorHelper)
             binding.soundList.adapter = soundAdapter

@@ -1,18 +1,12 @@
 package us.huseli.soundboard2.viewmodels
 
 import android.content.Context
-import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.SoundFile
@@ -20,6 +14,7 @@ import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
+import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,12 +22,12 @@ class SoundAddViewModel @Inject constructor(
     @ApplicationContext context: Context,
     categoryRepository: CategoryRepository,
     private val soundRepository: SoundRepository
-) : ViewModel() {
+) : ViewModel(), LoggingObject {
     data class SoundCounts(val add: Int?, val skip: Int?)
 
     private val _soundFiles = MutableStateFlow<List<SoundFile>>(emptyList())
     private val _duplicateAdd = MutableStateFlow(false)
-    private val _name = MutableStateFlow("")
+    private val _name = MutableStateFlow<CharSequence>("")
     private val _multiple: Flow<Boolean> = _soundFiles.map { it.size > 1 }
 
     private val _computedName: Flow<String> = _soundFiles.map {
@@ -61,6 +56,7 @@ class SoundAddViewModel @Inject constructor(
     val nameIsEditable: LiveData<Boolean> = _multiple.map { !it }.asLiveData()
     val addSoundCount = _soundCounts.map { it.add }.asLiveData()
     val skipSoundCount = _soundCounts.map { it.skip }.asLiveData()
+    val selectedCategoryPosition = MutableLiveData(0)
 
     val hasDuplicates: LiveData<Boolean> = merge(
         _duplicates.map { it.isNotEmpty() },
@@ -74,7 +70,7 @@ class SoundAddViewModel @Inject constructor(
     val duplicateAdd: LiveData<Boolean>
         get() = _duplicateAdd.asLiveData()
 
-    val name: LiveData<String> = merge(
+    val name: LiveData<CharSequence> = merge(
         _computedName,
         _name.filter { it != "" }
     ).asLiveData()
@@ -83,7 +79,7 @@ class SoundAddViewModel @Inject constructor(
         _soundFiles.value = value
     }
 
-    fun setName(value: String) {
+    fun setName(value: CharSequence) {
         _name.value = value
     }
 
@@ -102,14 +98,9 @@ class SoundAddViewModel @Inject constructor(
         _soundFiles.value.forEach { soundFile ->
             val duplicate = _duplicates.stateIn(viewModelScope).value.firstOrNull { it.checksum == soundFile.checksum }
             if (_duplicateAdd.value || duplicate == null) {
-                if (BuildConfig.DEBUG)
-                    Log.d(LOG_TAG, "save(): soundFile=$soundFile, duplicate=$duplicate, volume=$volume, category=$category")
+                log("save(): soundFile=$soundFile, duplicate=$duplicate, volume=$volume, category=$category")
                 soundRepository.create(soundFile, if (!_multiple.stateIn(viewModelScope).value) name else null, volume, category.id, duplicate)
             }
         }
-    }
-
-    companion object {
-        const val LOG_TAG = "SoundAddViewModel"
     }
 }
