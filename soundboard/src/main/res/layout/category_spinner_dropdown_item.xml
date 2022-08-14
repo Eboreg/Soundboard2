@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/margin_normal"
+    android:paddingTop="@dimen/margin_large"
+    android:paddingEnd="@dimen/margin_normal"
+    android:paddingBottom="@dimen/margin_large">
+
+    <ImageView
+        android:id="@+id/categorySpinnerItemColor"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="@dimen/margin_normal"
+        android:src="@drawable/color_circle"
+        tools:ignore="ContentDescription" />
+
+    <CheckedTextView
+        android:id="@+id/categorySpinnerItemText"
+        style="?android:attr/spinnerDropDownItemStyle"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:ellipsize="marquee"
+        android:singleLine="true"
+        tools:text="Category" />
+
+</LinearLayout>
+

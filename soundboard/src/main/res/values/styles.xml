@@ -1,0 +1,52 @@
+<!--
+"A style is a collection of view attribute values. You can think of a style as a `Map<view attribute, resource>`. That
+is the keys are all view attributes i.e. attributes that a widget declares and you might set in a layout file. Styles
+are specific to a single type of widget because different widgets support different sets of attributes:
+
+Styles are a collection of view attributes; specific to a single type of widget"
+
+- https://medium.com/androiddevelopers/android-styling-themes-vs-styles-ebe05f917578
+-->
+<resources>
+
+    <style name="Style" />
+
+    <style name="Style.Soundboard" />
+
+    <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:alpha">@dimen/sound_card_alpha</item>
+        <item name="android:visibility">invisible</item>
+        <item name="android:padding">@dimen/margin_normal</item>
+    </style>
+
+    <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.Light.ActionBar.Solid">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:minHeight">?attr/actionBarSize</item>
+        <item name="android:layout_height">?attr/actionBarSize</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:padding">2dp</item>
+    </style>
+
+    <style name="Style.Soundboard.Button.TextButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="rippleColor">?attr/colorAccent</item>
+        <item name="android:textColor">@color/alert_dialog_button</item>
+    </style>
+
+    <style name="Style.Soundboard.Button.TextButton.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="rippleColor">?attr/colorAccent</item>
+        <item name="android:textColor">@color/color_on_surface_subdued</item>
+    </style>
+
+    <style name="Style.Soundboard.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textSize">@dimen/title_text</item>
+    </style>
+
+    <style name="Style.Soundboard.Spinner" parent="android:Widget.Material.Spinner">
+        <item name="android:dropDownVerticalOffset">48dp</item>
+        <item name="android:dropDownWidth">match_parent</item>
+        <item name="android:popupBackground">?attr/colorBackgroundFloating</item>
+    </style>
+</resources>

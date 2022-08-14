@@ -1,0 +1,59 @@
+<resources>
+    <string name="app_name">Soundboard2</string>
+    <string name="reorder">Reorder</string>
+    <string name="settings">Sëttings</string>
+    <string name="help">Hëlp!!</string>
+    <string name="repress_mode">Re-press mode</string>
+    <string name="stop">Stop</string>
+    <string name="restart">Restart</string>
+    <string name="overlap">Overlap</string>
+    <string name="pause">Pause</string>
+    <string name="add_category">Add category</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="undo">Undo</string>
+    <string name="redo">Redo</string>
+    <string name="search">Search</string>
+    <string name="name">Name</string>
+    <string name="volume">Volume</string>
+    <string name="category">Category</string>
+    <string name="multiple_sounds_selected">(%1$d sounds selected)</string>
+    <string name="name_cannot_be_empty">Name cannot be empty.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="background_colour">Background colour</string>
+    <string name="select_colour">Select colour</string>
+    <string name="sort_by">Sort by</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="select_background_colour">Select background colour</string>
+    <string name="move_to_another_category">Move to another category</string>
+    <string name="delete">Delete</string>
+    <string name="move_to_category">Move to category</string>
+    <string name="delete_category">Delete category?</string>
+    <string name="delete_category_name">Delete category %1$s?</string>
+    <string name="add_sound">Add sound(s)</string>
+    <string name="cannot_delete_last_category">You cannot delete the last category.</string>
+    <plurals name="add_sound_counts">
+        <item quantity="one">Will add one sound and skip %2$d.</item>
+        <item quantity="other">Will add %1$d sounds and skip %2$d.</item>
+    </plurals>
+    <plurals name="add_duplicate">
+        <item quantity="one">Add duplicate</item>
+        <item quantity="other">Add duplicates</item>
+    </plurals>
+    <plurals name="add_sound">
+        <item quantity="one">Add sound</item>
+        <item quantity="other">Add sounds</item>
+    </plurals>
+    <plurals name="sound_already_exists">
+        <item quantity="one"><b>%2$s</b> already exists in the database. Do you want to add a duplicate of it?</item>
+        <item quantity="other"><b>%1$d</b> of the selected sounds already exist in the database. Do you want to add duplicates of them?</item>
+    </plurals>
+    <plurals name="category_contains_sounds">
+        <item quantity="one">This category contains one sound. What do you want to do with it?</item>
+        <item quantity="other">This category contains %1$d sounds. What do you want to do with them?</item>
+    </plurals>
+</resources>

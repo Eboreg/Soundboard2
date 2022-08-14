@@ -1,0 +1,17 @@
+<!--
+"A style is a collection of view attribute values. You can think of a style as a `Map<view attribute, resource>`. That
+is the keys are all view attributes i.e. attributes that a widget declares and you might set in a layout file. Styles
+are specific to a single type of widget because different widgets support different sets of attributes:
+
+Styles are a collection of view attributes; specific to a single type of widget"
+
+- https://medium.com/androiddevelopers/android-styling-themes-vs-styles-ebe05f917578
+-->
+<resources>
+    <style name="FontAwesomeTextView" parent="Widget.AppCompat.TextView">
+        <item name="autoSizeMaxTextSize">1000sp</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@android:color/primary_text_light</item>
+    </style>
+</resources>

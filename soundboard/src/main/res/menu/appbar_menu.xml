@@ -1,0 +1,95 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/actionSearch"
+        android:icon="@drawable/fas_magnifying_glass"
+        app:showAsAction="ifRoom|collapseActionView"
+        android:title="@string/search"
+        app:actionViewClass="android.widget.SearchView" />
+
+    <item
+        android:id="@+id/appbarMenu"
+        app:showAsAction="always"
+        android:title=""
+        android:icon="@drawable/fas_ellipsis_vertical">
+
+        <menu>
+            <group android:id="@+id/actionAddGroup">
+                <item
+                    android:icon="@drawable/fas_plus"
+                    android:id="@+id/actionAddSound"
+                    android:title="@string/add_sound" />
+
+                <item
+                    android:id="@+id/actionAddCategory"
+                    android:icon="@drawable/fas_folder_plus"
+                    android:title="@string/add_category" />
+            </group>
+
+            <item
+                android:id="@+id/actionRepressMode"
+                app:showAsAction="never"
+                android:icon="@drawable/repress_mode_menu_icon"
+                android:title="@string/repress_mode">
+                <menu android:id="@+id/actionRepressModeMenu">
+                    <item
+                        android:id="@+id/actionRepressModeStop"
+                        android:icon="@drawable/fas_stop"
+                        android:title="@string/stop" />
+                    <item
+                        android:id="@+id/actionRepressModeRestart"
+                        android:icon="@drawable/fas_play"
+                        android:title="@string/restart" />
+                    <item
+                        android:id="@+id/actionRepressModeOverlap"
+                        android:icon="@drawable/fas_arrows_spin"
+                        android:title="@string/overlap" />
+                    <item
+                        android:id="@+id/actionRepressModePause"
+                        android:icon="@drawable/fas_pause"
+                        android:title="@string/pause" />
+                </menu>
+            </item>
+
+            <group android:id="@+id/actionZoomGroup">
+                <item
+                    android:id="@+id/actionZoomIn"
+                    android:icon="@drawable/fas_magnifying_glass_plus"
+                    android:title="@string/zoom_in" />
+
+                <item
+                    android:id="@+id/actionZoomOut"
+                    android:icon="@drawable/fas_magnifying_glass_minus"
+                    android:title="@string/zoom_out" />
+            </group>
+
+            <group android:id="@+id/actionUndoGroup">
+                <item
+                    android:id="@+id/actionUndo"
+                    android:icon="@drawable/fas_rotate_left"
+                    android:title="@string/undo" />
+
+                <item
+                    android:id="@+id/actionRedo"
+                    android:icon="@drawable/fas_rotate_right"
+                    android:title="@string/redo" />
+            </group>
+
+            <item
+                android:id="@+id/actionToggleReorder"
+                android:icon="@drawable/fas_up_down_left_right"
+                android:title="@string/reorder" />
+
+            <item
+                android:id="@+id/actionSettings"
+                android:icon="@drawable/fas_gear"
+                android:title="@string/settings" />
+
+            <item
+                android:id="@+id/actionHelp"
+                android:icon="@drawable/fa_circle_question"
+                android:title="@string/help" />
+        </menu>
+    </item>
+</menu>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="../../../../layout/custom_preview.xml" value="0.30932971014492755" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/btn_dropdown.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/edit_text_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/list_choice_background_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/list_selector_background.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/popup_background_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/progress_horizontal_holo_dark.xml" value="0.3415" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/progress_horizontal_material.xml" value="0.3415" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/spinner_background_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/spinner_dropdown_background.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/spinner_textfield_background_material.xml" value="0.19" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/drawable/abc_cab_background_top_material.xml" value="0.19" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_action_menu_item_layout.xml" value="0.17239583333333333" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_action_menu_layout.xml" value="0.33" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_action_mode_bar.xml" value="0.35625" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_alert_dialog_material.xml" value="0.18177083333333333" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_list_menu_item_icon.xml" value="0.35625" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_list_menu_item_layout.xml" value="0.35625" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_popup_menu_header_item_layout.xml" value="0.15896739130434784" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_screen_content_include.xml" value="0.18177083333333333" />
+        <entry key="../../.gradle/caches/transforms-3/5a8d8ae265943a9670c6cb95f9f50c26/transformed/appcompat-1.4.2/res/layout/abc_screen_simple_overlay_action_mode.xml" value="0.18177083333333333" />
+        <entry key="../../.gradle/caches/transforms-3/7886eb9845a7386a9cd66654ce29517b/transformed/appcompat-1.2.0/res/layout/abc_popup_menu_header_item_layout.xml" value="0.15896739130434784" />
+        <entry key="../../.gradle/caches/transforms-3/fa2dd7934ebe2a5eca0241778f17f95c/transformed/material-1.6.1/res/drawable/mtrl_popupmenu_background.xml" value="0.189" />
+        <entry key="../../.gradle/caches/transforms-3/fa2dd7934ebe2a5eca0241778f17f95c/transformed/material-1.6.1/res/layout/design_menu_item_action_area.xml" value="0.18177083333333333" />
+        <entry key="../../.gradle/caches/transforms-3/fa2dd7934ebe2a5eca0241778f17f95c/transformed/material-1.6.1/res/layout/mtrl_alert_dialog_title.xml" value="0.18177083333333333" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_category_list.xml" value="0.245018115942029" />
+        <entry key="app/src/main/res/layout/item_category.xml" value="0.35520833333333335" />
+        <entry key="soundboard/src/main/res/drawable-v24/color_circle.xml" value="0.327" />
+        <entry key="soundboard/src/main/res/drawable/color_circle.xml" value="0.327" />
+        <entry key="soundboard/src/main/res/drawable/fas_circle_plus.xml" value="0.218" />
+        <entry key="soundboard/src/main/res/drawable/fas_filter.xml" value="0.3415" />
+        <entry key="soundboard/src/main/res/drawable/fas_up_down_left_right.xml" value="0.3415" />
+        <entry key="soundboard/src/main/res/drawable/ic_launcher_background.xml" value="0.219" />
+        <entry key="soundboard/src/main/res/drawable/repress_mode_menu_icon.xml" value="0.189" />
+        <entry key="soundboard/src/main/res/layout/action_bar.xml" value="0.17239583333333333" />
+        <entry key="soundboard/src/main/res/layout/actionbar.xml" value="0.35625" />
+        <entry key="soundboard/src/main/res/layout/activity_main.xml" value="0.36354166666666665" />
+        <entry key="soundboard/src/main/res/layout/category_spinner_dropdown_item.xml" value="0.5" />
+        <entry key="soundboard/src/main/res/layout/fragment_add_category.xml" value="0.3188405797101449" />
+        <entry key="soundboard/src/main/res/layout/fragment_add_duplicate_sounds.xml" value="0.15896739130434784" />
+        <entry key="soundboard/src/main/res/layout/fragment_add_sounds.xml" value="0.31476449275362317" />
+        <entry key="soundboard/src/main/res/layout/fragment_category_list.xml" value="0.35625" />
+        <entry key="soundboard/src/main/res/layout/fragment_delete_category.xml" value="0.36354166666666665" />
+        <entry key="soundboard/src/main/res/layout/item_category.xml" value="0.33" />
+        <entry key="soundboard/src/main/res/layout/item_sound.xml" value="0.5" />
+        <entry key="soundboard/src/main/res/layout/repress_mode_header.xml" value="0.75" />
+        <entry key="soundboard/src/main/res/menu/appbar_menu.xml" value="0.35625" />
+        <entry key="soundboard/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.3415" />
+        <entry key="soundboard/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.3415" />
+      </map>
+    </option>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="Android Studio default JDK" project-jdk-type="JavaSDK">
+    <output url="file://$PROJECT_DIR$/build/classes" />
+  </component>
+  <component name="ProjectType">
+    <option name="id" value="Android" />
+  </component>
+</project>

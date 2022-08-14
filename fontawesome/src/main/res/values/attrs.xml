@@ -1,0 +1,21 @@
+<resources>
+    <declare-styleable name="FontAwesomeAttributes">
+        <attr name="fa_typeface" format="enum">
+            <enum name="regular" value="0" />
+            <enum name="solid" value="1" />
+            <enum name="brands" value="2" />
+        </attr>
+    </declare-styleable>
+    <declare-styleable name="FontAwesomeTextView">
+        <attr name="fa_typeface" />
+        <attr name="android:text" />
+    </declare-styleable>
+    <declare-styleable name="FontAwesomeDrawable">
+        <attr name="fa_typeface" />
+        <attr name="android:text" />
+        <attr name="android:textColor" />
+        <attr name="android:textStyle" />
+        <attr name="android:textSize" />
+        <attr name="android:textAppearance" />
+    </declare-styleable>
+</resources>

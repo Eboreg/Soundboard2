@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="us.huseli.soundboard2.viewmodels.CategoryViewModel" />
+    </data>
+
+    <LinearLayout
+        android:id="@+id/categoryItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:background="?attr/colorBackgroundFloating">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/categoryHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_normal"
+            app:backgroundColor="@{viewModel.backgroundColor}"
+            android:orientation="horizontal"
+            android:padding="@dimen/margin_normal">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/categoryCollapse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="0dp"
+                android:paddingEnd="@dimen/margin_normal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <us.huseli.fontawesome.FontAwesomeTextView
+                    android:id="@+id/categoryCollapseButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_caret_down"
+                    android:textColor="@{viewModel.textColor}"
+                    android:rotation="@{viewModel.collapseIconRotation}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/categoryName"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/categoryName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:textColor="@{viewModel.textColor}"
+                    android:text="@{viewModel.name}"
+                    tools:text="Category name" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <us.huseli.fontawesome.FontAwesomeTextView
+                android:id="@+id/categoryEditButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_normal"
+                android:text="@string/fa_pen_to_square"
+                android:textColor="@{viewModel.textColor}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
+                app:layout_constraintStart_toEndOf="@+id/categoryCollapse"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <us.huseli.fontawesome.FontAwesomeTextView
+                android:id="@+id/categoryDeleteButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_normal"
+                android:text="@string/fa_trash_can"
+                android:textColor="@{viewModel.textColor}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/categoryMoveButtons"
+                app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/categoryMoveButtons"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:visible="@{viewModel.moveButtonsVisible}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/categoryDeleteButton"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <us.huseli.fontawesome.FontAwesomeTextView
+                    android:id="@+id/categoryMoveUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_chevron_down"
+                    android:textColor="@{viewModel.textColor}" />
+
+                <us.huseli.fontawesome.FontAwesomeTextView
+                    android:id="@+id/categoryMoveDown"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_chevron_up"
+                    android:textColor="@{viewModel.textColor}" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/soundList"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="4"
+            app:visible="@{viewModel.soundListVisible}"
+            tools:itemCount="4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+</layout>
