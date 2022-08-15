@@ -48,7 +48,7 @@ class CategoryRepository @Inject constructor(
     suspend fun toggleCategoryCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
 
     suspend fun create(name: CharSequence, backgroundColor: Int) =
-        categoryDao.create(name, backgroundColor, categoryDao.getNextOrder())
+        categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder())
 
     suspend fun delete(categoryId: Int, moveSoundsTo: Int?) {
         val sounds = soundDao.listByCategory(categoryId)
@@ -81,8 +81,8 @@ class CategoryRepository @Inject constructor(
         backgroundColor: Int?,
         soundSorting: SoundSorting
     ) {
-        if (backgroundColor != null) categoryDao.update(categoryId, name, backgroundColor)
-        else categoryDao.update(categoryId, name)
+        if (backgroundColor != null) categoryDao.update(categoryId, name.toString(), backgroundColor)
+        else categoryDao.update(categoryId, name.toString())
 
         if (soundSorting.parameter != SoundSorting.Parameter.UNDEFINED) {
             soundDao.sortWithinCategory(categoryId, soundSorting)

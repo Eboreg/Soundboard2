@@ -29,7 +29,7 @@ interface CategoryDao {
         INSERT INTO Category (name, backgroundColor, `order`, collapsed, autoImportCategory)
         VALUES (:name, :backgroundColor, :order, :collapsed, :autoImportCategory)
     """)
-    suspend fun create(name: CharSequence, backgroundColor: Int, order: Int, collapsed: Boolean = false, autoImportCategory: Boolean = false)
+    suspend fun create(name: String, backgroundColor: Int, order: Int, collapsed: Boolean = false, autoImportCategory: Boolean = false)
 
     @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)
@@ -41,8 +41,8 @@ interface CategoryDao {
     suspend fun delete(categoryId: Int)
 
     @Query("UPDATE Category SET name = :name, backgroundColor = :backgroundColor WHERE id = :categoryId")
-    suspend fun update(categoryId: Int, name: CharSequence, backgroundColor: Int)
+    suspend fun update(categoryId: Int, name: String, backgroundColor: Int)
 
     @Query("UPDATE Category SET name = :name WHERE id = :categoryId")
-    suspend fun update(categoryId: Int, name: CharSequence)
+    suspend fun update(categoryId: Int, name: String)
 }

@@ -1,5 +1,6 @@
 package us.huseli.soundboard2.ui
 
+import androidx.databinding.ViewDataBinding
 import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import us.huseli.soundboard2.Constants
@@ -8,7 +9,7 @@ import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.viewmodels.BaseCategoryEditViewModel
 import javax.inject.Inject
 
-abstract class BaseCategoryEditFragment : BaseDialogFragment(), ColorPickerDialogListener {
+abstract class BaseCategoryEditFragment<T: ViewDataBinding> : BaseDialogFragment<T>(), ColorPickerDialogListener {
     protected abstract val viewModel: BaseCategoryEditViewModel
     @Inject lateinit var colorHelper: ColorHelper
 

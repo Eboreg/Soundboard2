@@ -15,36 +15,35 @@ import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.databinding.FragmentAddSoundsBinding
 import us.huseli.soundboard2.viewmodels.SoundAddViewModel
 
-class SoundAddFragment : BaseDialogFragment() {
+class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
     private val viewModel by activityViewModels<SoundAddViewModel>()
     private var multiple = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        binding = FragmentAddSoundsBinding.inflate(layoutInflater).also { binding ->
-            binding.viewModel = viewModel
+        binding = FragmentAddSoundsBinding.inflate(layoutInflater)
+        binding.viewModel = viewModel
 
-            binding.duplicateAdd.setOnCheckedChangeListener { _, isChecked ->
-                viewModel.setDuplicateAdd(isChecked)
+        binding.duplicateAdd.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setDuplicateAdd(isChecked)
+        }
+
+        binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                viewModel.volume = progress
             }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
 
-            binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    viewModel.volume = progress
-                }
-                override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-            })
-
-            binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                    viewModel.selectedCategoryPosition.value = position
-                }
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
+        binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                viewModel.selectedCategoryPosition.value = position
             }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
 
-            binding.soundName.addTextChangedListener {
-                if (it != null) viewModel.setName(it)
-            }
+        binding.soundName.addTextChangedListener {
+            if (it != null) viewModel.setName(it)
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
@@ -61,17 +60,15 @@ class SoundAddFragment : BaseDialogFragment() {
     }
 
     private fun onPositiveButtonClick() {
-        (binding as FragmentAddSoundsBinding).also { binding ->
-            val soundName = binding.soundName.text.toString().trim()
-            if (soundName.isEmpty() && !multiple) {
-                Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
-            }
-            else {
-                viewModel.setName(soundName)
-                viewModel.volume = binding.volume.progress
-                viewModel.save(soundName, binding.volume.progress, binding.category.selectedItem as Category)
-                dismiss()
-            }
+        val soundName = binding.soundName.text.toString().trim()
+        if (soundName.isEmpty() && !multiple) {
+            Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
+        }
+        else {
+            viewModel.setName(soundName)
+            viewModel.volume = binding.volume.progress
+            viewModel.save(soundName, binding.volume.progress, binding.category.selectedItem as Category)
+            dismiss()
         }
     }
 
@@ -83,7 +80,7 @@ class SoundAddFragment : BaseDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.categories.observe(this) {
-            (binding as FragmentAddSoundsBinding).category.adapter = CategorySpinnerAdapter(requireContext(), it)
+            binding.category.adapter = CategorySpinnerAdapter(requireContext(), it)
         }
 
         viewModel.multiple.observe(this) {

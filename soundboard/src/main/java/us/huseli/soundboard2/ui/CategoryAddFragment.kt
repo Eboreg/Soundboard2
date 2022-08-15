@@ -13,19 +13,15 @@ import us.huseli.soundboard2.databinding.FragmentAddCategoryBinding
 import us.huseli.soundboard2.viewmodels.CategoryAddViewModel
 
 @AndroidEntryPoint
-class CategoryAddFragment : BaseCategoryEditFragment() {
+class CategoryAddFragment : BaseCategoryEditFragment<FragmentAddCategoryBinding>() {
     override val viewModel by activityViewModels<CategoryAddViewModel>()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         viewModel.reset()
-        binding = FragmentAddCategoryBinding.inflate(layoutInflater).also { binding ->
-            binding.viewModel = viewModel
-            binding.selectColorButton.setOnClickListener { onSelectColorClick() }
-
-            binding.categoryName.addTextChangedListener {
-                if (it != null) viewModel.setName(it)
-            }
-        }
+        binding = FragmentAddCategoryBinding.inflate(layoutInflater)
+        binding.viewModel = viewModel
+        binding.selectColorButton.setOnClickListener { onSelectColorClick() }
+        binding.categoryName.addTextChangedListener { if (it != null) viewModel.setName(it) }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.add_category)
@@ -42,15 +38,13 @@ class CategoryAddFragment : BaseCategoryEditFragment() {
     }
 
     private fun onPositiveButtonClick() {
-        (binding as FragmentAddCategoryBinding).also { binding ->
-            val catName = binding.categoryName.text.trim()
-            if (catName.isEmpty())
-                Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
-            else {
-                viewModel.setName(catName)
-                viewModel.save()
-                dismiss()
-            }
+        val catName = binding.categoryName.text
+        if (catName.trim().isEmpty())
+            Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
+        else {
+            viewModel.setName(catName)
+            viewModel.save()
+            dismiss()
         }
     }
 }

@@ -8,4 +8,6 @@ object Enums {
         OVERLAP(2),
         PAUSE(3),
     }
+
+    enum class Orientation { PORTRAIT, LANDSCAPE }
 }

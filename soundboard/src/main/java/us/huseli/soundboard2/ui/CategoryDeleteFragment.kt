@@ -15,7 +15,7 @@ import us.huseli.soundboard2.databinding.FragmentDeleteCategoryBinding
 import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
 
 @AndroidEntryPoint
-class CategoryDeleteFragment : BaseDialogFragment() {
+class CategoryDeleteFragment : BaseDialogFragment<FragmentDeleteCategoryBinding>() {
     private val viewModel by activityViewModels<CategoryDeleteViewModel>()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -32,38 +32,34 @@ class CategoryDeleteFragment : BaseDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        (binding as FragmentDeleteCategoryBinding).also { binding ->
-            viewModel.categories.observe(this) {
-                binding.newCategory.adapter = CategorySpinnerAdapter(requireContext(), it)
-            }
+        viewModel.categories.observe(this) {
+            binding.newCategory.adapter = CategorySpinnerAdapter(requireContext(), it)
+        }
 
-            viewModel.name.observe(this) { name ->
-                dialog?.setTitle(
-                    if (name != null) getString(R.string.delete_category_name, name)
-                    else getString(R.string.delete_category)
-                )
-                dialog?.show()
-            }
+        viewModel.name.observe(this) { name ->
+            dialog?.setTitle(
+                if (name != null) getString(R.string.delete_category_name, name)
+                else getString(R.string.delete_category)
+            )
+            dialog?.show()
+        }
 
-            viewModel.isLastCategory.observe(this) { isLastCategory ->
-                (dialog as AlertDialog?)?.let {
-                    it.getButton(DialogInterface.BUTTON_POSITIVE).isVisible = !isLastCategory
-                    it.show()
-                }
+        viewModel.isLastCategory.observe(this) { isLastCategory ->
+            (dialog as AlertDialog?)?.let {
+                it.getButton(DialogInterface.BUTTON_POSITIVE).isVisible = !isLastCategory
+                it.show()
             }
+        }
 
-            binding.soundAction.setOnCheckedChangeListener { _, checkedId ->
-                binding.newCategoryBlock.isVisible = checkedId == R.id.soundActionMove
-            }
+        binding.soundAction.setOnCheckedChangeListener { _, checkedId ->
+            binding.newCategoryBlock.isVisible = checkedId == R.id.soundActionMove
         }
     }
 
     private fun delete() {
-        (binding as FragmentDeleteCategoryBinding).also { binding ->
-            val moveTo =
-                if (binding.soundActionMove.isChecked) binding.newCategory.selectedItem as Category
-                else null
-            viewModel.delete(moveTo?.id)
-        }
+        val moveTo =
+            if (binding.soundActionMove.isChecked) binding.newCategory.selectedItem as Category
+            else null
+        viewModel.delete(moveTo?.id)
     }
 }

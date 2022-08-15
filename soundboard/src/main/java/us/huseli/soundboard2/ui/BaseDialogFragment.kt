@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.DialogFragment
 
-open class BaseDialogFragment : DialogFragment() {
-    protected open lateinit var binding: ViewDataBinding
+abstract class BaseDialogFragment<T: ViewDataBinding> : DialogFragment() {
+    protected open lateinit var binding: T
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?) =
         binding.root
