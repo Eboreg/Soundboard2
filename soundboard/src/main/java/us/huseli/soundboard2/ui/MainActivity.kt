@@ -25,6 +25,11 @@ import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.ui.drawables.RepressModeIconDrawable
+import us.huseli.soundboard2.ui.fragments.CategoryAddFragment
+import us.huseli.soundboard2.ui.fragments.CategoryDeleteFragment
+import us.huseli.soundboard2.ui.fragments.CategoryEditFragment
+import us.huseli.soundboard2.ui.fragments.SoundAddFragment
 import us.huseli.soundboard2.viewmodels.AppViewModel
 import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
 import us.huseli.soundboard2.viewmodels.CategoryEditViewModel

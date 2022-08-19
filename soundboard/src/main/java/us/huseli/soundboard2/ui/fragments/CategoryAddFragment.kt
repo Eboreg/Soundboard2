@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.fragments
 
 import android.app.Dialog
 import android.os.Bundle

@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.fragments
 
 import android.app.Dialog
 import android.os.Bundle
@@ -13,6 +13,7 @@ import com.google.android.material.snackbar.Snackbar
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.databinding.FragmentAddSoundsBinding
+import us.huseli.soundboard2.ui.CategorySpinnerAdapter
 import us.huseli.soundboard2.viewmodels.SoundAddViewModel
 
 class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {

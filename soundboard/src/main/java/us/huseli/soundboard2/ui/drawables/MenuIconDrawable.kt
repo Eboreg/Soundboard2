@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.drawables
 
 import android.content.res.Resources
 import android.text.Layout

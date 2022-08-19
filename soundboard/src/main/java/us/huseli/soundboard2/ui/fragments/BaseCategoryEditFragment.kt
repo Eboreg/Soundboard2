@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.fragments
 
 import androidx.databinding.ViewDataBinding
 import com.jaredrummler.android.colorpicker.ColorPickerDialog

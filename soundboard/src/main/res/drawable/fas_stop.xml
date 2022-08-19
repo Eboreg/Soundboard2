@@ -1,2 +1,2 @@
-<us.huseli.soundboard2.ui.MenuIconDrawable xmlns:android="http://schemas.android.com/apk/res/android"
+<us.huseli.soundboard2.ui.drawables.MenuIconDrawable xmlns:android="http://schemas.android.com/apk/res/android"
     android:text="@string/fas_stop" />

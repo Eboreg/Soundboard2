@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater

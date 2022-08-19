@@ -1,4 +1,4 @@
-package us.huseli.soundboard2.ui
+package us.huseli.soundboard2.ui.fragments
 
 import android.app.Dialog
 import android.content.DialogInterface
@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.databinding.FragmentDeleteCategoryBinding
+import us.huseli.soundboard2.ui.CategorySpinnerAdapter
 import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
 
 @AndroidEntryPoint
