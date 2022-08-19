@@ -1,7 +1,7 @@
 package us.huseli.soundboard2.data.repositories
 
 import android.content.Context
-import androidx.annotation.ColorInt
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -39,11 +39,7 @@ class CategoryRepository @Inject constructor(
 
     fun getCategory(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
 
-    fun getSoundCount(categoryId: Int): Flow<Int> = categoryDao.flowGetSoundCount(categoryId)
-
-    suspend fun setBackgroundColor(categoryId: Int, @ColorInt color: Int) {
-        categoryDao.setBackgroundColor(categoryId, color)
-    }
+    fun getCategoryDeleteData(categoryId: Int) = categoryDao.flowGetCategoryDeleteData(categoryId)
 
     suspend fun toggleCategoryCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
 
@@ -54,15 +50,15 @@ class CategoryRepository @Inject constructor(
         val sounds = soundDao.listByCategory(categoryId)
 
         if (moveSoundsTo == null) {
-            val duplicatePaths = soundDao.listByChecksums(sounds.map { it.checksum })
+            val duplicateUris = soundDao.listByChecksums(sounds.map { it.checksum })
                 .filter { it.categoryId != categoryId }
-                .map { it.path }
+                .map { it.uri }
                 .toSet()
-            val pathsToDelete = sounds.map { it.path }.subtract(duplicatePaths)
+            val urisToDelete = sounds.map { it.uri }.subtract(duplicateUris)
 
             context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE)
                 ?.listFiles()
-                ?.forEach { if (pathsToDelete.contains(it.path)) it.delete() }
+                ?.forEach { if (urisToDelete.contains(it.toUri())) it.delete() }
             soundDao.deleteByCategory(categoryId)
         }
         else {

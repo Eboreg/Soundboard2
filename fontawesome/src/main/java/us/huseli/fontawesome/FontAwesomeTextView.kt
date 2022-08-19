@@ -7,7 +7,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.res.getResourceIdOrThrow
 import androidx.core.widget.TextViewCompat
 
-class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : AppCompatTextView(context, attrs, defStyleAttr) {
+open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : AppCompatTextView(context, attrs, defStyleAttr) {
     init {
         val arr = context.theme.obtainStyledAttributes(attrs, R.styleable.FontAwesomeTextView, 0, 0)
         var computedTypeface: String? = null
@@ -32,6 +32,7 @@ class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: 
 
         typeface = FontAwesomeCache.get(context.assets, explicitTypeface ?: computedTypeface ?: FontAwesomeCache.FA_FONT_REGULAR)
 
+        @Suppress("LeakingThis")
         TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
             this,
             12,

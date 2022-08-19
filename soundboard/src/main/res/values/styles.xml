@@ -11,21 +11,25 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
     <style name="Style" />
 
-    <style name="Style.Soundboard" />
+    <style name="Style.Soundboard">
+        <item name="android:colorBackground">?attr/colorSurface</item>
+    </style>
+
+    <style name="Style.Soundboard.Button" parent="Widget.MaterialComponents.Button" />
 
     <style name="Style.Soundboard.Button.TextButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="rippleColor">?attr/colorAccent</item>
-        <item name="android:textColor">@color/alert_dialog_button</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
     <style name="Style.Soundboard.Button.TextButton.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="rippleColor">?attr/colorAccent</item>
-        <item name="android:textColor">@color/color_on_surface_subdued</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
         <item name="android:alpha">@dimen/sound_card_alpha</item>
         <item name="android:visibility">invisible</item>
         <item name="android:padding">@dimen/margin_normal</item>
@@ -33,12 +37,14 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
     <style name="Style.Soundboard.Spinner" parent="android:Widget.Material.Spinner">
         <item name="android:dropDownVerticalOffset">48dp</item>
+        <item name="cornerRadius">@dimen/margin_small</item>
+        <item name="dialogCornerRadius">@dimen/margin_small</item>
         <item name="android:dropDownWidth">match_parent</item>
-        <item name="android:popupBackground">?attr/colorBackgroundFloating</item>
+        <item name="android:popupBackground">?attr/colorPrimaryDark</item>
     </style>
 
     <style name="Style.Soundboard.Spinner.Item" parent="android:Widget.Material.TextView.SpinnerItem">
-        <item name="android:padding">@dimen/margin_normal</item>
+        <item name="android:padding">@dimen/margin_large</item>
     </style>
 
     <style name="Style.Soundboard.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
@@ -52,5 +58,13 @@ Styles are a collection of view attributes; specific to a single type of widget"
         <item name="android:layout_height">?attr/actionBarSize</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:padding">2dp</item>
+        <item name="overlapAnchor">false</item>
+        <item name="android:overlapAnchor">false</item>
+    </style>
+    
+    <style name="Style.Soundboard.Toolbar.PopupMenu.Overflow" parent="Widget.MaterialComponents.PopupMenu.Overflow">
+        <item name="android:overlapAnchor">false</item>
+        <item name="overlapAnchor">false</item>
+        <item name="android:popupBackground">?attr/colorPrimaryDark</item>
     </style>
 </resources>

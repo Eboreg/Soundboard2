@@ -1,7 +1,7 @@
 package us.huseli.soundboard2.data.repositories
 
 import android.content.Context
-import android.net.Uri
+import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.Functions
@@ -22,33 +22,16 @@ class SoundRepository @Inject constructor(private val soundDao: SoundDao, @Appli
 
     fun listByChecksums(checksums: List<String>): Flow<List<Sound>> = soundDao.flowListByChecksums(checksums)
 
-    suspend fun create(uri: Uri, volume: Int, categoryId: Int) {
-        val soundFile = Functions.extractMetadata(context, uri)
-        val file = Functions.copyFileToLocal(context, uri, soundFile.checksum)
-        val order = soundDao.getNextOrder(categoryId)
-
-        soundDao.create(
-            soundFile.name,
-            file.path,
-            soundFile.duration,
-            soundFile.checksum,
-            volume,
-            Date(),
-            categoryId = categoryId,
-            order = order
-        )
-    }
-
-    /** If duplicate == null: copy file to local storage. Otherwise: just use same path as duplicate. */
     suspend fun create(soundFile: SoundFile, explicitName: String?, volume: Int, categoryId: Int, duplicate: Sound?) {
-        val path = duplicate?.path ?: Functions.copyFileToLocal(context, soundFile.uri, soundFile.checksum).path
+        /** If duplicate == null: copy file to local storage. Otherwise: just use same path as duplicate. */
+        val uri = duplicate?.uri ?: Functions.copyFileToLocal(context, soundFile.uri, soundFile.checksum).toUri()
         val name = explicitName ?: duplicate?.name ?: soundFile.name
 
-        log("create(): soundFile=$soundFile, path=$path, name=$name, explicitName=$explicitName, volume=$volume, categoryId=$categoryId, duplicate=$duplicate")
+        log("create(): soundFile=$soundFile, path=$uri, name=$name, explicitName=$explicitName, volume=$volume, categoryId=$categoryId, duplicate=$duplicate")
 
         soundDao.create(
             name,
-            path,
+            uri,
             soundFile.duration,
             soundFile.checksum,
             volume,

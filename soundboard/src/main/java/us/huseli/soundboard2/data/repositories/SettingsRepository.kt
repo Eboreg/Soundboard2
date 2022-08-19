@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
+import us.huseli.soundboard2.Enums.RepressMode
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -35,15 +36,21 @@ class SettingsRepository @Inject constructor(
 
     private val preferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val _screenRatio = MutableStateFlow(getScreenRatio())
-    private val _spanCountPortrait = MutableStateFlow(Constants.DEFAULT_SPANCOUNT_PORTRAIT)
+    private val _spanCountPortrait = MutableStateFlow(
+        preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT)
+    )
     private val _spanCountLandscape = MutableStateFlow(portraitSpanCountToLandscape(Constants.DEFAULT_SPANCOUNT_PORTRAIT))
     private val _orientation = MutableStateFlow(Enums.Orientation.PORTRAIT)
+    private val _repressMode = MutableStateFlow(
+        preferences.getString("repressMode", null)?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
+    )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
         if (it == Enums.Orientation.LANDSCAPE) _spanCountLandscape else _spanCountPortrait
     }
 
+    val repressMode = _repressMode.asStateFlow()
     val zoomInPossible = spanCount.map { it > 1 }
 
     private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
@@ -81,6 +88,10 @@ class SettingsRepository @Inject constructor(
 
     fun zoomOut() = zoom(1)
 
+    fun setRepressMode(value: RepressMode) {
+        preferences.edit().putString("repressMode", value.name).apply()
+    }
+
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
         preferences.registerOnSharedPreferenceChangeListener(this)
@@ -101,6 +112,10 @@ class SettingsRepository @Inject constructor(
         when (key) {
             "spanCountPortrait" -> preferences.getInt(key, Constants.DEFAULT_SPANCOUNT_PORTRAIT).also {
                 _spanCountPortrait.value = it
+                _spanCountLandscape.value = portraitSpanCountToLandscape(it)
+            }
+            "repressMode" -> preferences.getString(key, null).also {
+                it?.let { _repressMode.value = RepressMode.valueOf(it) }
             }
         }
     }

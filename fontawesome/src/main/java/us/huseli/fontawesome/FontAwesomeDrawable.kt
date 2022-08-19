@@ -11,36 +11,11 @@ import android.util.AttributeSet
 import androidx.annotation.ColorInt
 import androidx.core.content.res.getResourceIdOrThrow
 import org.xmlpull.v1.XmlPullParser
-import kotlin.math.ceil
+import kotlin.math.roundToInt
 
-open class FontAwesomeDrawable : Drawable() {
-    /** Some debug stuff */
-    @Suppress("unused")
-    private val stateMap = mapOf(
-        Pair(android.R.attr.state_above_anchor, "state_above_anchor"),
-        Pair(android.R.attr.state_accelerated, "state_accelerated"),
-        Pair(android.R.attr.state_activated, "state_activated"),
-        Pair(android.R.attr.state_active, "state_active"),
-        Pair(android.R.attr.state_checkable, "state_checkable"),
-        Pair(android.R.attr.state_checked, "state_checked"),
-        Pair(android.R.attr.state_drag_can_accept, "state_drag_can_accept"),
-        Pair(android.R.attr.state_drag_hovered, "state_drag_hovered"),
-        Pair(android.R.attr.state_empty, "state_empty"),
-        Pair(android.R.attr.state_enabled, "state_enabled"),
-        Pair(android.R.attr.state_expanded, "state_expanded"),
-        Pair(android.R.attr.state_first, "state_first"),
-        Pair(android.R.attr.state_focused, "state_focused"),
-        Pair(android.R.attr.state_hovered, "state_hovered"),
-        Pair(android.R.attr.state_last, "state_last"),
-        Pair(android.R.attr.state_middle, "state_middle"),
-        Pair(android.R.attr.state_multiline, "state_multiline"),
-        Pair(android.R.attr.state_pressed, "state_pressed"),
-        Pair(android.R.attr.state_selected, "state_selected"),
-        Pair(android.R.attr.state_single, "state_single"),
-        Pair(android.R.attr.state_window_focused, "state_window_focused"),
-    )
-    private var textResName: String? = null
-
+open class FontAwesomeDrawable(
+    defaultTextAlignment: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL
+) : Drawable() {
     @Suppress("unused")
     enum class Attribute(val value: Int) {
         TEXT_SIZE(android.R.attr.textSize),
@@ -66,13 +41,15 @@ open class FontAwesomeDrawable : Drawable() {
         Attribute.TEXT_COLOR,
     )
 
+    open val squareLayout: Boolean = false
+
     open var text: CharSequence = ""
         set(value) {
             field = value
             measureContent()
         }
 
-    open var typeface: Typeface? = null
+    private var typeface: Typeface? = null
         set(value) {
             if (value != null && field != value) {
                 field = value
@@ -88,7 +65,7 @@ open class FontAwesomeDrawable : Drawable() {
      *
      * Calling this method with `null` will remove any Path currently attached.
      */
-    open var textPath: Path? = null
+    private var textPath: Path? = null
         set(value) {
             if (field != value) {
                 field = value
@@ -99,10 +76,10 @@ open class FontAwesomeDrawable : Drawable() {
     /**
      * Text alignment value. Should be set to one of:
      * [Layout.Alignment.ALIGN_NORMAL],
-     * [Layout.Alignment.ALIGN_NORMAL],
+     * [Layout.Alignment.ALIGN_CENTER],
      * [Layout.Alignment.ALIGN_OPPOSITE].
      */
-    open var textAlignment = Layout.Alignment.ALIGN_NORMAL
+    private var textAlignment = defaultTextAlignment
         set(value) {
             if (field != value) {
                 field = value
@@ -111,26 +88,26 @@ open class FontAwesomeDrawable : Drawable() {
         }
 
     @ColorInt private val defaultColor = Color.BLACK
-    protected open var textColors: ColorStateList = ColorStateList.valueOf(defaultColor)
+    private var textColors: ColorStateList = ColorStateList.valueOf(defaultColor)
 
     private val rootAttributeMap by lazy { rootAttributes.associateBy { it.value }.toSortedMap() }
     private val themeAttributeMap by lazy { themeAttributes.associateBy { it.value }.toSortedMap() }
     private val extractedAttributes = mutableSetOf<Attribute>()
 
     /** Paint to hold most drawing primitives for the text */
-    private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).also {
+    protected val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).also {
         it.isDither = true
         it.color = textColors.getColorForState(state, defaultColor)
     }
 
     /** Container for the bounds to be reported to widgets */
-    private var textBounds = Rect()
+    protected var textBounds = Rect()
 
     /** Layout is used to measure and draw the text */
-    private var textLayout: StaticLayout? = null
+    protected var textLayout: StaticLayout? = null
 
     /** 0 = normal, 1 = bold, 2 = italic, 3 = bold italic */
-    open var typefaceStyle: Int = -1
+    private var typefaceStyle: Int = -1
         set(value) {
             if (value != field) {
                 field = value
@@ -171,7 +148,6 @@ open class FontAwesomeDrawable : Drawable() {
                 Attribute.TEXT -> {
                     try {
                         val resName = r.getResourceEntryName(a.getResourceIdOrThrow(idx))
-                        textResName = resName
                         computedTypeface = when {
                             resName.startsWith("fas") -> FontAwesomeCache.FA_FONT_SOLID
                             resName.startsWith("fab") -> FontAwesomeCache.FA_FONT_BRANDS
@@ -229,27 +205,30 @@ open class FontAwesomeDrawable : Drawable() {
         canvas.save()
         canvas.translate(bounds.left.toFloat(), bounds.top.toFloat())
         textPath?.let {
-            // Draw directly on the canvas using the supplied path
+            // Draw directly on the canvas using the supplied path:
             canvas.drawTextOnPath(text.toString(), it, 0f, 0f, textPaint)
         } ?: run {
-            // Allow the layout to draw the text
+            // Allow the layout to draw the text:
             textLayout?.draw(canvas)
         }
         canvas.restore()
     }
 
-    private fun measureContent() {
+    protected fun getDesiredWidth(): Int =
+        if (squareLayout) textPaint.textSize.toInt() else Layout.getDesiredWidth(text, textPaint).roundToInt()
+
+    protected open fun measureContent() {
         // If drawing to a path, we cannot measure intrinsic bounds;
         // we must rely on setBounds being called externally.
         if (textPath != null) {
-            // Clear any previous measurement.
+            // Clear any previous measurement:
             textLayout = null
             textBounds.setEmpty()
         } else {
-            // Measure text bounds.
-            val desired = ceil(Layout.getDesiredWidth(text, textPaint).toDouble())
+            // Measure text bounds:
+            val desired = getDesiredWidth()
             textLayout = StaticLayout.Builder
-                .obtain(text, 0, text.length, textPaint, desired.toInt())
+                .obtain(text, 0, text.length, textPaint, desired)
                 .setAlignment(textAlignment)
                 .setLineSpacing(0f, 1f)
                 .setIncludePad(false)
@@ -270,7 +249,7 @@ open class FontAwesomeDrawable : Drawable() {
 
     /**
      * textPaint needs updating in a bunch of places; always do it via this
-     * method, so we make sure measureContent() is also run
+     * method, so we make sure measureContent() is also run.
      */
     private fun updateTextPaint(func: (TextPaint) -> Unit): Boolean {
         func(textPaint)
@@ -329,6 +308,7 @@ open class FontAwesomeDrawable : Drawable() {
         if (textPaint.alpha != alpha) updateTextPaint { it.alpha = alpha }
     }
 
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @Deprecated("Deprecated in Java")
     override fun getOpacity() = textPaint.alpha
 

@@ -10,25 +10,37 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/soundContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/soundContainer"
         android:orientation="vertical">
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/soundCardBorder"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:id="@+id/soundCard"
-            android:layout_marginHorizontal="@dimen/margin_small"
-            android:layout_marginBottom="@dimen/margin_normal"
-            app:cardBackgroundColor="@{viewModel.backgroundColor}"
+            android:alpha="0"
+            app:cardBackgroundColor="?attr/colorOnSurfaceVariant"
             app:cardCornerRadius="@dimen/sound_card_corner_radius"
-            app:cardElevation="@dimen/elevation_large"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintDimensionRatio="4:3"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            tools:alpha="1" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/soundCard"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="@dimen/margin_xsmall"
+            android:alpha="1"
+            app:cardBackgroundColor="@{viewModel.backgroundColor}"
+            app:cardCornerRadius="@dimen/sound_card_corner_radius"
+            app:layout_constraintBottom_toBottomOf="@+id/soundCardBorder"
+            app:layout_constraintDimensionRatio="4:3"
+            app:layout_constraintEnd_toEndOf="@+id/soundCardBorder"
+            app:layout_constraintStart_toStartOf="@+id/soundCardBorder"
+            app:layout_constraintTop_toTopOf="@+id/soundCardBorder"
             tools:cardBackgroundColor="@color/purple_500">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -52,102 +64,96 @@
                     tools:text="Sound name"
                     tools:textColor="@color/white" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundLoadingIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:text="@string/fas_hourglass_half"
-                    android:textColor="@{viewModel.textColor}"
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/soundIcons"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:orientation="horizontal"
                     app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    app:layout_constraintTop_toTopOf="parent">
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundPlayingIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:text="@string/fa_circle_play"
-                    android:textColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundLoadingIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:text="@string/fas_hourglass_half"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundPausedIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:text="@string/fa_circle_pause"
-                    android:textColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundPlayingIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:text="@string/fa_circle_play"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundFailedIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:text="@string/fas_skull_crossbones"
-                    android:textColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundPausedIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:text="@string/fa_circle_pause"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundSelectedIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:background="#A0B2EBF2"
-                    android:text="@string/fas_check"
-                    android:textColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundErrorIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:text="@string/fas_skull_crossbones"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
-                    android:id="@+id/soundReorderIcon"
-                    style="@style/Style.Soundboard.SoundCardIcon"
-                    android:text="@string/fas_up_down_left_right"
-                    android:textColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:visibility="invisible" />
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundSelectedIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:background="#A0B2EBF2"
+                        android:text="@string/fas_check"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <us.huseli.fontawesome.FontAwesomeTextView
+                        android:id="@+id/soundReorderIcon"
+                        style="@style/Style.Soundboard.SoundCardIcon"
+                        android:text="@string/fas_up_down_left_right"
+                        android:textColor="@{viewModel.textColor}"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <ProgressBar
+                    android:id="@+id/soundProgressBar"
                     style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                     android:layout_width="0dp"
                     android:layout_height="2dp"
-                    android:id="@+id/soundProgressBar"
+                    android:animateLayoutChanges="true"
                     android:max="100"
                     android:min="0"
-                    android:progress="@{viewModel.volume}"
-                    app:backgroundColor="@{viewModel.backgroundColor}"
-                    app:progressBackgroundTintColor="@{viewModel.backgroundColor}"
+                    android:progress="@{viewModel.soundProgress}"
                     android:progressBackgroundTintMode="src_over"
-                    app:progressTintColor="@{viewModel.progressTintColor}"
+                    android:progressDrawable="@android:drawable/progress_horizontal"
                     android:progressTintMode="src_over"
+                    app:backgroundColor="@{viewModel.backgroundColor}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    tools:layout_height="10dp"
+                    app:progressBackgroundTintColor="@{viewModel.backgroundColor}"
+                    app:progressTintColor="@{viewModel.secondaryBackgroundColor}"
+                    tools:ignore="UnusedAttribute"
+                    tools:layout_height="5dp"
                     tools:progress="50"
-                    tools:progressTint="@color/purple_200"
-                    tools:progressTintMode="src_over"
                     tools:progressBackgroundTint="@color/purple_500"
-                    tools:progressBackgroundTintMode="src_over"
-                    tools:ignore="UnusedAttribute" />
+                    tools:progressTint="@color/purple_200" />
 
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/soundDurationCard"
+                    visible="@{viewModel.duration != null}"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/soundDurationCard"
-                    android:visibility="gone"
                     app:cardBackgroundColor="#80000000"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
@@ -159,11 +165,14 @@
                         android:layout_height="wrap_content"
                         android:alpha="0.8"
                         android:paddingHorizontal="@dimen/margin_small"
+                        android:text="@{viewModel.durationString}"
                         android:textColor="@color/white"
                         android:textSize="@dimen/small_text"
                         tools:text="2s" />
                 </androidx.cardview.widget.CardView>
             </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.cardview.widget.CardView>
+
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

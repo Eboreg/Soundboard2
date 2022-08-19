@@ -25,71 +25,12 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toTopOf="@+id/debug"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/actionBar"
             tools:itemCount="3"
             tools:listitem="@layout/item_category" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/debug"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone"
-            tools:ignore="HardcodedText"
-            tools:visibility="visible"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/categoryList">
-
-            <TextView
-                android:id="@+id/debugText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <Button
-                android:id="@+id/changeColor1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Color 1"
-                app:layout_constraintEnd_toStartOf="@id/changeColor2"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/debugText" />
-
-            <Button
-                android:id="@+id/changeColor2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Color 2"
-                app:layout_constraintEnd_toStartOf="@id/changeColor3"
-                app:layout_constraintStart_toEndOf="@id/changeColor1"
-                app:layout_constraintTop_toBottomOf="@id/debugText" />
-
-            <Button
-                android:id="@+id/changeColor3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Color 3"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/changeColor2"
-                app:layout_constraintTop_toBottomOf="@id/debugText" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/addSoundAsset"
-                android:text="Add sound asset"
-                app:layout_constraintTop_toBottomOf="@id/changeColor2"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

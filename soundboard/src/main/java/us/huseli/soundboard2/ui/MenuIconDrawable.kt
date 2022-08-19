@@ -1,11 +1,14 @@
 package us.huseli.soundboard2.ui
 
 import android.content.res.Resources
+import android.text.Layout
 import android.util.TypedValue
 import us.huseli.fontawesome.FontAwesomeDrawable
 import us.huseli.soundboard2.R
 
-class MenuIconDrawable : FontAwesomeDrawable() {
+open class MenuIconDrawable : FontAwesomeDrawable(Layout.Alignment.ALIGN_CENTER) {
+    override val squareLayout = true
+
     /** Without TEXT_COLOR! */
     override val themeAttributes = listOf(
         Attribute.TEXT_STYLE,

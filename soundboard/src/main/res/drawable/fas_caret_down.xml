@@ -1,2 +1,2 @@
 <us.huseli.soundboard2.ui.MenuIconDrawable xmlns:android="http://schemas.android.com/apk/res/android"
-    android:text="@string/fas_arrows_spin" />
+    android:text="@string/fas_caret_down" />

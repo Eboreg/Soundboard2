@@ -51,7 +51,7 @@ object Functions {
     }
 
     /** Tries to grab title from media tag. If that fails, use filename. */
-    suspend fun extractMetadata(context: Context, uri: Uri): SoundFile {
+    private suspend fun extractMetadata(context: Context, uri: Uri): SoundFile {
         val checksum = extractChecksum(context, uri)
 
         val cursor = context.contentResolver

@@ -2,9 +2,11 @@ package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
+import us.huseli.soundboard2.data.entities.CategoryDeleteData
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
@@ -13,32 +15,44 @@ import javax.inject.Inject
 class CategoryDeleteViewModel @Inject constructor(
     private val repository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val categoryId = MutableLiveData<Int>()
+    private val _categoryId = MutableStateFlow<Int?>(null)
 
-    val name: LiveData<String?> = categoryId.switchMap { categoryId ->
-        repository.getCategory(categoryId).map { it?.name }.asLiveData()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _categoryData: Flow<CategoryDeleteData> = _categoryId.flatMapLatest { categoryId ->
+        if (categoryId != null) repository.getCategoryDeleteData(categoryId) else emptyFlow()
     }
 
-    val categories: LiveData<List<Category>> = categoryId.switchMap { categoryId ->
-        repository.categories.map { list -> list.filter { it.id != categoryId } }.asLiveData()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _otherCategories: Flow<List<Category>> = _categoryId.flatMapLatest { categoryId ->
+        if (categoryId != null)
+            repository.categories.map { list -> list.filter { it.id != categoryId } }
+        else emptyFlow()
     }
 
-    val soundCount: LiveData<Int> = categoryId.switchMap { categoryId ->
-        repository.getSoundCount(categoryId).asLiveData()
-    }
+    private val _soundCount = _categoryData.map { it.soundCount }
 
-    val isLastCategory: LiveData<Boolean> = categories.map { it.isEmpty() }
+    private val _isLastCategory = merge(
+        flowOf(false),
+        _otherCategories.map { it.isEmpty() },
+    )
 
-    val showSoundAction: LiveData<Boolean> = soundCount.switchMap { soundCount ->
-        isLastCategory.map { !it && soundCount > 0 }
-    }
+    private val _showSoundAction = merge(
+        flowOf(false),
+        combine(_categoryData, _isLastCategory) { cd, ilc -> cd.soundCount > 0 && !ilc }
+    )
+
+    val name: LiveData<String> = _categoryData.map { it.name }.asLiveData()
+    val otherCategories: LiveData<List<Category>> = _otherCategories.asLiveData()
+    val soundCount: LiveData<Int> = _soundCount.asLiveData()
+    val isLastCategory: LiveData<Boolean> = _isLastCategory.asLiveData()
+    val showSoundAction: LiveData<Boolean> = _showSoundAction.asLiveData()
 
     fun setCategoryId(value: Int) {
-        categoryId.value = value
+        _categoryId.value = value
     }
 
     fun delete(moveSoundsTo: Int?) = viewModelScope.launch {
-        categoryId.value?.let { categoryId ->
+        _categoryId.value?.let { categoryId ->
             log("delete(): categoryId=$categoryId, moveSoundsTo=$moveSoundsTo")
             repository.delete(categoryId, moveSoundsTo)
         }

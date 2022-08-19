@@ -1,46 +1,128 @@
 package us.huseli.soundboard2.ui
 
+import android.animation.ObjectAnimator
+import android.net.Uri
 import android.view.LayoutInflater
+import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.LifecycleOwner
+import androidx.core.view.forEach
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import us.huseli.soundboard2.Enums.PlayState
+import us.huseli.soundboard2.Enums.RepressMode
+import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
 import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(
-    private val lifecycleOwner: LifecycleOwner,
-    private val viewModelStore: ViewModelStore,
+    private val activity: MainActivity,
     private val soundRepository: SoundRepository,
+    private val settingsRepository: SettingsRepository,
     private val colorHelper: ColorHelper
 ) : ListAdapter<Int, SoundAdapter.ViewHolder>(Comparator()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(ItemSoundBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), lifecycleOwner, viewModelStore, soundRepository, colorHelper)
+        holder.bind(getItem(position), activity, soundRepository, settingsRepository, colorHelper)
     }
 
-    class ViewHolder(private val binding: ItemSoundBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(private val binding: ItemSoundBinding) : LoggingObject, View.OnTouchListener, RecyclerView.ViewHolder(binding.root) {
+        private lateinit var viewModel: SoundViewModel
+        private var playState: PlayState? = null
+        private var repressMode: RepressMode? = null
+        private var uri: Uri? = null
+        private var volume: Int = 100
+        private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
+
         internal fun bind(
             soundId: Int,
-            lifecycleOwner: LifecycleOwner,
-            viewModelStore: ViewModelStore,
+            activity: MainActivity,
             repository: SoundRepository,
+            settingsRepository: SettingsRepository,
             colorHelper: ColorHelper
         ) {
             val viewModel = ViewModelProvider(
-                viewModelStore,
-                SoundViewModel.Factory(repository, colorHelper, soundId)
+                activity.viewModelStore,
+                SoundViewModel.Factory(repository, settingsRepository, colorHelper, soundId)
             )[soundId.toString(), SoundViewModel::class.java]
 
-            binding.lifecycleOwner = lifecycleOwner
+            this.viewModel = viewModel
+            binding.lifecycleOwner = activity
             binding.viewModel = viewModel
+            binding.root.setOnTouchListener(this)
+
+            viewModel.repressMode.observe(activity) {
+                repressMode = it
+                // If changing to anything but PAUSE, make sure any paused sounds are stopped.
+                if (it != RepressMode.PAUSE) viewModel.stopPaused()
+            }
+
+            viewModel.uri.observe(activity) { uri = it }
+
+            viewModel.playState.observe(activity) {
+                playState = it
+                when (it) {
+                    PlayState.IDLE -> hideSoundIcons()
+                    PlayState.STARTED -> showSoundIcon(binding.soundPlayingIcon)
+                    PlayState.PAUSED -> showSoundIcon(binding.soundPausedIcon)
+                    PlayState.ERROR -> showSoundIcon(binding.soundErrorIcon)
+                    else -> hideSoundIcons()
+                }
+            }
+
+            viewModel.playerError.observe(activity) { playerError ->
+                if (playerError != null) activity.showSnackbar(playerError)
+            }
+
+            viewModel.volume.observe(activity) { if (it != null) volume = it }
+        }
+
+        private fun onSoundClicked() {
+            when (playState) {
+                PlayState.IDLE -> viewModel.play(uri?.path, volume)
+                PlayState.STARTED -> when (repressMode) {
+                    RepressMode.STOP -> viewModel.stop()
+                    RepressMode.RESTART -> viewModel.restart(uri?.path, volume)
+                    RepressMode.OVERLAP -> viewModel.play(uri?.path, volume, true)
+                    RepressMode.PAUSE -> viewModel.pause()
+                    null -> {}
+                }
+                PlayState.PAUSED -> viewModel.play(uri?.path, volume)
+                PlayState.ERROR -> viewModel.play(uri?.path, volume)
+                null -> {}
+            }
+            animator.start()
+        }
+
+        private fun hideSoundIcons(except: View? = null) {
+            binding.soundIcons.forEach { view ->
+                if (view != except) view.visibility = View.INVISIBLE
+            }
+        }
+
+        private fun showSoundIcon(view: View) {
+            view.visibility = View.VISIBLE
+            hideSoundIcons(view)
+        }
+
+        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+            if (v != null && event != null) {
+                if (v == binding.soundContainer) {
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
+                        MotionEvent.ACTION_UP -> onSoundClicked()
+                    }
+                }
+                if (event.actionMasked == MotionEvent.ACTION_UP) v.performClick()
+            }
+            return true
         }
     }
 

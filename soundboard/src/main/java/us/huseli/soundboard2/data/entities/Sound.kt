@@ -1,5 +1,6 @@
 package us.huseli.soundboard2.data.entities
 
+import android.net.Uri
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -22,7 +23,7 @@ open class Sound(
     @PrimaryKey(autoGenerate = true) open val id: Int,
     open val categoryId: Int?,
     open val name: String,
-    open val path: String,
+    open val uri: Uri,
     open val order: Int,
     open val duration: Long,
     open val checksum: String,

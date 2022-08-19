@@ -42,7 +42,7 @@ class CategoryAdapter(
                 activity.viewModelStore,
                 CategoryViewModel.Factory(categoryRepository, settingsRepository, colorHelper, categoryId)
             )[categoryId.toString(), CategoryViewModel::class.java]
-            val soundAdapter = SoundAdapter(activity, activity.viewModelStore, soundRepository, colorHelper)
+            val soundAdapter = SoundAdapter(activity, soundRepository, settingsRepository, colorHelper)
 
             binding.lifecycleOwner = activity
             binding.viewModel = viewModel

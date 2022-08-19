@@ -1,5 +1,6 @@
 package us.huseli.soundboard2.data.dao
 
+import android.net.Uri
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
@@ -29,13 +30,15 @@ interface SoundDao {
     @Query("SELECT COALESCE(MAX(`order`), -1) + 1 FROM Sound WHERE categoryId = :categoryId")
     suspend fun getNextOrder(categoryId: Int): Int
 
-    @Query("""
-        INSERT INTO Sound (name, path, duration, checksum, categoryId, `order`, volume, added, trashed)
-        VALUES (:name, :path, :duration, :checksum, :categoryId, :order, :volume, :added, :trashed)
-    """)
+    @Query(
+        """
+        INSERT INTO Sound (name, uri, duration, checksum, categoryId, `order`, volume, added, trashed)
+        VALUES (:name, :uri, :duration, :checksum, :categoryId, :order, :volume, :added, :trashed)
+    """
+    )
     suspend fun create(
         name: String,
-        path: String,
+        uri: Uri,
         duration: Long,
         checksum: String,
         volume: Int,

@@ -13,15 +13,15 @@
         android:id="@+id/categoryItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        tools:background="?attr/colorBackgroundFloating">
+        android:orientation="vertical">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/categoryHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/margin_normal"
+            android:layout_marginBottom="@dimen/margin_small"
             app:backgroundColor="@{viewModel.backgroundColor}"
+            tools:background="@color/purple_500"
             android:orientation="horizontal"
             android:padding="@dimen/margin_normal">
 
@@ -37,7 +37,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <us.huseli.fontawesome.FontAwesomeTextView
+                <us.huseli.fontawesome.FontAwesomeButton
                     android:id="@+id/categoryCollapseButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -64,7 +64,7 @@
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <us.huseli.fontawesome.FontAwesomeButton
                 android:id="@+id/categoryEditButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
                 app:layout_constraintStart_toEndOf="@+id/categoryCollapse"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <us.huseli.fontawesome.FontAwesomeButton
                 android:id="@+id/categoryDeleteButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -99,7 +99,7 @@
                 app:layout_constraintStart_toEndOf="@+id/categoryDeleteButton"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <us.huseli.fontawesome.FontAwesomeTextView
+                <us.huseli.fontawesome.FontAwesomeButton
                     android:id="@+id/categoryMoveUp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -107,7 +107,7 @@
                     android:text="@string/fas_chevron_down"
                     android:textColor="@{viewModel.textColor}" />
 
-                <us.huseli.fontawesome.FontAwesomeTextView
+                <us.huseli.fontawesome.FontAwesomeButton
                     android:id="@+id/categoryMoveDown"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -119,12 +119,14 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/soundList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/margin_small"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="4"
             app:visible="@{viewModel.soundListVisible}"
             tools:itemCount="4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            tools:listitem="@layout/item_sound" />
 
     </LinearLayout>
 </layout>

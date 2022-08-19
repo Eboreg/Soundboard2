@@ -1,7 +1,5 @@
 package us.huseli.soundboard2.ui
 
-import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -17,8 +15,8 @@ import com.google.android.material.snackbar.Snackbar
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Constants
+import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.repositories.CategoryRepository
@@ -62,30 +60,54 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        appViewModel.repressMode.observe(this) {
-            binding.actionBar.actionbarToolbar.menu?.findItem(R.id.actionRepressMode)?.icon?.level = it.index
-        }
-
         lifecycle.addObserver(settingsRepository)
 
         initCategoryList()
-        if (BuildConfig.DEBUG) initDebug()
+    }
+
+    override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
+        /** Flip caret icon when repress mode menu is opened. */
+        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
+            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.UP)
+        return super.onMenuOpened(featureId, menu)
+    }
+
+    override fun onPanelClosed(featureId: Int, menu: Menu) {
+        /** Flip caret icon when repress mode menu is closed. */
+        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
+            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.DOWN)
+        super.onPanelClosed(featureId, menu)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         /** Inflates top menu */
         menuInflater.inflate(R.menu.appbar_menu, menu)
 
+        // Init some listeners to make stuff focus/unfocus in a nice way for
+        // the search box:
         menu.findItem(R.id.actionSearch)?.also { item ->
             val view = item.actionView
             if (view is SearchView) initSearchAction(item, view)
         }
 
-        /** These have to be done here, because the callbacks require the menu to exist. */
+        // These ViewModel observers have to be done here, because the
+        // callbacks make no sense unless the menu already exists:
         appViewModel.zoomInPossible.observe(this) {
             binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionZoomIn).apply {
                 isEnabled = it
                 icon?.alpha = if (it) 255 else 128
+            }
+        }
+
+        appViewModel.repressMode.observe(this) {
+            val icon = menu.findItem(R.id.actionRepressMode).icon as RepressModeIconDrawable
+            icon.setRepressMode(it)
+            when (it) {
+                RepressMode.STOP -> menu.findItem(R.id.actionRepressModeStop).isChecked = true
+                RepressMode.RESTART -> menu.findItem(R.id.actionRepressModeRestart).isChecked = true
+                RepressMode.OVERLAP -> menu.findItem(R.id.actionRepressModeOverlap).isChecked = true
+                RepressMode.PAUSE -> menu.findItem(R.id.actionRepressModePause).isChecked = true
+                null -> {}
             }
         }
 
@@ -98,6 +120,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
             R.id.actionZoomIn -> zoomIn()
             R.id.actionZoomOut -> zoomOut()
+            R.id.actionRepressModeOverlap -> appViewModel.setRepressMode(RepressMode.OVERLAP)
+            R.id.actionRepressModePause -> appViewModel.setRepressMode(RepressMode.PAUSE)
+            R.id.actionRepressModeRestart -> appViewModel.setRepressMode(RepressMode.RESTART)
+            R.id.actionRepressModeStop -> appViewModel.setRepressMode(RepressMode.STOP)
         }
         return true
     }
@@ -173,39 +199,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         appViewModel.spanCount.observe(this) {  }
     }
 
-    @SuppressLint("SetTextI18n")
-    private fun initDebug() {
-        binding.debug.visibility = View.VISIBLE
-        binding.debugText.text = "BuildConfig.BUILD_TYPE: ${BuildConfig.BUILD_TYPE}"
-        binding.changeColor1.setOnClickListener {
-            lifecycleScope.launch {
-                categoryRepository.setBackgroundColor(1, colorHelper.getRandomColor())
-            }
-        }
-        binding.changeColor2.setOnClickListener {
-            lifecycleScope.launch {
-                categoryRepository.setBackgroundColor(2, colorHelper.getRandomColor())
-            }
-        }
-        binding.changeColor3.setOnClickListener {
-            lifecycleScope.launch {
-                categoryRepository.setBackgroundColor(3, colorHelper.getRandomColor())
-            }
-        }
-        binding.addSoundAsset.setOnClickListener {
-            lifecycleScope.launch {
-                val resId = R.raw.rnrvals
-                val uri = Uri.parse(
-                    ContentResolver.SCHEME_ANDROID_RESOURCE +
-                            "://" + resources.getResourcePackageName(resId) +
-                            "/" + resources.getResourceTypeName(resId) +
-                            "/" + resources.getResourceEntryName(resId)
-                )
-                soundRepository.create(uri, 100, 1)
-            }
-        }
-    }
-
     private fun initSearchAction(item: MenuItem, view: SearchView) {
         /** Making stuff focus/unfocus the way I like it in search box. */
         view.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -213,7 +206,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 view.clearFocus()
                 return true
             }
-
             override fun onQueryTextChange(newText: String?): Boolean {
                 if (newText != null) appViewModel.setFilterTerm(newText)
                 return true
@@ -225,7 +217,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 view.isIconified = false
                 return true
             }
-
             override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
                 view.setQuery("", true)
                 view.clearFocus()
@@ -234,10 +225,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         })
     }
 
-    private fun showSnackbar(text: CharSequence) = Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
+    fun showSnackbar(text: CharSequence) = Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
 
     @Suppress("unused")
-    private fun showSnackbar(textResource: Int) = showSnackbar(getText(textResource))
+    fun showSnackbar(textResource: Int) = showSnackbar(getText(textResource))
 
 
     private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {

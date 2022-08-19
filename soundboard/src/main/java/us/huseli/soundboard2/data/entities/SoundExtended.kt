@@ -1,5 +1,6 @@
 package us.huseli.soundboard2.data.entities
 
+import android.net.Uri
 import androidx.annotation.ColorInt
 import java.util.*
 
@@ -7,7 +8,7 @@ data class SoundExtended(
     override val id: Int,
     override val categoryId: Int?,
     override val name: String,
-    override val path: String,
+    override val uri: Uri,
     override val order: Int,
     override val duration: Long,
     override val checksum: String,
@@ -15,4 +16,4 @@ data class SoundExtended(
     override val added: Date,
     override val trashed: Boolean,
     @ColorInt val backgroundColor: Int?,
-) : Sound(id, categoryId, name, path, order, duration, checksum, volume, added, trashed)
+) : Sound(id, categoryId, name, uri, order, duration, checksum, volume, added, trashed)

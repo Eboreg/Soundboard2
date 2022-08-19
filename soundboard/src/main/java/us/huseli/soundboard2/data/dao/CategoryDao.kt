@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
+import us.huseli.soundboard2.data.entities.CategoryDeleteData
 
 @Dao
 interface CategoryDao {
@@ -19,8 +20,8 @@ interface CategoryDao {
     @Query("SELECT DISTINCT backgroundColor FROM Category")
     fun flowListUsedColors(): Flow<List<Int>>
 
-    @Query("SELECT COUNT(*) FROM Sound WHERE categoryId = :categoryId AND trashed = 0")
-    fun flowGetSoundCount(categoryId: Int): Flow<Int>
+    @Query("SELECT c.name, COUNT(s.id) as soundCount FROM Category c LEFT JOIN Sound s ON s.categoryId = c.id WHERE c.id = :categoryId")
+    fun flowGetCategoryDeleteData(categoryId: Int): Flow<CategoryDeleteData>
 
     @Query("SELECT COALESCE(MAX(`order`), -1) + 1 FROM Category")
     suspend fun getNextOrder(): Int
@@ -33,9 +34,6 @@ interface CategoryDao {
 
     @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)
-
-    @Query("UPDATE Category SET backgroundColor = :backgroundColor WHERE id = :categoryId")
-    suspend fun setBackgroundColor(categoryId: Int, backgroundColor: Int)
 
     @Query("DELETE FROM Category WHERE id = :categoryId")
     suspend fun delete(categoryId: Int)

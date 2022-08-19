@@ -32,7 +32,7 @@ class CategoryDeleteFragment : BaseDialogFragment<FragmentDeleteCategoryBinding>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.categories.observe(this) {
+        viewModel.otherCategories.observe(this) {
             binding.newCategory.adapter = CategorySpinnerAdapter(requireContext(), it)
         }
 

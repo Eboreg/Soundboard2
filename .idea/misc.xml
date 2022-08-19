@@ -4,11 +4,14 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.30932971014492755" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/btn_default.xml" value="0.219" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/btn_dropdown.xml" value="0.19" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/edit_text_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/item_background_borderless_material.xml" value="0.181" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/list_choice_background_material.xml" value="0.19" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/list_selector_background.xml" value="0.19" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/popup_background_material.xml" value="0.19" />
+        <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/progress_horizontal.xml" value="0.327" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/progress_horizontal_holo_dark.xml" value="0.3415" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/progress_horizontal_material.xml" value="0.3415" />
         <entry key="../../.android/SDK/platforms/android-32/data/res/drawable/spinner_background_material.xml" value="0.19" />
@@ -37,8 +40,10 @@
         <entry key="soundboard/src/main/res/drawable/fas_filter.xml" value="0.3415" />
         <entry key="soundboard/src/main/res/drawable/fas_up_down_left_right.xml" value="0.3415" />
         <entry key="soundboard/src/main/res/drawable/ic_launcher_background.xml" value="0.219" />
+        <entry key="soundboard/src/main/res/drawable/repress_mode_icon.xml" value="0.327" />
+        <entry key="soundboard/src/main/res/drawable/repress_mode_icon_with_caret.xml" value="0.22" />
         <entry key="soundboard/src/main/res/drawable/repress_mode_menu_icon.xml" value="0.189" />
-        <entry key="soundboard/src/main/res/layout/action_bar.xml" value="0.17239583333333333" />
+        <entry key="soundboard/src/main/res/layout/action_bar.xml" value="0.33" />
         <entry key="soundboard/src/main/res/layout/actionbar.xml" value="0.35625" />
         <entry key="soundboard/src/main/res/layout/activity_main.xml" value="0.36354166666666665" />
         <entry key="soundboard/src/main/res/layout/category_spinner_dropdown_item.xml" value="0.5" />
@@ -47,8 +52,8 @@
         <entry key="soundboard/src/main/res/layout/fragment_add_sounds.xml" value="0.31476449275362317" />
         <entry key="soundboard/src/main/res/layout/fragment_category_list.xml" value="0.35625" />
         <entry key="soundboard/src/main/res/layout/fragment_delete_category.xml" value="0.36354166666666665" />
-        <entry key="soundboard/src/main/res/layout/fragment_edit_category.xml" value="0.1" />
-        <entry key="soundboard/src/main/res/layout/item_category.xml" value="0.33" />
+        <entry key="soundboard/src/main/res/layout/fragment_edit_category.xml" value="0.33" />
+        <entry key="soundboard/src/main/res/layout/item_category.xml" value="0.5" />
         <entry key="soundboard/src/main/res/layout/item_sound.xml" value="0.5" />
         <entry key="soundboard/src/main/res/layout/repress_mode_header.xml" value="0.75" />
         <entry key="soundboard/src/main/res/menu/appbar_menu.xml" value="0.35625" />
