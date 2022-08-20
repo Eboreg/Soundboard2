@@ -2,10 +2,10 @@ package us.huseli.soundboard2.viewmodels
 
 import android.net.Uri
 import androidx.lifecycle.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.entities.SoundExtended
@@ -19,17 +19,29 @@ import kotlin.math.roundToInt
 
 class SoundViewModel(
     repository: SoundRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    soundId: Int
+    private val soundId: Int
 ) : LoggingObject, ViewModel() {
-    private val _player = SoundPlayer()
+    private val _player = SoundPlayer(viewModelScope)
     private val _sound: Flow<SoundExtended?> = repository.getSound(soundId)
     private val _decimalFormat = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
         symbols.decimalSeparator = '.'
         it.decimalFormatSymbols = symbols
     }
+
+    private val _currentPositionPercent = flow<Int?> {
+        var lastValue: Int? = null
+        while (true) {
+            val pos = _player.getCurrentPositionPercent()
+            if (pos != null && pos != lastValue) {
+                emit(pos)
+                lastValue = pos
+            }
+            delay(200)
+        }
+    }.flowOn(Dispatchers.IO)
 
     val backgroundColor: LiveData<Int?> = _sound.map { it?.backgroundColor }.asLiveData()
     val name: LiveData<String?> = _sound.map { it?.name }.asLiveData()
@@ -51,18 +63,6 @@ class SoundViewModel(
         }
     }.asLiveData()
 
-    private val _currentPositionPercent = flow<Int?> {
-        var lastValue: Int? = null
-        while (true) {
-            val pos = _player.getCurrentPositionPercent()
-            if (pos != null && pos != lastValue) {
-                emit(pos)
-                lastValue = pos
-            }
-            delay(100)
-        }
-    }
-
     @OptIn(FlowPreview::class)
     val soundProgress: LiveData<Int?> = _player.state.map { state ->
         when (state) {
@@ -72,17 +72,33 @@ class SoundViewModel(
         }
     }.flattenMerge().asLiveData()
 
-    fun play(path: String?, volume: Int, allowParallel: Boolean = false) = viewModelScope.launch {
+    /** State booleans etc. */
+    val isSelectEnabled: LiveData<Boolean> = settingsRepository.isSelectEnabled.asLiveData()
+    val isSelected: LiveData<Boolean> = settingsRepository.selectedSounds.map { it.contains(soundId) }.asLiveData()
+    val isPlayStateStarted: LiveData<Boolean> = _player.state.map { it == PlayState.STARTED }.asLiveData()
+    val isPlayStatePaused: LiveData<Boolean> = _player.state.map { it == PlayState.PAUSED }.asLiveData()
+    val isPlayStateError: LiveData<Boolean> = _player.state.map { it == PlayState.ERROR }.asLiveData()
+
+    fun play(path: String?, volume: Int, allowParallel: Boolean = false) =
         _player.start(path, volume.toFloat() / 100, allowParallel)
+
+    fun stop() = _player.stop()
+
+    fun stopPaused() = _player.stop(onlyPaused = true)
+
+    fun restart(path: String?, volume: Int) = _player.restart(path, volume.toFloat() / 100)
+
+    fun pause() = _player.pause()
+
+    fun enableSelect() = settingsRepository.enableSelect()
+
+    fun select() = settingsRepository.selectSound(soundId)
+
+    fun unselect() = settingsRepository.unselectSound(soundId)
+
+    override fun onCleared() {
+        _player.release()
     }
-
-    fun stop() = viewModelScope.launch { _player.stop() }
-
-    fun stopPaused() = viewModelScope.launch { _player.stop(onlyPaused = true) }
-
-    fun restart(path: String?, volume: Int) = viewModelScope.launch { _player.restart(path, volume.toFloat() / 100) }
-
-    fun pause() = viewModelScope.launch { _player.pause() }
 
 
     class Factory(private val repository: SoundRepository, private val settingsRepository: SettingsRepository, private val colorHelper: ColorHelper, private val soundId: Int) : ViewModelProvider.Factory {

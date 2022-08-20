@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         // These ViewModel observers have to be done here, because the
         // callbacks make no sense unless the menu already exists:
-        appViewModel.zoomInPossible.observe(this) {
+        appViewModel.isZoomInPossible.observe(this) {
             binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionZoomIn).apply {
                 isEnabled = it
                 icon?.alpha = if (it) 255 else 128
@@ -114,6 +114,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 RepressMode.PAUSE -> menu.findItem(R.id.actionRepressModePause).isChecked = true
                 null -> {}
             }
+        }
+
+        appViewModel.isSelectEnabled.observe(this) {
+            if (it) showSnackbar(R.string.sound_selection_enabled)
+            else showSnackbar(R.string.sound_selection_disabled)
         }
 
         return super.onCreateOptionsMenu(menu)
@@ -200,7 +205,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         val adapter = CategoryAdapter(this, categoryRepository, soundRepository, settingsRepository, colorHelper)
         binding.categoryList.adapter = adapter
         binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
-        appViewModel.categoryIds.observe(this) { adapter.submitList(it) }
+        appViewModel.categoryIds.observe(this) {
+            adapter.submitList(it)
+            if (it.isEmpty()) appViewModel.createDefaultCategory()
+        }
         appViewModel.spanCount.observe(this) {  }
     }
 

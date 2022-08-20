@@ -22,7 +22,6 @@ import kotlin.math.roundToInt
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : SharedPreferences.OnSharedPreferenceChangeListener, DefaultLifecycleObserver {
-
     private inner class SpanCounts(factor: Int) {
         val portrait = when (_orientation.value) {
             Enums.Orientation.PORTRAIT -> max(_spanCountPortrait.value + factor, 1)
@@ -34,16 +33,18 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    private val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    private val _preferences = PreferenceManager.getDefaultSharedPreferences(context)
     private val _screenRatio = MutableStateFlow(getScreenRatio())
     private val _spanCountPortrait = MutableStateFlow(
-        preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT)
+        _preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT)
     )
     private val _spanCountLandscape = MutableStateFlow(portraitSpanCountToLandscape(Constants.DEFAULT_SPANCOUNT_PORTRAIT))
     private val _orientation = MutableStateFlow(Enums.Orientation.PORTRAIT)
     private val _repressMode = MutableStateFlow(
-        preferences.getString("repressMode", null)?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
+        _preferences.getString("repressMode", null)?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
     )
+    private val _isSelectEnabled = MutableStateFlow<Boolean?>(null)
+    private val _selectedSounds = MutableStateFlow<Set<Int>>(emptySet())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
@@ -51,7 +52,9 @@ class SettingsRepository @Inject constructor(
     }
 
     val repressMode = _repressMode.asStateFlow()
-    val zoomInPossible = spanCount.map { it > 1 }
+    val isZoomInPossible = spanCount.map { it > 1 }
+    val isSelectEnabled = _isSelectEnabled.filterNotNull()
+    val selectedSounds = _selectedSounds.asStateFlow()
 
     private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
 
@@ -80,7 +83,7 @@ class SettingsRepository @Inject constructor(
         val newSpanCounts = SpanCounts(factor)
         _spanCountPortrait.value = newSpanCounts.portrait
         _spanCountLandscape.value = newSpanCounts.landscape
-        preferences.edit().putInt("spanCountPortrait", newSpanCounts.portrait).apply()
+        _preferences.edit().putInt("spanCountPortrait", newSpanCounts.portrait).apply()
         return getZoomPercent()
     }
 
@@ -89,12 +92,32 @@ class SettingsRepository @Inject constructor(
     fun zoomOut() = zoom(1)
 
     fun setRepressMode(value: RepressMode) {
-        preferences.edit().putString("repressMode", value.name).apply()
+        _preferences.edit().putString("repressMode", value.name).apply()
     }
+
+    fun enableSelect() {
+        _isSelectEnabled.value = true
+    }
+
+    fun disableSelect() {
+        _isSelectEnabled.value = false
+        _selectedSounds.value = emptySet()
+    }
+
+    fun selectSound(soundId: Int) {
+        _selectedSounds.value += soundId
+    }
+
+    fun unselectSound(soundId: Int) {
+        _selectedSounds.value -= soundId
+        if (_selectedSounds.value.isEmpty()) disableSelect()
+    }
+
+    /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onResume(owner: LifecycleOwner) {
         super.onResume(owner)
-        preferences.registerOnSharedPreferenceChangeListener(this)
+        _preferences.registerOnSharedPreferenceChangeListener(this)
         _orientation.value =
             when (context.resources.configuration.orientation) {
                 Configuration.ORIENTATION_LANDSCAPE -> Enums.Orientation.LANDSCAPE
@@ -105,16 +128,16 @@ class SettingsRepository @Inject constructor(
 
     override fun onPause(owner: LifecycleOwner) {
         super.onPause(owner)
-        preferences.unregisterOnSharedPreferenceChangeListener(this)
+        _preferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         when (key) {
-            "spanCountPortrait" -> preferences.getInt(key, Constants.DEFAULT_SPANCOUNT_PORTRAIT).also {
+            "spanCountPortrait" -> _preferences.getInt(key, Constants.DEFAULT_SPANCOUNT_PORTRAIT).also {
                 _spanCountPortrait.value = it
                 _spanCountLandscape.value = portraitSpanCountToLandscape(it)
             }
-            "repressMode" -> preferences.getString(key, null).also {
+            "repressMode" -> _preferences.getString(key, null).also {
                 it?.let { _repressMode.value = RepressMode.valueOf(it) }
             }
         }

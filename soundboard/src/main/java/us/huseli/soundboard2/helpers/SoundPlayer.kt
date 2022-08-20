@@ -2,12 +2,18 @@ package us.huseli.soundboard2.helpers
 
 import android.media.AudioAttributes
 import android.media.MediaPlayer
-import kotlinx.coroutines.flow.*
+import android.media.PlaybackParams
+import android.media.SyncParams
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.PlayState
 import java.lang.Integer.min
 import kotlin.math.roundToInt
 
-class SoundPlayer : LoggingObject {
+class SoundPlayer(private val scope: CoroutineScope) : LoggingObject {
     private enum class InternalState { IDLE, INITIALIZED, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, }
 
     private val _player = MediaPlayer()
@@ -53,7 +59,7 @@ class SoundPlayer : LoggingObject {
         return "$whatStr: $extraStr"
     }
 
-    private fun _startParallel(path: String?, volume: Float) {
+    private fun _startParallel(path: String?, volume: Float) = scope.launch(Dispatchers.IO) {
         val player = MediaPlayer()
 
         player.setOnErrorListener { mp, what, extra ->
@@ -83,6 +89,24 @@ class SoundPlayer : LoggingObject {
         }
     }
 
+    private fun _handleException(e: Exception) {
+        /** Only for the main _player, not the parallel ones. */
+        _internalState = InternalState.ERROR
+        _error.value = e.toString()
+        _player.reset()
+        _internalState = InternalState.IDLE
+        _state.value = PlayState.IDLE
+    }
+
+    private fun _start(volume: Float) {
+        /** Presupposes that player is already in PREPARED state. */
+        _player.syncParams.tolerance = 0.1f
+        _player.setVolume(volume, volume)
+        _player.start()
+        _internalState = InternalState.STARTED
+        _state.value = PlayState.STARTED
+    }
+
     fun getCurrentPositionPercent(): Int? {
         if (listOf(PlayState.STARTED, PlayState.PAUSED).contains(_state.value)) {
             val player = _parallelPlayers.lastOrNull() ?: _player
@@ -94,30 +118,31 @@ class SoundPlayer : LoggingObject {
     }
 
     fun start(path: String?, volume: Float, allowParallel: Boolean = false) {
-        if (_player.isPlaying && allowParallel) {
+        if (_player.isPlaying && allowParallel)
             _startParallel(path, volume)
-        }
         else {
-            try {
-                if (_internalState == InternalState.IDLE) {
-                    _player.setDataSource(path)
-                    _internalState = InternalState.INITIALIZED
+            if (listOf(InternalState.IDLE, InternalState.STOPPED, InternalState.INITIALIZED).contains(_internalState)) {
+                // Player needs to be prepared, which is a blocking procedure,
+                // so do it (and the playing) in a coroutine.
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        if (_internalState == InternalState.IDLE) {
+                            _player.setDataSource(path)
+                            _internalState = InternalState.INITIALIZED
+                        }
+                        if (listOf(InternalState.STOPPED, InternalState.INITIALIZED).contains(_internalState)) {
+                            _player.prepare()
+                            _internalState = InternalState.PREPARED
+                        }
+                        _start(volume)
+                    }
+                    catch (e: Exception) { _handleException(e) }
                 }
-                if (listOf(InternalState.STOPPED, InternalState.INITIALIZED).contains(_internalState)) {
-                    _player.prepare()
-                    _internalState = InternalState.PREPARED
-                }
-                _player.setVolume(volume, volume)
-                _player.start()
-                _internalState = InternalState.STARTED
-                _state.value = PlayState.STARTED
             }
-            catch (e: Exception) {
-                _internalState = InternalState.ERROR
-                _error.value = e.toString()
-                _player.reset()
-                _internalState = InternalState.IDLE
-                _state.value = PlayState.IDLE
+            else {
+                // Player is already prepared; do without coroutine.
+                try { _start(volume) }
+                catch (e: Exception) { _handleException(e) }
             }
         }
     }
@@ -165,5 +190,16 @@ class SoundPlayer : LoggingObject {
             }
             _state.value = PlayState.IDLE
         }
+    }
+
+    fun release() {
+        // This should already have been done, but just in case:
+        _parallelPlayers.forEach {
+            it.reset()
+
+            it.release()
+        }
+        _player.reset()
+        _player.release()
     }
 }

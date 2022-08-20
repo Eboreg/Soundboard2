@@ -1,12 +1,12 @@
 package us.huseli.soundboard2.ui
 
 import android.animation.ObjectAnimator
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.forEach
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -33,12 +33,15 @@ class SoundAdapter(
         holder.bind(getItem(position), activity, soundRepository, settingsRepository, colorHelper)
     }
 
-    class ViewHolder(private val binding: ItemSoundBinding) : LoggingObject, View.OnTouchListener, RecyclerView.ViewHolder(binding.root) {
+    class ViewHolder(private val binding: ItemSoundBinding) :
+        LoggingObject, View.OnTouchListener, View.OnLongClickListener, View.OnClickListener, RecyclerView.ViewHolder(binding.root) {
         private lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
         private var uri: Uri? = null
         private var volume: Int = 100
+        private var isSelectEnabled = false
+        private var isSelected = false
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
         internal fun bind(
@@ -56,7 +59,10 @@ class SoundAdapter(
             this.viewModel = viewModel
             binding.lifecycleOwner = activity
             binding.viewModel = viewModel
+
             binding.root.setOnTouchListener(this)
+            binding.root.setOnLongClickListener(this)
+            binding.root.setOnClickListener(this)
 
             viewModel.repressMode.observe(activity) {
                 repressMode = it
@@ -65,64 +71,59 @@ class SoundAdapter(
             }
 
             viewModel.uri.observe(activity) { uri = it }
-
-            viewModel.playState.observe(activity) {
-                playState = it
-                when (it) {
-                    PlayState.IDLE -> hideSoundIcons()
-                    PlayState.STARTED -> showSoundIcon(binding.soundPlayingIcon)
-                    PlayState.PAUSED -> showSoundIcon(binding.soundPausedIcon)
-                    PlayState.ERROR -> showSoundIcon(binding.soundErrorIcon)
-                    else -> hideSoundIcons()
-                }
-            }
+            viewModel.volume.observe(activity) { if (it != null) volume = it }
+            viewModel.isSelectEnabled.observe(activity) { isSelectEnabled = it }
+            viewModel.playState.observe(activity) { playState = it }
+            viewModel.isSelected.observe(activity) { isSelected = it }
 
             viewModel.playerError.observe(activity) { playerError ->
                 if (playerError != null) activity.showSnackbar(playerError)
             }
-
-            viewModel.volume.observe(activity) { if (it != null) volume = it }
         }
 
-        private fun onSoundClicked() {
-            when (playState) {
-                PlayState.IDLE -> viewModel.play(uri?.path, volume)
-                PlayState.STARTED -> when (repressMode) {
-                    RepressMode.STOP -> viewModel.stop()
-                    RepressMode.RESTART -> viewModel.restart(uri?.path, volume)
-                    RepressMode.OVERLAP -> viewModel.play(uri?.path, volume, true)
-                    RepressMode.PAUSE -> viewModel.pause()
+        @SuppressLint("ClickableViewAccessibility")
+        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+            /** This seems to work, but I don't know exactly why. */
+            log("onTouch: v=$v, event=$event")
+            when (event?.actionMasked) {
+                MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
+                MotionEvent.ACTION_UP -> animator.start()
+            }
+            return false
+        }
+
+        override fun onLongClick(v: View?): Boolean {
+            log("onLongClick: v=$v")
+            if (!isSelectEnabled) {
+                // Select is not enabled; enable it and select sound.
+                viewModel.enableSelect()
+                viewModel.select()
+                return true
+            }
+            return false
+        }
+
+        override fun onClick(v: View?) {
+            log("onClick: v=$v")
+            if (isSelectEnabled) {
+                if (isSelected) viewModel.unselect()
+                else viewModel.select()
+            }
+            else {
+                when (playState) {
+                    PlayState.IDLE -> viewModel.play(uri?.path, volume)
+                    PlayState.STARTED -> when (repressMode) {
+                        RepressMode.STOP -> viewModel.stop()
+                        RepressMode.RESTART -> viewModel.restart(uri?.path, volume)
+                        RepressMode.OVERLAP -> viewModel.play(uri?.path, volume, true)
+                        RepressMode.PAUSE -> viewModel.pause()
+                        null -> {}
+                    }
+                    PlayState.PAUSED -> viewModel.play(uri?.path, volume)
+                    PlayState.ERROR -> viewModel.play(uri?.path, volume)
                     null -> {}
                 }
-                PlayState.PAUSED -> viewModel.play(uri?.path, volume)
-                PlayState.ERROR -> viewModel.play(uri?.path, volume)
-                null -> {}
             }
-            animator.start()
-        }
-
-        private fun hideSoundIcons(except: View? = null) {
-            binding.soundIcons.forEach { view ->
-                if (view != except) view.visibility = View.INVISIBLE
-            }
-        }
-
-        private fun showSoundIcon(view: View) {
-            view.visibility = View.VISIBLE
-            hideSoundIcons(view)
-        }
-
-        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-            if (v != null && event != null) {
-                if (v == binding.soundContainer) {
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
-                        MotionEvent.ACTION_UP -> onSoundClicked()
-                    }
-                }
-                if (event.actionMasked == MotionEvent.ACTION_UP) v.performClick()
-            }
-            return true
         }
     }
 

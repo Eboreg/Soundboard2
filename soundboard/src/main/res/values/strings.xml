@@ -41,6 +41,7 @@
     <string name="duration">Duration</string>
     <string name="zoom_level_percent">Zoom level: %1$d%%</string>
     <string name="creation_time">Creation time</string>
+    <string name="sound_selection_enabled">Sound selection is enabled.</string>
     <plurals name="add_sound_counts">
         <item quantity="one">Will add one sound and skip %2$d.</item>
         <item quantity="other">Will add %1$d sounds and skip %2$d.</item>
@@ -61,4 +62,5 @@
         <item quantity="one">This category contains one sound. What do you want to do with it?</item>
         <item quantity="other">This category contains %1$d sounds. What do you want to do with them?</item>
     </plurals>
+    <string name="sound_selection_disabled">Sound selection is disabled.</string>
 </resources>

@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
@@ -84,4 +81,6 @@ class CategoryRepository @Inject constructor(
             soundDao.sortWithinCategory(categoryId, soundSorting)
         }
     }
+
+    suspend fun createDefault() = create("Dëfäult", randomColor.first())
 }

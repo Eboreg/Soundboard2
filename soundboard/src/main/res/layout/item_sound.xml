@@ -68,7 +68,6 @@
                     android:id="@+id/soundIcons"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:orientation="horizontal"
                     app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -87,6 +86,7 @@
                         style="@style/Style.Soundboard.SoundCardIcon"
                         android:text="@string/fa_circle_play"
                         android:textColor="@{viewModel.textColor}"
+                        app:visible="@{viewModel.isPlayStateStarted}"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent" />
 
@@ -95,6 +95,7 @@
                         style="@style/Style.Soundboard.SoundCardIcon"
                         android:text="@string/fa_circle_pause"
                         android:textColor="@{viewModel.textColor}"
+                        app:visible="@{viewModel.isPlayStatePaused}"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent" />
 
@@ -103,6 +104,7 @@
                         style="@style/Style.Soundboard.SoundCardIcon"
                         android:text="@string/fas_skull_crossbones"
                         android:textColor="@{viewModel.textColor}"
+                        app:visible="@{viewModel.isPlayStateError}"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent" />
 
@@ -112,6 +114,7 @@
                         android:background="#A0B2EBF2"
                         android:text="@string/fas_check"
                         android:textColor="@{viewModel.textColor}"
+                        app:visible="@{viewModel.isSelected}"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent" />
 
