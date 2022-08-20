@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape>
+            <corners
+                android:bottomLeftRadius="@dimen/sound_card_corner_radius"
+                android:bottomRightRadius="@dimen/sound_card_corner_radius" />
+            <solid android:color="?attr/colorPrimaryDark" />
+        </shape>
+    </item>
+
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners
+                    android:bottomLeftRadius="@dimen/sound_card_corner_radius"
+                    android:bottomRightRadius="@dimen/sound_card_corner_radius" />
+                <solid android:color="?attr/colorOnPrimary" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

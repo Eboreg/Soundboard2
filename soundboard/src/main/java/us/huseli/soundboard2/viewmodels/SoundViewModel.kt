@@ -52,7 +52,7 @@ class SoundViewModel(
     val playState: LiveData<PlayState> = _player.state.asLiveData()
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
     val uri: LiveData<Uri?> = _sound.map { it?.uri }.asLiveData()
-    val duration: LiveData<Long?> = _sound.map { it?.duration }.asLiveData()
+    val durationCardVisible: LiveData<Boolean> = _sound.map { it?.duration != null }.asLiveData()
     val durationString = _sound.map { sound ->
         sound?.duration?.let {
             when {

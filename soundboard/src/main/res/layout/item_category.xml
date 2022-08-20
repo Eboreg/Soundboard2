@@ -25,44 +25,32 @@
             android:orientation="horizontal"
             android:padding="@dimen/margin_normal">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/categoryCollapse"
+            <us.huseli.fontawesome.FontAwesomeButton
+                android:id="@+id/categoryCollapseButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/margin_normal"
+                android:text="@string/fas_caret_down"
+                android:textColor="@{viewModel.textColor}"
+                android:rotation="@{viewModel.collapseIconRotation}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/categoryName"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/categoryName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
                 android:paddingStart="0dp"
-                android:paddingEnd="@dimen/margin_normal"
+                android:paddingEnd="@dimen/margin_large"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <us.huseli.fontawesome.FontAwesomeButton
-                    android:id="@+id/categoryCollapseButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/margin_normal"
-                    android:text="@string/fas_caret_down"
-                    android:textColor="@{viewModel.textColor}"
-                    android:rotation="@{viewModel.collapseIconRotation}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/categoryName"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/categoryName"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:textColor="@{viewModel.textColor}"
-                    android:text="@{viewModel.name}"
-                    tools:text="Category name" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
+                app:layout_constraintTop_toTopOf="parent"
+                android:textColor="@{viewModel.textColor}"
+                android:text="@{viewModel.name}"
+                tools:text="Category name" />
 
             <us.huseli.fontawesome.FontAwesomeButton
                 android:id="@+id/categoryEditButton"
@@ -73,7 +61,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
-                app:layout_constraintStart_toEndOf="@+id/categoryCollapse"
+                app:layout_constraintStart_toEndOf="@+id/categoryName"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <us.huseli.fontawesome.FontAwesomeButton
