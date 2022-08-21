@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -18,6 +19,7 @@ import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.SoundPlayer
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(
@@ -38,10 +40,9 @@ class SoundAdapter(
         private lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
-        private var uri: Uri? = null
-        private var volume: Int = 100
         private var isSelectEnabled = false
         private var isSelected = false
+        private var disableAnimations = false
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
         internal fun bind(
@@ -70,10 +71,12 @@ class SoundAdapter(
                 if (it != RepressMode.PAUSE) viewModel.stopPaused()
             }
 
-            viewModel.uri.observe(activity) { uri = it }
-            viewModel.volume.observe(activity) { if (it != null) volume = it }
+            viewModel.disableAnimations.observe(activity) { disableAnimations = it }
             viewModel.isSelectEnabled.observe(activity) { isSelectEnabled = it }
-            viewModel.playState.observe(activity) { playState = it }
+            viewModel.playState.observe(activity) {
+                log("playState.observe: new playState=$it, was=$playState")
+                playState = it
+            }
             viewModel.isSelected.observe(activity) { isSelected = it }
 
             viewModel.playerError.observe(activity) { playerError ->
@@ -85,9 +88,11 @@ class SoundAdapter(
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
             /** This seems to work, but I don't know exactly why. */
             log("onTouch: v=$v, event=$event")
-            when (event?.actionMasked) {
-                MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
-                MotionEvent.ACTION_UP -> animator.start()
+            if (!disableAnimations) {
+                when (event?.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
+                    MotionEvent.ACTION_UP -> animator.start()
+                }
             }
             return false
         }
@@ -104,23 +109,23 @@ class SoundAdapter(
         }
 
         override fun onClick(v: View?) {
-            log("onClick: v=$v")
+            log("onClick: v=$v, isSelectEnabled=$isSelectEnabled, playState=$playState")
             if (isSelectEnabled) {
                 if (isSelected) viewModel.unselect()
                 else viewModel.select()
             }
             else {
                 when (playState) {
-                    PlayState.IDLE -> viewModel.play(uri?.path, volume)
+                    PlayState.IDLE -> viewModel.play()
                     PlayState.STARTED -> when (repressMode) {
                         RepressMode.STOP -> viewModel.stop()
-                        RepressMode.RESTART -> viewModel.restart(uri?.path, volume)
-                        RepressMode.OVERLAP -> viewModel.play(uri?.path, volume, true)
+                        RepressMode.RESTART -> viewModel.restart()
+                        RepressMode.OVERLAP -> viewModel.play(true)
                         RepressMode.PAUSE -> viewModel.pause()
                         null -> {}
                     }
-                    PlayState.PAUSED -> viewModel.play(uri?.path, volume)
-                    PlayState.ERROR -> viewModel.play(uri?.path, volume)
+                    PlayState.PAUSED -> viewModel.play()
+                    PlayState.ERROR -> viewModel.play()
                     null -> {}
                 }
             }

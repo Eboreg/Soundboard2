@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
         <variable
             name="viewModel"
             type="us.huseli.soundboard2.viewmodels.SoundViewModel" />
@@ -131,7 +130,7 @@
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="0dp"
                 android:layout_height="2dp"
-                android:animateLayoutChanges="true"
+                android:animateLayoutChanges="@{!viewModel.disableAnimations}"
                 android:max="100"
                 android:min="0"
                 android:progress="@{viewModel.soundProgress}"
@@ -169,6 +168,5 @@
                     tools:text="2s" />
             </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>
-        <!--</androidx.cardview.widget.CardView>-->
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

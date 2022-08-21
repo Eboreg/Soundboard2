@@ -2,10 +2,11 @@ package us.huseli.soundboard2.viewmodels
 
 import android.net.Uri
 import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.entities.SoundExtended
@@ -13,6 +14,7 @@ import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.MediaPlayerWrapper
 import us.huseli.soundboard2.helpers.SoundPlayer
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
@@ -23,25 +25,13 @@ class SoundViewModel(
     colorHelper: ColorHelper,
     private val soundId: Int
 ) : LoggingObject, ViewModel() {
-    private val _player = SoundPlayer(viewModelScope)
+    private val _player = SoundPlayer()
     private val _sound: Flow<SoundExtended?> = repository.getSound(soundId)
     private val _decimalFormat = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
         symbols.decimalSeparator = '.'
         it.decimalFormatSymbols = symbols
     }
-
-    private val _currentPositionPercent = flow<Int?> {
-        var lastValue: Int? = null
-        while (true) {
-            val pos = _player.getCurrentPositionPercent()
-            if (pos != null && pos != lastValue) {
-                emit(pos)
-                lastValue = pos
-            }
-            delay(200)
-        }
-    }.flowOn(Dispatchers.IO)
 
     val backgroundColor: LiveData<Int?> = _sound.map { it?.backgroundColor }.asLiveData()
     val name: LiveData<String?> = _sound.map { it?.name }.asLiveData()
@@ -53,6 +43,17 @@ class SoundViewModel(
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
     val uri: LiveData<Uri?> = _sound.map { it?.uri }.asLiveData()
     val durationCardVisible: LiveData<Boolean> = _sound.map { it?.duration != null }.asLiveData()
+    val disableAnimations: LiveData<Boolean> = settingsRepository.disableAnimations.asLiveData()
+
+    val soundProgress = combine(
+        settingsRepository.disableAnimations,
+        _sound.map { it?.volume },
+        _player.currentPosition
+    ) { disableAnimations, volume, position ->
+        if (!disableAnimations && position != null) position
+        else volume
+    }.asLiveData()
+
     val durationString = _sound.map { sound ->
         sound?.duration?.let {
             when {
@@ -63,15 +64,6 @@ class SoundViewModel(
         }
     }.asLiveData()
 
-    @OptIn(FlowPreview::class)
-    val soundProgress: LiveData<Int?> = _player.state.map { state ->
-        when (state) {
-            PlayState.STARTED -> _currentPositionPercent
-            PlayState.PAUSED -> flowOf(_player.getCurrentPositionPercent())
-            else -> _sound.map { it?.volume }
-        }
-    }.flattenMerge().asLiveData()
-
     /** State booleans etc. */
     val isSelectEnabled: LiveData<Boolean> = settingsRepository.isSelectEnabled.asLiveData()
     val isSelected: LiveData<Boolean> = settingsRepository.selectedSounds.map { it.contains(soundId) }.asLiveData()
@@ -79,14 +71,22 @@ class SoundViewModel(
     val isPlayStatePaused: LiveData<Boolean> = _player.state.map { it == PlayState.PAUSED }.asLiveData()
     val isPlayStateError: LiveData<Boolean> = _player.state.map { it == PlayState.ERROR }.asLiveData()
 
-    fun play(path: String?, volume: Int, allowParallel: Boolean = false) =
-        _player.start(path, volume.toFloat() / 100, allowParallel)
+    init {
+        viewModelScope.launch {
+            _sound.stateIn(viewModelScope).filterNotNull().collect {
+                _player.setPath(it.uri.path)
+                _player.setVolume(it.volume.toFloat())
+            }
+        }
+    }
+
+    fun play(allowParallel: Boolean = false) = viewModelScope.launch(Dispatchers.IO) { _player.start(allowParallel) }
 
     fun stop() = _player.stop()
 
     fun stopPaused() = _player.stop(onlyPaused = true)
 
-    fun restart(path: String?, volume: Int) = _player.restart(path, volume.toFloat() / 100)
+    fun restart() = viewModelScope.launch(Dispatchers.IO) { _player.restart() }
 
     fun pause() = _player.pause()
 
@@ -102,7 +102,7 @@ class SoundViewModel(
 
 
     class Factory(private val repository: SoundRepository, private val settingsRepository: SettingsRepository, private val colorHelper: ColorHelper, private val soundId: Int) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             if (modelClass.isAssignableFrom(SoundViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return SoundViewModel(repository, settingsRepository, colorHelper, soundId) as T

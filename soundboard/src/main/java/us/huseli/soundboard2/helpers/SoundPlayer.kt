@@ -1,203 +1,164 @@
 package us.huseli.soundboard2.helpers
 
-import android.media.AudioAttributes
-import android.media.MediaPlayer
-import android.media.PlaybackParams
-import android.media.SyncParams
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.sync.Mutex
 import us.huseli.soundboard2.Enums.PlayState
-import java.lang.Integer.min
-import kotlin.math.roundToInt
 
-class SoundPlayer(private val scope: CoroutineScope) : LoggingObject {
-    private enum class InternalState { IDLE, INITIALIZED, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, }
+class SoundPlayer : LoggingObject {
+    private val _player = MediaPlayerWrapper()
+    private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
+    private var _path: String? = null
+    private var _volume: Float? = null
+    private val mutex = Mutex()
 
-    private val _player = MediaPlayer()
-    private val _parallelPlayers = mutableListOf<MediaPlayer>()
-    private val _state = MutableStateFlow(PlayState.IDLE)
-    private val _error = MutableStateFlow<String?>(null)
-    private var _internalState = InternalState.IDLE
+    // This SHOULD produce a flow of State arrays, with one array entry for
+    // each of the current _parallelPlayers. So a new array will be emitted
+    // whenever any of those players change state.
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _parallelPlayerStates: Flow<Array<MediaPlayerWrapper.State>> = _parallelPlayers.flatMapLatest { players ->
+        // log("_parallelPlayerStates: players=$players")
+        combine(players.map {
+            // log("_parallelPlayerStates.flows: it=$it")
+            it.state
+        }) {
+            // log("_parallelPlayerStates.transform: it=$it")
+            it
+        }.onStart {
+            // log("_parallelPlayerStates.onStart: will emit empty array")
+            emit(emptyArray())
+        }
+    }
 
-    val state = _state.asStateFlow()
-    val error = _error.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _parallelPlayerPositions: Flow<Array<Int?>> = _parallelPlayers.flatMapLatest { players ->
+        // log("_parallelPlayerPositions: players=$players")
+        combine(players.map { it.currentPosition }) { it }.onStart { emit(emptyArray()) }
+    }
+
+    // This SHOULD, then, produce a flow of State arrays for the main _player
+    // and the current _parallelPlayers, combined.
+    private val _playerStates = combine(_player.state, _parallelPlayerStates) { a, b -> b + a }
+
+    val state = _playerStates.map { states ->
+        // log("state: states=${states.map { it.name }}")
+        // If any player is STARTED, state is STARTED
+        if (states.contains(MediaPlayerWrapper.State.STARTED)) PlayState.STARTED
+        // If any player is PAUSED, state is PAUSED
+        else if (states.contains(MediaPlayerWrapper.State.PAUSED)) PlayState.PAUSED
+        // Otherwise, state is IDLE
+        else PlayState.IDLE
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val error = merge(
+        _player.error,
+        _parallelPlayers.flatMapLatest { list -> list.map { it.error }.merge() }
+    )
+
+    val currentPosition = combine(_player.currentPosition, _parallelPlayerPositions) { position, parallelPositions ->
+        // log("currentPosition: position=$position, parallelPositions=$parallelPositions")
+        (parallelPositions + position).filterNotNull().maxOrNull()
+    }
 
     init {
-        _player.setOnErrorListener { mp, what, extra ->
-            _error.value = _mediaPlayerErrorToString(what, extra)
-            _state.value = PlayState.ERROR
-            _internalState = InternalState.ERROR
+        _player.setOnErrorListener { mp, _, _ ->
             mp.reset()
-            _internalState = InternalState.IDLE
             true
         }
-
-        _player.setOnCompletionListener { mp ->
-            _internalState = InternalState.PLAYBACK_COMPLETED
-            mp.reset()
-            _internalState = InternalState.IDLE
-            if (_parallelPlayers.size == 0) _state.value = PlayState.IDLE
-        }
+        // _player.setOnCompletionListener { mp -> mp.reset() }
     }
 
-    private fun _mediaPlayerErrorToString(what: Int, extra: Int): String {
-        val whatStr = when (what) {
-            MediaPlayer.MEDIA_ERROR_UNKNOWN -> "Unspecified media player error"
-            MediaPlayer.MEDIA_ERROR_SERVER_DIED -> "Media server died"
-            else -> "Other ($what)"
-        }
-        val extraStr = when (extra) {
-            MediaPlayer.MEDIA_ERROR_IO -> "File or network related operation error"
-            MediaPlayer.MEDIA_ERROR_MALFORMED -> "Bitstream is not conforming to the related coding standard or file spec"
-            MediaPlayer.MEDIA_ERROR_UNSUPPORTED -> "Bitstream is conforming to the related coding standard or file spec, but the media framework does not support the feature"
-            MediaPlayer.MEDIA_ERROR_TIMED_OUT -> "Some operation takes too long to complete, usually more than 3-5 seconds"
-            else -> "Other ($extra)"
-        }
-        return "$whatStr: $extraStr"
-    }
+    private fun _startParallel() {
+        val player = MediaPlayerWrapper()
 
-    private fun _startParallel(path: String?, volume: Float) = scope.launch(Dispatchers.IO) {
-        val player = MediaPlayer()
-
-        player.setOnErrorListener { mp, what, extra ->
-            _error.value = _mediaPlayerErrorToString(what, extra)
-            mp.reset()
-            mp.release()
-            _parallelPlayers.remove(mp)
-            true
-        }
-
-        player.setOnCompletionListener { mp ->
-            mp.reset()
-            mp.release()
-            _parallelPlayers.remove(mp)
-            if (_parallelPlayers.size == 0 && !_player.isPlaying) _state.value = PlayState.IDLE
+        player.setOnStateChangeListener { mp, state ->
+            if (
+                state in listOf(
+                    MediaPlayerWrapper.State.ERROR,
+                    MediaPlayerWrapper.State.STOPPED,
+                    MediaPlayerWrapper.State.PAUSED,
+                    MediaPlayerWrapper.State.PLAYBACK_COMPLETED
+                )
+            ) {
+                mp.release()
+                _parallelPlayers.value -= mp
+            }
         }
 
         try {
-            player.setDataSource(path)
-            player.prepare()
-            player.setVolume(volume, volume)
-            player.start()
-            _parallelPlayers.add(player)
+            _parallelPlayers.value += player
+            player.setPath(_path)
+            player.setVolume(_volume)
+            player.play()
+        } catch (e: Exception) {
+            player.release()
+            _parallelPlayers.value -= player
         }
-        catch (e: Exception) {
-            _error.value = e.toString()
+    }
+
+    fun start(allowParallel: Boolean = false) {
+        if (_player.state.value == MediaPlayerWrapper.State.STARTED) {
+            if (allowParallel) _startParallel()
         }
-    }
-
-    private fun _handleException(e: Exception) {
-        /** Only for the main _player, not the parallel ones. */
-        _internalState = InternalState.ERROR
-        _error.value = e.toString()
-        _player.reset()
-        _internalState = InternalState.IDLE
-        _state.value = PlayState.IDLE
-    }
-
-    private fun _start(volume: Float) {
-        /** Presupposes that player is already in PREPARED state. */
-        _player.syncParams.tolerance = 0.1f
-        _player.setVolume(volume, volume)
-        _player.start()
-        _internalState = InternalState.STARTED
-        _state.value = PlayState.STARTED
-    }
-
-    fun getCurrentPositionPercent(): Int? {
-        if (listOf(PlayState.STARTED, PlayState.PAUSED).contains(_state.value)) {
-            val player = _parallelPlayers.lastOrNull() ?: _player
-            val pos = player.currentPosition
-            val duration = player.duration
-            return if (duration > 0) min(((pos.toDouble() / duration) * 100).roundToInt(), 100) else 0
-        }
-        return null
-    }
-
-    fun start(path: String?, volume: Float, allowParallel: Boolean = false) {
-        if (_player.isPlaying && allowParallel)
-            _startParallel(path, volume)
         else {
-            if (listOf(InternalState.IDLE, InternalState.STOPPED, InternalState.INITIALIZED).contains(_internalState)) {
-                // Player needs to be prepared, which is a blocking procedure,
-                // so do it (and the playing) in a coroutine.
-                scope.launch(Dispatchers.IO) {
-                    try {
-                        if (_internalState == InternalState.IDLE) {
-                            _player.setDataSource(path)
-                            _internalState = InternalState.INITIALIZED
-                        }
-                        if (listOf(InternalState.STOPPED, InternalState.INITIALIZED).contains(_internalState)) {
-                            _player.prepare()
-                            _internalState = InternalState.PREPARED
-                        }
-                        _start(volume)
-                    }
-                    catch (e: Exception) { _handleException(e) }
-                }
+            try {
+                _player.play()
+            } catch (e: Exception) {
+                _player.reset()
+                // mutex.unlock()
             }
-            else {
-                // Player is already prepared; do without coroutine.
-                try { _start(volume) }
-                catch (e: Exception) { _handleException(e) }
-            }
+        }
+    }
+
+    fun setPath(path: String?) {
+        if (path != _path) {
+            _path = path
+            _player.setPath(path)
+        }
+    }
+
+    fun setVolume(volume: Float) {
+        if (volume != _volume) {
+            _volume = volume
+            _player.setVolume(volume)
         }
     }
 
     fun pause() {
-        _parallelPlayers.forEach {
+        _parallelPlayers.value.forEach {
             it.stop()
-            _parallelPlayers.remove(it)
+            // _parallelPlayers.value -= it
         }
-        if (_player.isPlaying) {
-            _player.pause()
-            _internalState = InternalState.PAUSED
-            _state.value = PlayState.PAUSED
-        }
+        _player.pause()
     }
 
-    fun restart(path: String?, volume: Float) {
+    fun restart() {
         /** If playing, stop and start again from the beginning. Otherwise, just start. */
-        _parallelPlayers.forEach {
+        _parallelPlayers.value.forEach {
             it.stop()
-            _parallelPlayers.remove(it)
+            // _parallelPlayers.value -= it
         }
-        if (_player.isPlaying) {
-            _player.stop()
-            _internalState = InternalState.STOPPED
-        }
-        start(path, volume)
+        if (_player.isPlaying) _player.stop()
+        start()
     }
 
     fun stop(onlyPaused: Boolean = false) {
-        _parallelPlayers.forEach {
+        _parallelPlayers.value.forEach {
             if (!onlyPaused || !it.isPlaying) {
                 it.stop()
-                _parallelPlayers.remove(it)
+                // _parallelPlayers.value -= it
             }
         }
-        if (!onlyPaused || !_player.isPlaying) {
-            if (listOf(InternalState.STARTED, InternalState.PAUSED).contains(_internalState)) {
-                _player.stop()
-                _internalState = InternalState.STOPPED
-            }
-            if (_internalState != InternalState.IDLE) {
-                _player.reset()
-                _internalState = InternalState.IDLE
-            }
-            _state.value = PlayState.IDLE
-        }
+        if (_player.isPaused || (!onlyPaused && _player.isPlaying)) _player.stop()
     }
 
     fun release() {
         // This should already have been done, but just in case:
-        _parallelPlayers.forEach {
+        _parallelPlayers.value.forEach {
             it.reset()
-
             it.release()
+            _parallelPlayers.value -= it
         }
         _player.reset()
         _player.release()

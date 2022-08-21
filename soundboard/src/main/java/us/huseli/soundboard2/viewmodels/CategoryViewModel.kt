@@ -1,6 +1,7 @@
 package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -38,7 +39,7 @@ class CategoryViewModel(
         private val colorHelper: ColorHelper,
         private val categoryId: Int
     ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             if (modelClass.isAssignableFrom(CategoryViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return CategoryViewModel(repository, settingsRepository, colorHelper, categoryId) as T

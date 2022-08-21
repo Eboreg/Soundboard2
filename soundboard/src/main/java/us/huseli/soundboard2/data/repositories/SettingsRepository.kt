@@ -45,16 +45,18 @@ class SettingsRepository @Inject constructor(
     )
     private val _isSelectEnabled = MutableStateFlow<Boolean?>(null)
     private val _selectedSounds = MutableStateFlow<Set<Int>>(emptySet())
+    private val _disableAnimations = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
         if (it == Enums.Orientation.LANDSCAPE) _spanCountLandscape else _spanCountPortrait
     }
 
-    val repressMode = _repressMode.asStateFlow()
-    val isZoomInPossible = spanCount.map { it > 1 }
-    val isSelectEnabled = _isSelectEnabled.filterNotNull()
-    val selectedSounds = _selectedSounds.asStateFlow()
+    val repressMode: StateFlow<RepressMode> = _repressMode
+    val isZoomInPossible: Flow<Boolean> = spanCount.map { it > 1 }
+    val isSelectEnabled: Flow<Boolean> = _isSelectEnabled.filterNotNull()
+    val selectedSounds: StateFlow<Set<Int>> = _selectedSounds
+    val disableAnimations: StateFlow<Boolean> = _disableAnimations
 
     private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
 
@@ -99,6 +101,7 @@ class SettingsRepository @Inject constructor(
         _isSelectEnabled.value = true
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun disableSelect() {
         _isSelectEnabled.value = false
         _selectedSounds.value = emptySet()
@@ -139,6 +142,9 @@ class SettingsRepository @Inject constructor(
             }
             "repressMode" -> _preferences.getString(key, null).also {
                 it?.let { _repressMode.value = RepressMode.valueOf(it) }
+            }
+            "disableAnimations" -> _preferences.getBoolean(key, false).also {
+                _disableAnimations.value = it
             }
         }
     }
