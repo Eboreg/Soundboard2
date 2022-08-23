@@ -63,4 +63,12 @@
         <item quantity="other">This category contains %1$d sounds. What do you want to do with them?</item>
     </plurals>
     <string name="sound_selection_disabled">Sound selection is disabled.</string>
+    <string name="enable_animations">Enable animations</string>
+    <string name="watch_folder">Watch folder</string>
+    <string name="watch_folder_text">If set, the app will scan this folder for audio files on every startup, and add any new ones.</string>
+    <string name="select_folder">Select folder</string>
+    <string name="remove_watch">Remove watch</string>
+    <string name="category_for_new_sounds">Category for new sounds</string>
+    <string name="watch_folder_category_text">If not set, or invalid, sounds will be placed in the first category.</string>
+    <string name="not_set">(Not set)</string>
 </resources>

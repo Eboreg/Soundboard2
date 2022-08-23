@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.asLiveData
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,6 +13,8 @@ import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Enums.RepressMode
+import us.huseli.soundboard2.data.dao.CategoryDao
+import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -20,8 +23,9 @@ import kotlin.math.roundToInt
 
 @Singleton
 class SettingsRepository @Inject constructor(
+    categoryDao: CategoryDao,
     @ApplicationContext private val context: Context
-) : SharedPreferences.OnSharedPreferenceChangeListener, DefaultLifecycleObserver {
+) : LoggingObject, SharedPreferences.OnSharedPreferenceChangeListener, DefaultLifecycleObserver {
     private inner class SpanCounts(factor: Int) {
         val portrait = when (_orientation.value) {
             Enums.Orientation.PORTRAIT -> max(_spanCountPortrait.value + factor, 1)
@@ -45,18 +49,25 @@ class SettingsRepository @Inject constructor(
     )
     private val _isSelectEnabled = MutableStateFlow<Boolean?>(null)
     private val _selectedSounds = MutableStateFlow<Set<Int>>(emptySet())
-    private val _disableAnimations = MutableStateFlow(false)
+    private val _animationsEnabled = MutableStateFlow(true)
+    private val _watchFolder = MutableStateFlow<String?>(null)
+    private val _watchFolderCategoryId = MutableStateFlow<Int?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
         if (it == Enums.Orientation.LANDSCAPE) _spanCountLandscape else _spanCountPortrait
     }
 
-    val repressMode: StateFlow<RepressMode> = _repressMode
+    val repressMode = _repressMode.asStateFlow()
     val isZoomInPossible: Flow<Boolean> = spanCount.map { it > 1 }
     val isSelectEnabled: Flow<Boolean> = _isSelectEnabled.filterNotNull()
-    val selectedSounds: StateFlow<Set<Int>> = _selectedSounds
-    val disableAnimations: StateFlow<Boolean> = _disableAnimations
+    val selectedSounds = _selectedSounds.asStateFlow()
+    val animationsEnabled = _animationsEnabled.asStateFlow()
+    val watchFolder = _watchFolder.asStateFlow()
+    val watchFolderCategoryId = _watchFolderCategoryId.asStateFlow()
+    val watchFolderCategory = combine(_watchFolderCategoryId, categoryDao.flowList()) { categoryId, categories ->
+        categories.firstOrNull { it.id == categoryId }
+    }
 
     private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
 
@@ -116,9 +127,27 @@ class SettingsRepository @Inject constructor(
         if (_selectedSounds.value.isEmpty()) disableSelect()
     }
 
+    fun enableAnimations() {
+        _preferences.edit().putBoolean("animationsEnabled", true).apply()
+    }
+
+    fun disableAnimations() {
+        _preferences.edit().putBoolean("animationsEnabled", false).apply()
+    }
+
+    fun setWatchFolder(value: String?) {
+        _preferences.edit().putString("watchFolder", value).apply()
+    }
+
+    fun setWatchFolderCategoryId(value: Int?) {
+        log("setWatchFolderCategoryId(): value=$value")
+        _preferences.edit().putInt("watchFolderCategoryId", value ?: -1).apply()
+    }
+
     /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onResume(owner: LifecycleOwner) {
+        log("onResume()")
         super.onResume(owner)
         _preferences.registerOnSharedPreferenceChangeListener(this)
         _orientation.value =
@@ -130,11 +159,14 @@ class SettingsRepository @Inject constructor(
     }
 
     override fun onPause(owner: LifecycleOwner) {
+        log("onPause()")
         super.onPause(owner)
         _preferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        log("onSharedPreferenceChanged(): key=$key")
+
         when (key) {
             "spanCountPortrait" -> _preferences.getInt(key, Constants.DEFAULT_SPANCOUNT_PORTRAIT).also {
                 _spanCountPortrait.value = it
@@ -143,8 +175,17 @@ class SettingsRepository @Inject constructor(
             "repressMode" -> _preferences.getString(key, null).also {
                 it?.let { _repressMode.value = RepressMode.valueOf(it) }
             }
-            "disableAnimations" -> _preferences.getBoolean(key, false).also {
-                _disableAnimations.value = it
+            "animationsEnabled" -> _preferences.getBoolean(key, false).also {
+                log("onSharedPreferenceChanged(): animationsEnabled=$it")
+                _animationsEnabled.value = it
+            }
+            "watchFolder" -> _preferences.getString(key, null).also {
+                log("onSharedPreferenceChanged(): watchFolder=$it")
+                _watchFolder.value = it
+            }
+            "watchFolderCategoryId" -> _preferences.getInt(key, -1).also {
+                log("onSharedPreferenceChanged(): watchFolderCategoryId=$it")
+                _watchFolderCategoryId.value = if (it < 0) null else it
             }
         }
     }

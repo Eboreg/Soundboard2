@@ -15,7 +15,7 @@
         android:layout_height="24dp"
         android:layout_marginEnd="@dimen/margin_normal"
         android:src="@drawable/color_circle"
-        tools:ignore="ContentDescription" />
+        tools:ignore="ContentDescription,ImageContrastCheck" />
 
     <CheckedTextView
         android:id="@+id/categorySpinnerItemText"

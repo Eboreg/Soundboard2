@@ -73,9 +73,10 @@
 
                 <Spinner
                     android:id="@+id/newCategory"
-                    android:spinnerMode="dropdown"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:spinnerMode="dropdown" />
 
             </LinearLayout>
 

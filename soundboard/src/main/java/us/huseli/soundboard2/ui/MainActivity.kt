@@ -50,9 +50,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val addSoundLauncher = registerForActivityResult(GetMultipleSounds()) { addSoundsFromUris(it) }
     private val scaleGestureDetector by lazy { ScaleGestureDetector(applicationContext, ScaleListener()) }
 
-    class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
-        override fun createIntent(context: Context, input: String) =
-            super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    inner class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
+        override fun createIntent(context: Context, input: String): Intent {
+            this@MainActivity.overridePendingTransition(0, 0)
+            return super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
     }
 
     /** OVERRIDDEN METHODS ***************************************************/
@@ -134,6 +136,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             R.id.actionRepressModePause -> appViewModel.setRepressMode(RepressMode.PAUSE)
             R.id.actionRepressModeRestart -> appViewModel.setRepressMode(RepressMode.RESTART)
             R.id.actionRepressModeStop -> appViewModel.setRepressMode(RepressMode.STOP)
+            R.id.actionSettings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                overridePendingTransition(0, 0)
+            }
         }
         return true
     }

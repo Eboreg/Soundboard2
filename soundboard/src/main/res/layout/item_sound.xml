@@ -130,7 +130,7 @@
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="0dp"
                 android:layout_height="2dp"
-                android:animateLayoutChanges="@{!viewModel.disableAnimations}"
+                android:animateLayoutChanges="true"
                 android:max="100"
                 android:min="0"
                 android:progress="@{viewModel.soundProgress}"
@@ -164,7 +164,7 @@
                     android:paddingHorizontal="@dimen/margin_small"
                     android:text="@{viewModel.durationString}"
                     android:textColor="@color/white"
-                    android:textSize="@dimen/small_text"
+                    android:textSize="@dimen/text_small"
                     tools:text="2s" />
             </androidx.cardview.widget.CardView>
         </androidx.constraintlayout.widget.ConstraintLayout>

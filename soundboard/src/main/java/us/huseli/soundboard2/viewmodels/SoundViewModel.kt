@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.PlayState
@@ -14,7 +13,6 @@ import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.helpers.MediaPlayerWrapper
 import us.huseli.soundboard2.helpers.SoundPlayer
 import java.text.DecimalFormat
 import kotlin.math.roundToInt
@@ -43,14 +41,14 @@ class SoundViewModel(
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
     val uri: LiveData<Uri?> = _sound.map { it?.uri }.asLiveData()
     val durationCardVisible: LiveData<Boolean> = _sound.map { it?.duration != null }.asLiveData()
-    val disableAnimations: LiveData<Boolean> = settingsRepository.disableAnimations.asLiveData()
+    val animationsEnabled: LiveData<Boolean> = settingsRepository.animationsEnabled.asLiveData()
 
     val soundProgress = combine(
-        settingsRepository.disableAnimations,
+        settingsRepository.animationsEnabled,
         _sound.map { it?.volume },
         _player.currentPosition
-    ) { disableAnimations, volume, position ->
-        if (!disableAnimations && position != null) position
+    ) { animationsEnabled, volume, position ->
+        if (animationsEnabled && position != null) position
         else volume
     }.asLiveData()
 

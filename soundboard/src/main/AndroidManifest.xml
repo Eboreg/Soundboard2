@@ -29,5 +29,10 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:theme="@style/Theme.Soundboard.NoActionBar"
+            android:parentActivityName=".ui.MainActivity" />
+
     </application>
 </manifest>

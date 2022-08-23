@@ -30,7 +30,7 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
 
         binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                viewModel.volume = progress
+                viewModel.setVolume(progress)
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -38,7 +38,7 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
 
         binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.selectedCategoryPosition.value = position
+                viewModel.setSelectedCategoryPosition(position)
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
@@ -67,7 +67,7 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
         }
         else {
             viewModel.setName(soundName)
-            viewModel.volume = binding.volume.progress
+            viewModel.setVolume(binding.volume.progress)
             viewModel.save(soundName, binding.volume.progress, binding.category.selectedItem as Category)
             dismiss()
         }

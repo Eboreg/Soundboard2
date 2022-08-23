@@ -11,24 +11,26 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:contentDescription="@string/app_name"
-        android:paddingVertical="4dp"
-        android:paddingStart="4dp"
+        android:paddingVertical="@dimen/margin_small"
+        android:paddingStart="@dimen/margin_small"
         android:paddingEnd="0dp"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@mipmap/ic_launcher_round" />
+        app:srcCompat="@mipmap/ic_launcher_round"
+        tools:ignore="ImageContrastCheck" />
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/actionbarToolbar"
+    <TextView
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/margin_large"
+        android:text="@string/settings"
+        style="@style/Style.Soundboard.TextView.H2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/actionbarLogo"
-        app:layout_constraintTop_toTopOf="parent"
-        android:animateLayoutChanges="false"
-        tools:menu="@menu/appbar_menu" />
+        app:layout_constraintTop_toTopOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

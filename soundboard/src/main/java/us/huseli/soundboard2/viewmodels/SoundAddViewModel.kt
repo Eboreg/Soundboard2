@@ -29,6 +29,8 @@ class SoundAddViewModel @Inject constructor(
     private val _duplicateAdd = MutableStateFlow(false)
     private val _name = MutableStateFlow<CharSequence>("")
     private val _multiple: Flow<Boolean> = _soundFiles.map { it.size > 1 }
+    private val _selectedCategoryPosition = MutableStateFlow(0)
+    private var _volume = Constants.DEFAULT_VOLUME
 
     private val _computedName: Flow<String> = _soundFiles.map {
         if (it.size == 1) it[0].name
@@ -50,13 +52,14 @@ class SoundAddViewModel @Inject constructor(
     }
 
     val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
-    var volume = Constants.DEFAULT_VOLUME
     val duplicateCount: LiveData<Int?> = _duplicates.map { it.size }.asLiveData()
     val multiple: LiveData<Boolean> = _multiple.asLiveData()
     val nameIsEditable: LiveData<Boolean> = _multiple.map { !it }.asLiveData()
     val addSoundCount = _soundCounts.map { it.add }.asLiveData()
     val skipSoundCount = _soundCounts.map { it.skip }.asLiveData()
-    val selectedCategoryPosition = MutableLiveData(0)
+    val selectedCategoryPosition = _selectedCategoryPosition.asLiveData()
+    val volume: Int
+        get() = _volume
 
     val hasDuplicates: LiveData<Boolean> = merge(
         _duplicates.map { it.isNotEmpty() },
@@ -75,6 +78,10 @@ class SoundAddViewModel @Inject constructor(
         _name.filter { it != "" }
     ).asLiveData()
 
+    fun setVolume(value: Int) {
+        _volume = value
+    }
+
     fun setSoundFiles(value: List<SoundFile>) {
         _soundFiles.value = value
     }
@@ -87,9 +94,13 @@ class SoundAddViewModel @Inject constructor(
         _duplicateAdd.value = value
     }
 
+    fun setSelectedCategoryPosition(value: Int) {
+        _selectedCategoryPosition.value = value
+    }
+
     fun reset() {
         _soundFiles.value = emptyList()
-        volume = Constants.DEFAULT_VOLUME
+        _volume = Constants.DEFAULT_VOLUME
         _duplicateAdd.value = false
         _name.value = ""
     }

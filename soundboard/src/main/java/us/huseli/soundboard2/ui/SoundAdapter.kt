@@ -2,13 +2,11 @@ package us.huseli.soundboard2.ui
 
 import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -19,7 +17,6 @@ import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.helpers.SoundPlayer
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(
@@ -42,7 +39,7 @@ class SoundAdapter(
         private var repressMode: RepressMode? = null
         private var isSelectEnabled = false
         private var isSelected = false
-        private var disableAnimations = false
+        private var animationsEnabled = false
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
         internal fun bind(
@@ -71,7 +68,7 @@ class SoundAdapter(
                 if (it != RepressMode.PAUSE) viewModel.stopPaused()
             }
 
-            viewModel.disableAnimations.observe(activity) { disableAnimations = it }
+            viewModel.animationsEnabled.observe(activity) { animationsEnabled = it }
             viewModel.isSelectEnabled.observe(activity) { isSelectEnabled = it }
             viewModel.playState.observe(activity) {
                 log("playState.observe: new playState=$it, was=$playState")
@@ -88,7 +85,7 @@ class SoundAdapter(
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
             /** This seems to work, but I don't know exactly why. */
             log("onTouch: v=$v, event=$event")
-            if (!disableAnimations) {
+            if (animationsEnabled) {
                 when (event?.actionMasked) {
                     MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
                     MotionEvent.ACTION_UP -> animator.start()
