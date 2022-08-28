@@ -42,7 +42,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/soundNameLabel"
-            tools:ignore="UnusedAttribute" />
+            tools:ignore="UnusedAttribute,DuplicateSpeakableTextCheck" />
 
         <TextView
             android:id="@+id/volumeLabel"
@@ -73,6 +73,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_normal"
             android:text="@string/category"
+            android:labelFor="@+id/category"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/volume" />
 
@@ -84,7 +85,8 @@
             android:selectedItemPosition="@{viewModel.selectedCategoryPosition}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/categoryLabel" />
+            app:layout_constraintTop_toBottomOf="@+id/categoryLabel"
+            tools:ignore="DuplicateSpeakableTextCheck" />
 
         <LinearLayout
             android:id="@+id/duplicateBlock"

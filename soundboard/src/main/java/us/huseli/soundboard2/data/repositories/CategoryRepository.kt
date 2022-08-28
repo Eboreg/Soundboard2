@@ -23,12 +23,14 @@ class CategoryRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
-
     val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
-
     val filterTerm = MutableStateFlow("")
-
     val randomColor: Flow<Int> = categoryDao.flowListUsedColors().map { colorHelper.getRandomColor(exclude = it) }
+
+    val firstCategory: Flow<Category> = categories.map {
+        if (it.isEmpty()) createDefault()
+        it.firstOrNull()
+    }.filterNotNull()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getSoundIds(categoryId: Int): Flow<List<Int>> =

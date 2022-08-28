@@ -2,7 +2,6 @@ package us.huseli.soundboard2.helpers
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.sync.Mutex
 import us.huseli.soundboard2.Enums.PlayState
 
 class SoundPlayer : LoggingObject {
@@ -10,7 +9,6 @@ class SoundPlayer : LoggingObject {
     private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
     private var _path: String? = null
     private var _volume: Float? = null
-    private val mutex = Mutex()
 
     // This SHOULD produce a flow of State arrays, with one array entry for
     // each of the current _parallelPlayers. So a new array will be emitted

@@ -1,8 +1,14 @@
 package us.huseli.soundboard2.ui
 
+import android.animation.LayoutTransition
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.widget.AdapterView
+import android.provider.DocumentsContract
+import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,6 +24,27 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
     @Inject lateinit var settingsRepository: SettingsRepository
     private lateinit var binding: ActivitySettingsBinding
     private val viewModel by viewModels<SettingsViewModel>()
+    private var watchFolderUri: Uri? = null
+    private var watchFolderLauncher = registerForActivityResult(GetWatchFolder()) { onWatchFolderSelected(it) }
+
+    private fun onWatchFolderSelected(uri: Uri?) {
+        if (uri != null) {
+            applicationContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            watchFolderUri = uri
+            viewModel.setWatchFolderUri(uri)
+        }
+    }
+
+    inner class GetWatchFolder : ActivityResultContracts.OpenDocumentTree() {
+        override fun createIntent(context: Context, input: Uri?): Intent {
+            this@SettingsActivity.overridePendingTransition(0, 0)
+            val intent = super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                watchFolderUri?.also { intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
+            }
+            return intent
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,19 +53,19 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
         binding.lifecycleOwner = this
         binding.viewModel = viewModel
         setContentView(binding.root)
-        lifecycle.addObserver(settingsRepository)
+
+        viewModel.watchFolderUri.observe(this) { watchFolderUri = it }
+        viewModel.watchFolderString.observe(this) { binding.watchFolderString.setText(it) }
+        viewModel.watchFolderCategoryPosition.observe(this) { binding.watchFolderCategory.setSelection(it) }
 
         viewModel.categories.observe(this) {
             binding.watchFolderCategory.adapter = CategorySpinnerAdapter(this, it)
         }
 
-        binding.watchFolderCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.setWatchFolderCategoryPosition(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                viewModel.setWatchFolderCategoryPosition(0)
-            }
+        binding.watchFolderSelectButton.setOnClickListener { watchFolderLauncher.launch(watchFolderUri) }
+
+        binding.watchFolderEnabled.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setWatchFolderEnabled(isChecked)
         }
 
         binding.animationsEnabled.setOnCheckedChangeListener { _, isChecked ->
@@ -46,15 +73,40 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
         }
 
         binding.saveButton.setOnClickListener {
-            viewModel.save()
+            viewModel.save(
+                binding.animationsEnabled.isChecked,
+                binding.watchFolderEnabled.isChecked,
+                watchFolderUri,
+                binding.watchFolderCategory.selectedItem as? Category,
+                binding.watchFolderTrashMissing.isChecked
+            )
             finish()
         }
 
         binding.cancelButton.setOnClickListener { finish() }
+
+        viewModel.watchFolderEnabled.observe(this) { isChecked ->
+            if (isChecked) {
+                // Expand; 0 to wrap_content
+                binding.watchFolderOptions.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+                binding.watchFolderOptions.requestLayout()
+            }
+            else {
+                // Collapse; wrap_content to 0
+                binding.watchFolderOptions.layoutParams.height = 0
+                binding.watchFolderOptions.requestLayout()
+            }
+            binding.watchFolderOptions.layoutTransition?.enableTransitionType(LayoutTransition.CHANGING)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         overridePendingTransition(0, 0)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        settingsRepository.initialize()
     }
 }

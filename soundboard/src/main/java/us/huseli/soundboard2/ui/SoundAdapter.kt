@@ -37,8 +37,8 @@ class SoundAdapter(
         private lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
-        private var isSelectEnabled = false
-        private var isSelected = false
+        private var selectEnabled = false
+        private var selected = false
         private var animationsEnabled = false
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
@@ -69,12 +69,12 @@ class SoundAdapter(
             }
 
             viewModel.animationsEnabled.observe(activity) { animationsEnabled = it }
-            viewModel.isSelectEnabled.observe(activity) { isSelectEnabled = it }
+            viewModel.selectEnabled.observe(activity) { selectEnabled = it }
             viewModel.playState.observe(activity) {
                 log("playState.observe: new playState=$it, was=$playState")
                 playState = it
             }
-            viewModel.isSelected.observe(activity) { isSelected = it }
+            viewModel.selected.observe(activity) { selected = it }
 
             viewModel.playerError.observe(activity) { playerError ->
                 if (playerError != null) activity.showSnackbar(playerError)
@@ -96,7 +96,7 @@ class SoundAdapter(
 
         override fun onLongClick(v: View?): Boolean {
             log("onLongClick: v=$v")
-            if (!isSelectEnabled) {
+            if (!selectEnabled) {
                 // Select is not enabled; enable it and select sound.
                 viewModel.enableSelect()
                 viewModel.select()
@@ -106,9 +106,9 @@ class SoundAdapter(
         }
 
         override fun onClick(v: View?) {
-            log("onClick: v=$v, isSelectEnabled=$isSelectEnabled, playState=$playState")
-            if (isSelectEnabled) {
-                if (isSelected) viewModel.unselect()
+            log("onClick: v=$v, selectEnabled=$selectEnabled, playState=$playState")
+            if (selectEnabled) {
+                if (selected) viewModel.unselect()
                 else viewModel.select()
             }
             else {

@@ -67,7 +67,7 @@
                 android:elevation="@dimen/elevation_normal"
                 android:src="@drawable/color_circle"
                 app:drawableColor="@{viewModel.backgroundColor}"
-                tools:ignore="ContentDescription" />
+                tools:ignore="ContentDescription,ImageContrastCheck" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/selectColorButton"

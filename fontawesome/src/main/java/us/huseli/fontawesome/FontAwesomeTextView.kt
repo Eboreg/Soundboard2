@@ -1,14 +1,14 @@
 package us.huseli.fontawesome
 
 import android.content.Context
-import android.graphics.Canvas
 import android.util.AttributeSet
 import android.util.TypedValue
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.res.getResourceIdOrThrow
 import androidx.core.widget.TextViewCompat
 
-open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : AppCompatTextView(context, attrs, defStyleAttr) {
+open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+    AppCompatTextView(context, attrs, defStyleAttr) {
     init {
         val arr = context.theme.obtainStyledAttributes(attrs, R.styleable.FontAwesomeTextView, 0, 0)
         var computedTypeface: String? = null
@@ -32,8 +32,13 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
         }
 
         typeface = FontAwesomeCache.get(context.assets, explicitTypeface ?: computedTypeface ?: FontAwesomeCache.FA_FONT_REGULAR)
+    }
 
-        @Suppress("LeakingThis")
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.style.FontAwesomeTextView)
+
+    constructor(context: Context) : this(context, null)
+
+    override fun onTextChanged(text: CharSequence?, start: Int, lengthBefore: Int, lengthAfter: Int) {
         TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
             this,
             12,
@@ -41,9 +46,6 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
             1,
             TypedValue.COMPLEX_UNIT_SP
         )
+        super.onTextChanged(text, start, lengthBefore, lengthAfter)
     }
-
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.style.FontAwesomeTextView)
-
-    constructor(context: Context) : this(context, null)
 }

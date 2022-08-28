@@ -87,7 +87,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.isPlayStateStarted}" />
+                app:visible="@{viewModel.playStateStarted}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundPausedIcon"
@@ -96,7 +96,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.isPlayStatePaused}" />
+                app:visible="@{viewModel.playStatePaused}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundErrorIcon"
@@ -105,7 +105,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.isPlayStateError}" />
+                app:visible="@{viewModel.playStateError}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundSelectedIcon"
@@ -115,7 +115,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.isSelected}" />
+                app:visible="@{viewModel.selected}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundReorderIcon"

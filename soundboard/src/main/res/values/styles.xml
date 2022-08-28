@@ -12,19 +12,19 @@ Styles are a collection of view attributes; specific to a single type of widget"
     <style name="Style" />
 
     <style name="Style.Soundboard">
-        <item name="android:colorBackground">?attr/colorSurface</item>
+        <!--<item name="android:colorBackground">?attr/colorSurface</item>-->
     </style>
 
     <style name="Style.Soundboard.Button" parent="Widget.MaterialComponents.Button" />
 
     <style name="Style.Soundboard.Button.TextButton" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="rippleColor">?attr/colorAccent</item>
-        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:textColor">@color/primary_text</item>
     </style>
 
     <style name="Style.Soundboard.Button.TextButton.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
         <item name="rippleColor">?attr/colorAccent</item>
-        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColor">@color/secondary_text</item>
     </style>
 
     <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
@@ -72,13 +72,16 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
     <style name="Style.Soundboard.TextView.H1">
         <item name="android:textSize">@dimen/text_h1</item>
+        <item name="android:textColor">@color/primary_text</item>
     </style>
 
     <style name="Style.Soundboard.TextView.H2">
         <item name="android:textSize">@dimen/text_h2</item>
+        <item name="android:textColor">@color/primary_text</item>
     </style>
 
     <style name="Style.Soundboard.TextView.H3">
         <item name="android:textSize">@dimen/text_h3</item>
+        <item name="android:textColor">@color/primary_text</item>
     </style>
 </resources>

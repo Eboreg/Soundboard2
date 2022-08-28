@@ -67,9 +67,30 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        lifecycle.addObserver(settingsRepository)
+        // If we are supposed to watch a folder, now is the time to sync it.
+        appViewModel.watchFolderEnabled.observe(this) { watchFolderEnabled ->
+            log("onCreate(): appViewModel.watchFolderEnabled=$watchFolderEnabled")
+            if (watchFolderEnabled) {
+                appViewModel.syncWatchFolder { added, deleted ->
+                    var snackbarString = getString(R.string.watched_folder_sync) + ": "
+                    if (added > 0) snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_added, added, added)
+                    if (deleted > 0) {
+                        if (added > 0) snackbarString += ", "
+                        snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, deleted, deleted)
+                    }
+                    snackbarString += "."
+                    log("appViewModel.watchFolderSoundOperations.observe(): snackbarString=$snackbarString")
+                    showSnackbar(snackbarString)
+                }
+            }
+        }
 
         initCategoryList()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        settingsRepository.initialize()
     }
 
     override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
@@ -118,7 +139,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             }
         }
 
-        appViewModel.isSelectEnabled.observe(this) {
+        appViewModel.selectEnabled.observe(this) {
             if (it) showSnackbar(R.string.sound_selection_enabled)
             else showSnackbar(R.string.sound_selection_disabled)
         }

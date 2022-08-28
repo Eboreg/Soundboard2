@@ -1,9 +1,7 @@
 package us.huseli.soundboard2.data.dao
 
 import android.net.Uri
-import androidx.room.Dao
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
@@ -12,6 +10,9 @@ import java.util.*
 
 @Dao
 interface SoundDao {
+    @Query("SELECT * FROM Sound")
+    fun flowList(): Flow<List<Sound>>
+
     @Query("SELECT * FROM Sound WHERE checksum IN (:checksums) GROUP BY `checksum`")
     fun flowListByChecksums(checksums: List<String>): Flow<List<Sound>>
 
@@ -20,6 +21,9 @@ interface SoundDao {
 
     @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
     fun flowGet(soundId: Int): Flow<SoundExtended?>
+
+    @Query("SELECT checksum FROM Sound")
+    fun flowListAllChecksums(): Flow<List<String>>
 
     @Query("SELECT * FROM Sound WHERE checksum IN (:checksums) GROUP BY `checksum`")
     suspend fun listByChecksums(checksums: List<String>): List<Sound>
@@ -47,6 +51,9 @@ interface SoundDao {
         categoryId: Int? = null,
         order: Int? = null,
     )
+
+    @Delete
+    suspend fun delete(sound: Sound)
 
     @Query("DELETE FROM Sound WHERE categoryId = :categoryId")
     suspend fun deleteByCategory(categoryId: Int)

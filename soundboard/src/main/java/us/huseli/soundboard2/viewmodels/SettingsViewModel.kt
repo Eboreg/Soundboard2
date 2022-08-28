@@ -1,13 +1,17 @@
 package us.huseli.soundboard2.viewmodels
 
 import android.content.Context
-import android.graphics.Color
+import android.net.Uri
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
@@ -22,62 +26,61 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     categoryRepository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val _noCategory = Category(-1, context.getString(R.string.not_set), Color.DKGRAY, -1)
-    private val _categories = categoryRepository.categories.map { listOf(_noCategory) + it }
+    private val _categories = categoryRepository.categories
+    private val _newWatchFolderUri = MutableStateFlow<Uri?>(null)
+    private val _watchFolderString =
+        MutableStateFlow(settingsRepository.watchFolderUri.value?.path?.split(":")?.last())
+    private val _watchFolderEnabled = MutableStateFlow(settingsRepository.watchFolderEnabled.value)
+    private val _animationsEnabled = MutableStateFlow(settingsRepository.animationsEnabled.value)
 
-    private val _watchFolderCategoryPosition = MutableStateFlow(0).apply {
-        viewModelScope.launch {
-            val idFlow = combine(settingsRepository.watchFolderCategoryId, _categories) { categoryId, categories ->
-                categories.indexOfFirst { it.id == categoryId }
-            }.filter { it != -1 }
-            emitAll(idFlow)
-        }
-    }
-    private val _watchFolder = MutableStateFlow<String?>(null).apply {
-        viewModelScope.launch { emitAll(settingsRepository.watchFolder) }
-    }
-    private val _animationsEnabled = MutableStateFlow<Boolean?>(null).apply {
-        viewModelScope.launch { emitAll(settingsRepository.animationsEnabled) }
-    }
+    private val _watchFolderCategoryPosition = combine(
+        settingsRepository.watchFolderCategoryId,
+        _categories
+    ) { categoryId, categories ->
+        val result = categories.indexOfFirst { it.id == categoryId }
+        log("_watchFolderCategoryPosition: categoryId=$categoryId, categories=$categories, result=$result")
+        result
+    }.filter { it != -1 }
 
-    val animationsEnabled = _animationsEnabled.filterNotNull().map {
-        log("animationsEnabled=$it")
-        it
-    }.asLiveData()
-    val watchFolderString = _watchFolder.map {
-        log("watchFolderString=$it")
-        it ?: context.getString(R.string.not_set)
-    }.asLiveData()
-    val watchFolderCategoryPosition = _watchFolderCategoryPosition.map {
-        log("watchFolderCategoryPosition=$it")
-        it
-    }.asLiveData()
-    val watchFolderCategoryName = combine(_watchFolderCategoryPosition, _categories) { position, categories ->
-        categories[position].name
-    }.asLiveData()
-    val categories = _categories.asLiveData()
+    val animationsEnabled: LiveData<Boolean> = _animationsEnabled.asLiveData()
+    val watchFolderEnabled: LiveData<Boolean> = _watchFolderEnabled.asLiveData()
+    val watchFolderUri: LiveData<Uri?> = settingsRepository.watchFolderUri.asLiveData()
+    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
+    val watchFolderString: LiveData<String> =
+        _watchFolderString.map { it ?: context.getString(R.string.not_set) }.asLiveData()
+    val watchFolderCategoryPosition: LiveData<Int> = _watchFolderCategoryPosition.map { it }.asLiveData()
+    val categories: LiveData<List<Category>> = _categories.asLiveData()
 
     fun setAnimationsEnabled(value: Boolean) {
         _animationsEnabled.value = value
     }
 
-    fun setWatchFolderCategoryPosition(value: Int) {
-        _watchFolderCategoryPosition.value = value
+    fun setWatchFolderEnabled(value: Boolean) {
+        _watchFolderEnabled.value = value
     }
 
-    fun setWatchFolder(value: String?) {
-        _watchFolder.value = value
+    fun setWatchFolderUri(value: Uri?) {
+        _newWatchFolderUri.value = value
+        _watchFolderString.value = value?.path?.split(":")?.last()
     }
 
-    fun save() = viewModelScope.launch {
-        val category = _categories.stateIn(viewModelScope).value[_watchFolderCategoryPosition.value]
-        log("save(): category=$category, _animationsEnabled=${_animationsEnabled.value}, _watchFolder=${_watchFolder.value}")
-        when (_animationsEnabled.value) {
-            true -> settingsRepository.enableAnimations()
-            false -> settingsRepository.disableAnimations()
-            else -> {}
-        }
-        settingsRepository.setWatchFolder(_watchFolder.value)
-        settingsRepository.setWatchFolderCategoryId(category.id)
+    fun save(
+        animationsEnabled: Boolean,
+        watchFolderEnabled: Boolean,
+        watchFolderUri: Uri?,
+        watchFolderCategory: Category?,
+        watchFolderTrashMissing: Boolean
+    ) = viewModelScope.launch {
+        log("save(): animationsEnabled=$animationsEnabled, watchFolderEnabled=$watchFolderEnabled, watchFolderUri=$watchFolderUri, watchFolderCategory=$watchFolderCategory, watchFolderTrashMissing=$watchFolderTrashMissing")
+        if (animationsEnabled)
+            settingsRepository.enableAnimations()
+        else
+            settingsRepository.disableAnimations()
+        settingsRepository.setWatchFolder(
+            watchFolderEnabled,
+            watchFolderUri,
+            watchFolderCategory?.id,
+            watchFolderTrashMissing
+        )
     }
 }

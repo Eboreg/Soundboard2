@@ -20,7 +20,7 @@ class CategoryDeleteViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _categoryData: Flow<CategoryDeleteData> = _categoryId.flatMapLatest { categoryId ->
         if (categoryId != null) repository.getCategoryDeleteData(categoryId) else emptyFlow()
-    }
+    }.filterNotNull()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _otherCategories: Flow<List<Category>> = _categoryId.flatMapLatest { categoryId ->
@@ -29,7 +29,7 @@ class CategoryDeleteViewModel @Inject constructor(
         else emptyFlow()
     }
 
-    private val _soundCount = _categoryData.map { it.soundCount }
+    private val _soundCount: Flow<Int> = _categoryData.map { it.soundCount ?: 0 }
 
     private val _isLastCategory = merge(
         flowOf(false),
@@ -38,10 +38,10 @@ class CategoryDeleteViewModel @Inject constructor(
 
     private val _showSoundAction = merge(
         flowOf(false),
-        combine(_categoryData, _isLastCategory) { cd, ilc -> cd.soundCount > 0 && !ilc }
+        combine(_categoryData, _isLastCategory) { cd, ilc -> (cd.soundCount ?: 0) > 0 && !ilc }
     )
 
-    val name: LiveData<String> = _categoryData.map { it.name }.asLiveData()
+    val name: LiveData<String> = _categoryData.map { it.name ?: "" }.asLiveData()
     val otherCategories: LiveData<List<Category>> = _otherCategories.asLiveData()
     val soundCount: LiveData<Int> = _soundCount.asLiveData()
     val isLastCategory: LiveData<Boolean> = _isLastCategory.asLiveData()

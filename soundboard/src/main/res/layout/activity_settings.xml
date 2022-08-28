@@ -11,7 +11,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:context=".ui.SettingsActivity">
 
         <include
             android:id="@+id/actionBar"
@@ -21,159 +22,219 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/animationsSection"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_margin="@dimen/margin_normal"
+            app:layout_constraintBottom_toTopOf="@+id/bottomDivider"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/actionBar">
 
-            <us.huseli.fontawesome.FontAwesomeTextView
-                android:id="@+id/animationsIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:width="40sp"
-                android:text="@string/fas_person_running"
-                android:textColor="?attr/menuIconColor"
-                android:textSize="@dimen/text_h2"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/animationsEnabled"
-                style="@style/Style.Soundboard.TextView.H2"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:checked="@{viewModel.animationsEnabled}"
-                android:text="@string/enable_animations"
-                android:textColor="?attr/colorOnPrimary"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/animationsIcon"
-                app:layout_constraintTop_toTopOf="parent"
-                app:switchMinWidth="50dp" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/watchFolderSection"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/margin_normal"
-            android:layout_marginTop="@dimen/margin_xlarge"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/animationsSection">
-
-            <us.huseli.fontawesome.FontAwesomeTextView
-                android:id="@+id/watchFolderIcon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:width="40sp"
-                android:text="@string/fas_folder"
-                android:textColor="?attr/menuIconColor"
-                android:textSize="@dimen/text_h2"
-                app:layout_constraintBottom_toBottomOf="@+id/watchFolderLabel"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/watchFolderLabel"
-                android:layout_width="wrap_content"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/animationsSection"
+                android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:text="@string/watch_folder"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="@dimen/text_h2"
-                app:layout_constraintStart_toEndOf="@+id/watchFolderIcon"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/watchFolderText"
+                <us.huseli.fontawesome.FontAwesomeTextView
+                    android:id="@+id/animationsIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:width="40sp"
+                    android:text="@string/fas_person_running"
+                    android:textColor="?attr/menuIconColor"
+                    android:textSize="@dimen/text_h2"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/animationsEnabled"
+                    style="@style/Style.Soundboard.TextView.H2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:checked="@{viewModel.animationsEnabled}"
+                    android:text="@string/enable_animations"
+                    android:textColor="?attr/colorOnPrimary"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/animationsIcon"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:switchMinWidth="60dp" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <View
+                android:id="@+id/divider1"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="@dimen/margin_large"
+                android:background="?android:attr/listDivider"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/animationsSection" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/watchFolderSection"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/watch_folder_text"
-                android:layout_marginVertical="@dimen/margin_normal"
+                android:layout_marginTop="@dimen/margin_large"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderLabel" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/divider1">
 
-            <EditText
-                android:id="@+id/watchFolderString"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/margin_normal"
-                android:enabled="false"
-                android:text="@{viewModel.watchFolderString}"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderText"
-                tools:ignore="Autofill,LabelFor,TextFields,TouchTargetSizeCheck" />
+                <us.huseli.fontawesome.FontAwesomeTextView
+                    android:id="@+id/watchFolderIcon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:width="40sp"
+                    android:text="@string/fas_folder"
+                    android:textColor="?attr/menuIconColor"
+                    android:textSize="@dimen/text_h2"
+                    app:layout_constraintBottom_toBottomOf="@+id/watchFolderEnabled"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
-            <com.google.android.material.button.MaterialButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/watchFolderSelectButton"
-                android:text="@string/select_folder"
-                android:layout_marginVertical="@dimen/margin_normal"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderString"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel" />
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/watchFolderEnabled"
+                    style="@style/Style.Soundboard.TextView.H2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:checked="@{viewModel.watchFolderEnabled}"
+                    android:text="@string/watch_folder"
+                    android:textColor="?attr/colorOnPrimary"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/watchFolderIcon"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:switchMinWidth="60dp" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/watchFolderClearButton"
-                style="@style/Style.Soundboard.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/remove_watch"
-                android:layout_marginVertical="@dimen/margin_normal"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderString" />
+                <TextView
+                    android:id="@+id/watchFolderText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginVertical="@dimen/margin_normal"
+                    android:text="@string/watch_folder_text"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/watchFolderEnabled"
+                    app:layout_constraintTop_toBottomOf="@+id/watchFolderEnabled" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/watchFolderCategoryLabel"
-                android:text="@string/category_for_new_sounds"
-                android:textSize="@dimen/text_h3"
-                android:layout_marginVertical="@dimen/margin_normal"
-                android:textColor="?attr/colorOnPrimary"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderSelectButton"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel" />
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/watchFolderOptions"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:animateLayoutChanges="@{viewModel.animationsEnabled}"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/watchFolderEnabled"
+                    app:layout_constraintTop_toBottomOf="@+id/watchFolderText">
 
-            <TextView
-                android:id="@+id/watchFolderCategoryText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@string/watch_folder_category_text"
-                android:layout_marginVertical="@dimen/margin_normal"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryLabel" />
+                    <EditText
+                        android:id="@+id/watchFolderString"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:enabled="false"
+                        android:text="@{viewModel.watchFolderString}"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:ignore="Autofill,LabelFor,TextFields,TouchTargetSizeCheck"
+                        tools:text="(Not set)" />
 
-            <Spinner
-                android:id="@+id/watchFolderCategory"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginVertical="@dimen/margin_normal"
-                android:minHeight="48dp"
-                android:selectedItemPosition="@{viewModel.watchFolderCategoryPosition}"
-                android:contentDescription="@{viewModel.watchFolderCategoryName}"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="@+id/watchFolderLabel"
-                app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryText" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/watchFolderSelectButton"
+                        style="@style/Style.Soundboard.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:text="@string/select_folder"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderString" />
+
+                    <TextView
+                        android:id="@+id/watchFolderCategoryLabel"
+                        style="@style/Style.Soundboard.TextView.H3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:labelFor="@+id/watchFolderCategory"
+                        android:text="@string/category_for_new_sounds"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderSelectButton" />
+
+                    <TextView
+                        android:id="@+id/watchFolderCategoryText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:text="@string/watch_folder_category_text"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryLabel" />
+
+                    <Spinner
+                        android:id="@+id/watchFolderCategory"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:minHeight="48dp"
+                        android:selectedItemPosition="@{viewModel.watchFolderCategoryPosition}"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryText"
+                        tools:ignore="DuplicateSpeakableTextCheck" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/watchFolderTrashMissing"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:checked="@{viewModel.watchFolderTrashMissing}"
+                        android:text="@string/trash_missing_files"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderCategory"
+                        app:switchMinWidth="60dp" />
+
+                    <TextView
+                        android:id="@+id/watchFolderTrashMissingText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginVertical="@dimen/margin_normal"
+                        android:text="@string/watch_folder_trash_missing_text"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/watchFolderTrashMissing" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/cancelButton"
-            style="@style/Style.Soundboard.Button.TextButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <View
+            android:id="@+id/bottomDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
             android:layout_marginStart="@dimen/margin_normal"
+            android:layout_marginEnd="@dimen/margin_normal"
             android:layout_marginBottom="@dimen/margin_normal"
-            android:text="@string/cancel"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/saveButton"
+            android:background="?android:attr/listDivider"
+            app:layout_constraintBottom_toTopOf="@+id/cancelButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.button.MaterialButton
+            style="@style/Style.Soundboard.Button.TextButton.Negative"
+            android:id="@+id/cancelButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/margin_normal"
+            android:layout_marginBottom="@dimen/margin_normal"
+            android:text="@string/cancel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/saveButton" />
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/Style.Soundboard.Button.TextButton"
             android:id="@+id/saveButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -181,8 +242,7 @@
             android:layout_marginBottom="@dimen/margin_normal"
             android:text="@string/save"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/cancelButton" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

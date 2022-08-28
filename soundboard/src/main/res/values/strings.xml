@@ -62,6 +62,14 @@
         <item quantity="one">This category contains one sound. What do you want to do with it?</item>
         <item quantity="other">This category contains %1$d sounds. What do you want to do with them?</item>
     </plurals>
+    <plurals name="watch_folder_sounds_added">
+        <item quantity="one">one sound added</item>
+        <item quantity="other">%1$d sounds added</item>
+    </plurals>
+    <plurals name="watch_folder_sounds_deleted">
+        <item quantity="one">one sound deleted</item>
+        <item quantity="other">%1$d sounds deleted</item>
+    </plurals>
     <string name="sound_selection_disabled">Sound selection is disabled.</string>
     <string name="enable_animations">Enable animations</string>
     <string name="watch_folder">Watch folder</string>
@@ -71,4 +79,7 @@
     <string name="category_for_new_sounds">Category for new sounds</string>
     <string name="watch_folder_category_text">If not set, or invalid, sounds will be placed in the first category.</string>
     <string name="not_set">(Not set)</string>
+    <string name="trash_missing_files">Trash missing files</string>
+    <string name="watch_folder_trash_missing_text">If checked, the app will not only copy new files from the watched folder, but also delete those that are missing.</string>
+    <string name="watched_folder_sync">Watched folder sync</string>
 </resources>

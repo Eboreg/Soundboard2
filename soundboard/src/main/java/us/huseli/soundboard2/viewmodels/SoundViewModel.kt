@@ -63,11 +63,11 @@ class SoundViewModel(
     }.asLiveData()
 
     /** State booleans etc. */
-    val isSelectEnabled: LiveData<Boolean> = settingsRepository.isSelectEnabled.asLiveData()
-    val isSelected: LiveData<Boolean> = settingsRepository.selectedSounds.map { it.contains(soundId) }.asLiveData()
-    val isPlayStateStarted: LiveData<Boolean> = _player.state.map { it == PlayState.STARTED }.asLiveData()
-    val isPlayStatePaused: LiveData<Boolean> = _player.state.map { it == PlayState.PAUSED }.asLiveData()
-    val isPlayStateError: LiveData<Boolean> = _player.state.map { it == PlayState.ERROR }.asLiveData()
+    val selectEnabled: LiveData<Boolean> = settingsRepository.selectEnabled.asLiveData()
+    val selected: LiveData<Boolean> = settingsRepository.selectedSounds.map { it.contains(soundId) }.asLiveData()
+    val playStateStarted: LiveData<Boolean> = _player.state.map { it == PlayState.STARTED }.asLiveData()
+    val playStatePaused: LiveData<Boolean> = _player.state.map { it == PlayState.PAUSED }.asLiveData()
+    val playStateError: LiveData<Boolean> = _player.state.map { it == PlayState.ERROR }.asLiveData()
 
     init {
         viewModelScope.launch {

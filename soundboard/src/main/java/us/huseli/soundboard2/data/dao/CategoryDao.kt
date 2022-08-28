@@ -21,7 +21,7 @@ interface CategoryDao {
     fun flowListUsedColors(): Flow<List<Int>>
 
     @Query("SELECT c.name, COUNT(s.id) as soundCount FROM Category c LEFT JOIN Sound s ON s.categoryId = c.id WHERE c.id = :categoryId")
-    fun flowGetCategoryDeleteData(categoryId: Int): Flow<CategoryDeleteData>
+    fun flowGetCategoryDeleteData(categoryId: Int): Flow<CategoryDeleteData?>
 
     @Query("SELECT COALESCE(MAX(`order`), -1) + 1 FROM Category")
     suspend fun getNextOrder(): Int

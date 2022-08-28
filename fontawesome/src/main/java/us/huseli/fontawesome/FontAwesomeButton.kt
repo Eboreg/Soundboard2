@@ -3,7 +3,6 @@ package us.huseli.fontawesome
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import kotlin.math.roundToInt
 
 class FontAwesomeButton(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : FontAwesomeTextView(context, attrs, defStyleAttr) {
     init {
