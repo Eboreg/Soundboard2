@@ -7,6 +7,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums
@@ -25,29 +28,29 @@ class AppViewModel @Inject constructor(
     private val soundRepository: SoundRepository,
     application: Application
 ) : LoggingObject, AndroidViewModel(application) {
+    data class WatchFolderSyncResult(val added: Int, val deleted: Int)
+
+    private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
+
     val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
     val selectEnabled: LiveData<Boolean> = settingsRepository.selectEnabled.asLiveData()
     val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
+    val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
 
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
 
-    fun setFilterTerm(value: String) {
-        categoryRepository.filterTerm.value = value
-    }
+    fun setFilterTerm(value: String) { categoryRepository.filterTerm.value = value }
 
     fun zoomIn() = settingsRepository.zoomIn()
 
     fun zoomOut() = settingsRepository.zoomOut()
 
-    /**
-     * @param onChanges Callback that will be called if, and only if, any sounds are added or deleted.
-     */
-    fun syncWatchFolder(onChanges: ((added: Int, deleted: Int) -> Unit)? = null) = viewModelScope.launch {
+    fun syncWatchFolder() = viewModelScope.launch {
         val treeUri = settingsRepository.watchFolderUri.value
         val context = getApplication<Application>().applicationContext
         var added = 0
@@ -88,7 +91,7 @@ class AppViewModel @Inject constructor(
                     }
             }
 
-            if (added > 0 || deleted > 0) onChanges?.invoke(added, deleted)
+            if (added > 0 || deleted > 0) _watchFolderSyncResult.send(WatchFolderSyncResult(added, deleted))
         }
     }
 }

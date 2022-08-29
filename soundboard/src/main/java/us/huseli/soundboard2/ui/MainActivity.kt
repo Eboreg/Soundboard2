@@ -67,22 +67,26 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // If we are supposed to watch a folder, now is the time to sync it.
-        appViewModel.watchFolderEnabled.observe(this) { watchFolderEnabled ->
-            log("onCreate(): appViewModel.watchFolderEnabled=$watchFolderEnabled")
-            if (watchFolderEnabled) {
-                appViewModel.syncWatchFolder { added, deleted ->
-                    var snackbarString = getString(R.string.watched_folder_sync) + ": "
-                    if (added > 0) snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_added, added, added)
-                    if (deleted > 0) {
-                        if (added > 0) snackbarString += ", "
-                        snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, deleted, deleted)
-                    }
-                    snackbarString += "."
-                    log("appViewModel.watchFolderSoundOperations.observe(): snackbarString=$snackbarString")
-                    showSnackbar(snackbarString)
+        // Using Flow instead of LiveData, because the latter does not seem to
+        // enable us to display a message only _once_.
+        lifecycleScope.launchWhenCreated {
+            appViewModel.watchFolderSyncResult.collect {
+                var snackbarString = getString(R.string.watched_folder_sync) + ": "
+                if (it.added > 0) snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_added, it.added, it.added)
+                if (it.deleted > 0) {
+                    if (it.added > 0) snackbarString += ", "
+                    snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, it.deleted, it.deleted)
                 }
+                snackbarString += "."
+                log("appViewModel.watchFolderSyncResult.collect: snackbarString=$snackbarString")
+                showSnackbar(snackbarString)
             }
+        }
+
+        // If we are supposed to watch a folder, now is the time to sync it.
+        appViewModel.watchFolderEnabled.observe(this) {
+            log("onCreate(): appViewModel.watchFolderEnabled=$it")
+            if (it) appViewModel.syncWatchFolder()
         }
 
         initCategoryList()
