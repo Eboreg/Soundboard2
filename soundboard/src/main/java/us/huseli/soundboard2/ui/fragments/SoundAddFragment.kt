@@ -2,6 +2,8 @@ package us.huseli.soundboard2.ui.fragments
 
 import android.app.Dialog
 import android.os.Bundle
+import android.text.Html
+import android.text.TextUtils
 import android.view.View
 import android.widget.AdapterView
 import android.widget.SeekBar
@@ -79,6 +81,18 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
          * Observe viewModel.multiple to set dialog title.
          */
         super.onViewCreated(view, savedInstanceState)
+
+        viewModel.duplicateData.observe(this) {
+            binding.duplicateText.text = Html.fromHtml(
+                resources.getQuantityString(
+                    R.plurals.sound_already_exists,
+                    it.count,
+                    it.count,
+                    TextUtils.htmlEncode(it.name)
+                ),
+                Html.FROM_HTML_MODE_LEGACY
+            )
+        }
 
         viewModel.categories.observe(this) {
             binding.category.adapter = CategorySpinnerAdapter(requireContext(), it)

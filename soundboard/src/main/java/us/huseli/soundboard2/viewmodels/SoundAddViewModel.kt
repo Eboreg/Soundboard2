@@ -23,7 +23,8 @@ class SoundAddViewModel @Inject constructor(
     categoryRepository: CategoryRepository,
     private val soundRepository: SoundRepository
 ) : ViewModel(), LoggingObject {
-    data class SoundCounts(val add: Int?, val skip: Int?)
+    data class SoundCounts(val add: Int, val skip: Int)
+    data class DuplicateData(val count: Int, val name: String)
 
     private val _soundFiles = MutableStateFlow<List<SoundFile>>(emptyList())
     private val _duplicateAdd = MutableStateFlow(false)
@@ -55,23 +56,28 @@ class SoundAddViewModel @Inject constructor(
     val duplicateCount: LiveData<Int?> = _duplicates.map { it.size }.asLiveData()
     val multiple: LiveData<Boolean> = _multiple.asLiveData()
     val nameIsEditable: LiveData<Boolean> = _multiple.map { !it }.asLiveData()
-    val addSoundCount = _soundCounts.map { it.add }.asLiveData()
-    val skipSoundCount = _soundCounts.map { it.skip }.asLiveData()
-    val selectedCategoryPosition = _selectedCategoryPosition.asLiveData()
+    val addSoundCount: LiveData<Int?> = _soundCounts.map { it.add }.asLiveData()
+    val skipSoundCount: LiveData<Int?> = _soundCounts.map { it.skip }.asLiveData()
+    val selectedCategoryPosition: LiveData<Int> = _selectedCategoryPosition.asLiveData()
     val volume: Int
         get() = _volume
+
+    val duplicateData = merge(
+        _duplicates.map {
+            when (it.size) {
+                1 -> DuplicateData(1, it[0].name)
+                else -> DuplicateData(it.size, "")
+            }
+        },
+        flow { emit(DuplicateData(0, "")) }
+    ).asLiveData()
 
     val hasDuplicates: LiveData<Boolean> = merge(
         _duplicates.map { it.isNotEmpty() },
         flow { emit(false) }
     ).asLiveData()
 
-    val duplicateName: LiveData<String> = _duplicates.map {
-        if (it.size == 1) it[0].name else ""
-    }.asLiveData()
-
-    val duplicateAdd: LiveData<Boolean>
-        get() = _duplicateAdd.asLiveData()
+    val duplicateAdd: LiveData<Boolean> = _duplicateAdd.asLiveData()
 
     val name: LiveData<CharSequence> = merge(
         _computedName,

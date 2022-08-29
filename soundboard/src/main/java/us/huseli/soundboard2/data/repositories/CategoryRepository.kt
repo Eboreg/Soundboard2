@@ -19,12 +19,12 @@ import javax.inject.Singleton
 class CategoryRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val soundDao: SoundDao,
+    private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
     val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
-    val filterTerm = MutableStateFlow("")
     val randomColor: Flow<Int> = categoryDao.flowListUsedColors().map { colorHelper.getRandomColor(exclude = it) }
 
     val firstCategory: Flow<Category> = categories.map {
@@ -33,14 +33,15 @@ class CategoryRepository @Inject constructor(
     }.filterNotNull()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getSoundIds(categoryId: Int): Flow<List<Int>> =
-        filterTerm.flatMapLatest { soundDao.flowListFilteredIds(categoryId, "%$it%") }
+    fun listSoundIdsFiltered(categoryId: Int): Flow<List<Int>> = settingsRepository.soundFilterTerm.flatMapLatest {
+        soundDao.flowListFilteredIdsByCategoryId(categoryId, "%$it%")
+    }
 
-    fun getCategory(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
+    fun get(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
 
-    fun getCategoryDeleteData(categoryId: Int) = categoryDao.flowGetCategoryDeleteData(categoryId)
+    fun getDeleteData(categoryId: Int) = categoryDao.flowGetCategoryDeleteData(categoryId)
 
-    suspend fun toggleCategoryCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
+    suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
 
     suspend fun create(name: CharSequence, backgroundColor: Int) =
         categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder())

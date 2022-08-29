@@ -17,10 +17,10 @@ class CategoryViewModel(
     colorHelper: ColorHelper,
     private val categoryId: Int
 ) : ViewModel() {
-    private val _category: Flow<Category?> = repository.getCategory(categoryId)
+    private val _category: Flow<Category?> = repository.get(categoryId)
     private val _moveButtonsVisible = MutableStateFlow(false)
 
-    val soundIds: LiveData<List<Int>> = repository.getSoundIds(categoryId).asLiveData()
+    val soundIds: LiveData<List<Int>> = repository.listSoundIdsFiltered(categoryId).asLiveData()
     val backgroundColor: LiveData<Int?> = _category.map { it?.backgroundColor }.asLiveData()
     val textColor: LiveData<Int?> = backgroundColor.map { it?.let { colorHelper.getColorOnBackground(it) } }
     val name: LiveData<String?> = _category.map { it?.name }.asLiveData()
@@ -31,7 +31,7 @@ class CategoryViewModel(
     val moveButtonsVisible: LiveData<Boolean>
         get() = _moveButtonsVisible.asLiveData()
 
-    fun toggleCollapsed() = viewModelScope.launch { repository.toggleCategoryCollapsed(categoryId) }
+    fun toggleCollapsed() = viewModelScope.launch { repository.toggleCollapsed(categoryId) }
 
     class Factory(
         private val repository: CategoryRepository,

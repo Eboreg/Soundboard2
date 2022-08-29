@@ -17,7 +17,10 @@ interface SoundDao {
     fun flowListByChecksums(checksums: List<String>): Flow<List<Sound>>
 
     @Query("SELECT id FROM Sound WHERE categoryId = :categoryId AND name LIKE :filterTerm ORDER BY `order`")
-    fun flowListFilteredIds(categoryId: Int, filterTerm: String): Flow<List<Int>>
+    fun flowListFilteredIdsByCategoryId(categoryId: Int, filterTerm: String): Flow<List<Int>>
+
+    @Query("SELECT s.* FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.name LIKE :filterTerm ORDER BY c.`order`, s.`order`")
+    fun flowListFiltered(filterTerm: String): Flow<List<Sound>>
 
     @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
     fun flowGet(soundId: Int): Flow<SoundExtended?>

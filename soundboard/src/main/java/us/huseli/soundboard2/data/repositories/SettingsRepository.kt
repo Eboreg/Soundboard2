@@ -44,8 +44,6 @@ class SettingsRepository @Inject constructor(
         _preferences.getString("repressMode", null)
             ?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
     )
-    private val _selectEnabled = MutableStateFlow<Boolean?>(null)
-    private val _selectedSounds = MutableStateFlow<Set<Int>>(emptySet())
     private val _animationsEnabled = MutableStateFlow(_preferences.getBoolean("animationsEnabled", false))
     private val _watchFolderEnabled =
         MutableStateFlow(_preferences.getBoolean("watchFolderEnabled", false))
@@ -56,6 +54,7 @@ class SettingsRepository @Inject constructor(
     )
     private val _watchFolderTrashMissing =
         MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
+    private val _soundFilterTerm = MutableStateFlow("")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
@@ -64,13 +63,12 @@ class SettingsRepository @Inject constructor(
 
     val repressMode: StateFlow<RepressMode> = _repressMode.asStateFlow()
     val isZoomInPossible: Flow<Boolean> = spanCount.map { it > 1 }
-    val selectEnabled: Flow<Boolean> = _selectEnabled.filterNotNull()
-    val selectedSounds: StateFlow<Set<Int>> = _selectedSounds.asStateFlow()
     val animationsEnabled: StateFlow<Boolean> = _animationsEnabled.asStateFlow()
     val watchFolderEnabled: StateFlow<Boolean> = _watchFolderEnabled.asStateFlow()
     val watchFolderUri: StateFlow<Uri?> = _watchFolderUri.asStateFlow()
     val watchFolderCategoryId: StateFlow<Int?> = _watchFolderCategoryId.asStateFlow()
     val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
+    val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
 
     fun initialize() {
         log("initialize()")
@@ -83,6 +81,8 @@ class SettingsRepository @Inject constructor(
             }
         _screenRatio.value = getScreenRatio()
     }
+
+    /** ZOOMING **************************************************************/
 
     private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
 
@@ -119,22 +119,9 @@ class SettingsRepository @Inject constructor(
 
     fun zoomOut() = zoom(1)
 
+    /** VARIOUS **************************************************************/
+
     fun setRepressMode(value: RepressMode) = _preferences.edit().putString("repressMode", value.name).apply()
-
-    fun enableSelect() { _selectEnabled.value = true }
-
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun disableSelect() {
-        _selectEnabled.value = false
-        _selectedSounds.value = emptySet()
-    }
-
-    fun selectSound(soundId: Int) { _selectedSounds.value += soundId }
-
-    fun unselectSound(soundId: Int) {
-        _selectedSounds.value -= soundId
-        if (_selectedSounds.value.isEmpty()) disableSelect()
-    }
 
     fun enableAnimations() = _preferences.edit().putBoolean("animationsEnabled", true).apply()
 
@@ -151,6 +138,8 @@ class SettingsRepository @Inject constructor(
         else
             _preferences.edit().putBoolean("watchFolderEnabled", enabled).apply()
     }
+
+    fun setSoundFilterTerm(value: String) { _soundFilterTerm.value = value }
 
     /** OVERRIDDEN METHODS ***************************************************/
 

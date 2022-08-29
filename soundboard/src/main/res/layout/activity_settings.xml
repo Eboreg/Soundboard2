@@ -187,7 +187,7 @@
                         android:layout_width="0dp"
                         android:layout_height="48dp"
                         android:checked="@{viewModel.watchFolderTrashMissing}"
-                        android:text="@string/trash_missing_files"
+                        android:text="@string/auto_delete_missing"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/watchFolderCategory"

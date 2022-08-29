@@ -20,7 +20,7 @@ class CategoryEditViewModel @Inject constructor(private val repository: Category
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val category: Flow<Category?> = _categoryId.flatMapLatest {
-        if (it != null) repository.getCategory(it) else emptyFlow()
+        if (it != null) repository.get(it) else emptyFlow()
     }
 
     val sortOrder = MutableLiveData(SoundSorting.Order.ASCENDING)

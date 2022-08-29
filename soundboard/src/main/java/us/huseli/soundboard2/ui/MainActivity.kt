@@ -26,10 +26,7 @@ import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.ui.drawables.RepressModeIconDrawable
-import us.huseli.soundboard2.ui.fragments.CategoryAddFragment
-import us.huseli.soundboard2.ui.fragments.CategoryDeleteFragment
-import us.huseli.soundboard2.ui.fragments.CategoryEditFragment
-import us.huseli.soundboard2.ui.fragments.SoundAddFragment
+import us.huseli.soundboard2.ui.fragments.*
 import us.huseli.soundboard2.viewmodels.AppViewModel
 import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
 import us.huseli.soundboard2.viewmodels.CategoryEditViewModel
@@ -49,6 +46,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val categoryEditViewModel by viewModels<CategoryEditViewModel>()
     private val addSoundLauncher = registerForActivityResult(GetMultipleSounds()) { addSoundsFromUris(it) }
     private val scaleGestureDetector by lazy { ScaleGestureDetector(applicationContext, ScaleListener()) }
+    private var watchFolderEnabled: Boolean = false
+    private var watchFolderTrashMissing: Boolean = false
 
     inner class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
         override fun createIntent(context: Context, input: String): Intent {
@@ -86,8 +85,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         // If we are supposed to watch a folder, now is the time to sync it.
         appViewModel.watchFolderEnabled.observe(this) {
             log("onCreate(): appViewModel.watchFolderEnabled=$it")
+            watchFolderEnabled = it
             if (it) appViewModel.syncWatchFolder()
         }
+
+        appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
 
         initCategoryList()
     }
@@ -153,7 +155,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.actionAddSound -> addSoundLauncher.launch("audio/*")
+            R.id.actionAddSound -> {
+                if (watchFolderEnabled && watchFolderTrashMissing) showInfoDialog(R.string.cannot_add_sounds)
+                else addSoundLauncher.launch("audio/*")
+            }
             R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
             R.id.actionZoomIn -> zoomIn()
             R.id.actionZoomOut -> zoomOut()
@@ -197,6 +202,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         supportFragmentManager
             .beginTransaction()
             .add(fragmentClass, args, fragmentClass.simpleName)
+            .commit()
+    }
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun showInfoDialog(message: Int) {
+        supportFragmentManager
+            .beginTransaction()
+            .add(InfoDialogFragment(message), InfoDialogFragment::class.java.simpleName)
             .commit()
     }
 
@@ -251,7 +264,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 return true
             }
             override fun onQueryTextChange(newText: String?): Boolean {
-                if (newText != null) appViewModel.setFilterTerm(newText)
+                if (newText != null) appViewModel.setSoundFilterTerm(newText)
                 return true
             }
         })

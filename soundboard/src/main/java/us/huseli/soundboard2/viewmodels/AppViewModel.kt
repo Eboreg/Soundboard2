@@ -36,15 +36,16 @@ class AppViewModel @Inject constructor(
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
-    val selectEnabled: LiveData<Boolean> = settingsRepository.selectEnabled.asLiveData()
+    val selectEnabled: LiveData<Boolean> = soundRepository.selectEnabled.asLiveData()
     val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
     val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
+    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
 
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
 
-    fun setFilterTerm(value: String) { categoryRepository.filterTerm.value = value }
+    fun setSoundFilterTerm(value: String) { settingsRepository.setSoundFilterTerm(value) }
 
     fun zoomIn() = settingsRepository.zoomIn()
 

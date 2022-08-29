@@ -100,9 +100,13 @@ class SoundAdapter(
                 // Select is not enabled; enable it and select sound.
                 viewModel.enableSelect()
                 viewModel.select()
-                return true
             }
-            return false
+            else {
+                // Select is enabled; if this sound is not selected, select it
+                // and all between it and the last selected one (if any).
+                viewModel.selectAllFromLastSelected()
+            }
+            return true
         }
 
         override fun onClick(v: View?) {

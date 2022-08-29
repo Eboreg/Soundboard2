@@ -19,7 +19,7 @@ class CategoryDeleteViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _categoryData: Flow<CategoryDeleteData> = _categoryId.flatMapLatest { categoryId ->
-        if (categoryId != null) repository.getCategoryDeleteData(categoryId) else emptyFlow()
+        if (categoryId != null) repository.getDeleteData(categoryId) else emptyFlow()
     }.filterNotNull()
 
     @OptIn(ExperimentalCoroutinesApi::class)
