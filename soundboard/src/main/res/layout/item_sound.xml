@@ -43,7 +43,10 @@
             app:layout_constraintEnd_toEndOf="@+id/soundCardBorder"
             app:layout_constraintStart_toStartOf="@+id/soundCardBorder"
             app:layout_constraintTop_toTopOf="@+id/soundCardBorder"
-            tools:cardBackgroundColor="@color/purple_500" />
+            tools:cardBackgroundColor="@color/purple_500">
+
+
+        </androidx.cardview.widget.CardView>
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="0dp"
@@ -129,7 +132,7 @@
                 android:id="@+id/soundProgressBar"
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="0dp"
-                android:layout_height="2dp"
+                android:layout_height="@dimen/sound_card_corner_radius"
                 android:animateLayoutChanges="true"
                 android:max="100"
                 android:min="0"
@@ -139,7 +142,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 tools:ignore="UnusedAttribute"
-                tools:layout_height="5dp"
                 tools:progress="50"
                 app:progressBackgroundTintColor="@{viewModel.backgroundColor}"
                 app:progressTintColor="@{viewModel.secondaryBackgroundColor}"

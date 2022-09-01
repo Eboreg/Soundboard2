@@ -56,6 +56,10 @@
     <string name="zoom_in">Zoom in</string>
     <string name="zoom_level_percent">Zoom level: %1$d%%</string>
     <string name="zoom_out">Zoom out</string>
+    <string name="select_all">Select all</string>
+    <string name="edit">Edit</string>
+    <string name="no_change">No change</string>
+    <string name="not_changed">(Not changed)</string>
     <plurals name="add_duplicate">
         <item quantity="one">Add duplicate</item>
         <item quantity="other">Add duplicates</item>
@@ -71,6 +75,18 @@
     <plurals name="category_contains_sounds">
         <item quantity="one">This category contains one sound. What do you want to do with it?</item>
         <item quantity="other">This category contains %1$d sounds. What do you want to do with them?</item>
+    </plurals>
+    <plurals name="delete_sounds">
+        <item quantity="one">Delete sound?</item>
+        <item quantity="other">Delete sounds?</item>
+    </plurals>
+    <plurals name="delete_sounds_confirm">
+        <item quantity="one">Do you want to delete &lt;b>%2$s&lt;/b>?</item>
+        <item quantity="other">Do you want to delete the %1$d selected sounds?</item>
+    </plurals>
+    <plurals name="edit_sounds">
+        <item quantity="one">Edit sound</item>
+        <item quantity="other">Edit sounds</item>
     </plurals>
     <plurals name="sound_already_exists">
         <item quantity="one">&lt;b>%2$s&lt;/b> already exists in the database. Do you want to add a duplicate of it?</item>

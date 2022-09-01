@@ -45,20 +45,22 @@ class CategoryEditFragment : BaseCategoryEditFragment<FragmentEditCategoryBindin
         binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 (parent?.getItemAtPosition(position) as? SortParameterItem)?.let {
-                    viewModel.sortParameter.value = it.value
+                    viewModel.setSortParameter(it.value)
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                viewModel.sortParameter.value = SoundSorting.Parameter.UNDEFINED
+                viewModel.setSortParameter(SoundSorting.Parameter.UNDEFINED)
             }
         }
 
         binding.sortOrder.setOnCheckedChangeListener { _, checkedId ->
-            viewModel.sortOrder.value = when(checkedId) {
-                binding.sortOrderDescending.id -> SoundSorting.Order.DESCENDING
-                else -> SoundSorting.Order.ASCENDING
-            }
+            viewModel.setSortOrder(
+                when(checkedId) {
+                    binding.sortOrderDescending.id -> SoundSorting.Order.DESCENDING
+                    else -> SoundSorting.Order.ASCENDING
+                }
+            )
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
@@ -80,16 +82,7 @@ class CategoryEditFragment : BaseCategoryEditFragment<FragmentEditCategoryBindin
         if (catName.trim().isEmpty())
             Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
         else {
-            viewModel.save(
-                catName,
-                SoundSorting(
-                    (binding.sortBy.selectedItem as SortParameterItem).value,
-                    when (binding.sortOrder.checkedRadioButtonId) {
-                        binding.sortOrderDescending.id -> SoundSorting.Order.DESCENDING
-                        else -> SoundSorting.Order.ASCENDING
-                    }
-                )
-            )
+            viewModel.save(catName)
             dismiss()
         }
     }

@@ -12,7 +12,9 @@ concrete values for these named resources."
     <style name="Base.Theme.Soundboard" parent="Theme.MaterialComponents.DayNight">
         <item name="actionBarSize">@dimen/actionbar_height</item>
         <item name="actionBarStyle">@style/Style.Soundboard.Toolbar</item>
+        <item name="actionModeStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
+        <item name="android:actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
         <item name="alertDialogTheme">@style/Theme.Soundboard.MaterialAlertDialog</item>
         <item name="android:dropDownSpinnerStyle">@style/Style.Soundboard.Spinner</item>
         <item name="android:spinnerItemStyle">@style/Style.Soundboard.Spinner.Item</item>
@@ -71,6 +73,8 @@ concrete values for these named resources."
         <!-- We actually do have an actionbar, but we create and style it ourselves -->
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="windowActionBarOverlay">true</item>
+        <item name="windowActionModeOverlay">true</item>
     </style>
 
     <style name="Theme.Soundboard.MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">

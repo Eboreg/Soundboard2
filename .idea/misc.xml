@@ -56,13 +56,16 @@
         <entry key="soundboard/src/main/res/layout/fragment_add_sounds.xml" value="0.31476449275362317" />
         <entry key="soundboard/src/main/res/layout/fragment_category_list.xml" value="0.35625" />
         <entry key="soundboard/src/main/res/layout/fragment_delete_category.xml" value="0.36354166666666665" />
+        <entry key="soundboard/src/main/res/layout/fragment_delete_sounds.xml" value="0.29243266353142366" />
         <entry key="soundboard/src/main/res/layout/fragment_edit_category.xml" value="0.33" />
+        <entry key="soundboard/src/main/res/layout/fragment_edit_sounds.xml" value="0.29243266353142366" />
         <entry key="soundboard/src/main/res/layout/fragment_info_dialog.xml" value="0.29157759726378796" />
         <entry key="soundboard/src/main/res/layout/fragment_soundboard.xml" value="0.29157759726378796" />
         <entry key="soundboard/src/main/res/layout/item_category.xml" value="0.5" />
-        <entry key="soundboard/src/main/res/layout/item_sound.xml" value="0.6622889305816135" />
+        <entry key="soundboard/src/main/res/layout/item_sound.xml" value="0.6257088846880907" />
         <entry key="soundboard/src/main/res/layout/repress_mode_header.xml" value="0.75" />
         <entry key="soundboard/src/main/res/menu/appbar_menu.xml" value="0.35625" />
+        <entry key="soundboard/src/main/res/menu/sound_actionmode_menu.xml" value="0.29157759726378796" />
         <entry key="soundboard/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.3415" />
         <entry key="soundboard/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.3415" />
       </map>

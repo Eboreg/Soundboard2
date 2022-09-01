@@ -40,6 +40,7 @@ class AppViewModel @Inject constructor(
     val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
     val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
     val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
+    val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
 
@@ -50,6 +51,18 @@ class AppViewModel @Inject constructor(
     fun zoomIn() = settingsRepository.zoomIn()
 
     fun zoomOut() = settingsRepository.zoomOut()
+
+    fun selectAllSounds() = viewModelScope.launch {
+        soundRepository.listFiltered().stateIn(viewModelScope).value.forEach { sound ->
+            soundRepository.select(sound.id)
+        }
+    }
+
+    fun unselectAllSounds() = viewModelScope.launch {
+        soundRepository.sounds.stateIn(viewModelScope).value.forEach { sound ->
+            soundRepository.unselect(sound.id)
+        }
+    }
 
     fun syncWatchFolder() = viewModelScope.launch {
         val treeUri = settingsRepository.watchFolderUri.value
@@ -84,12 +97,10 @@ class AppViewModel @Inject constructor(
             if (trashMissing) {
                 // If trashMissing == true, it means that the sounds we got from the watched folder are the ONLY
                 // sounds there should be.
-                soundRepository.sounds.stateIn(viewModelScope).value
+                val sounds = soundRepository.sounds.stateIn(viewModelScope).value
                     .filterNot { sound -> sound.checksum in urisAndChecksums.map { it.second } }
-                    .forEach {
-                        soundRepository.delete(it)
-                        deleted++
-                    }
+                soundRepository.delete(sounds)
+                deleted = sounds.size
             }
 
             if (added > 0 || deleted > 0) _watchFolderSyncResult.send(WatchFolderSyncResult(added, deleted))

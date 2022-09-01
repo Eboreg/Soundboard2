@@ -6,11 +6,11 @@ import androidx.fragment.app.DialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import us.huseli.soundboard2.R
 
-class InfoDialogFragment(private val message: Int) : DialogFragment() {
+class InfoDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return MaterialAlertDialogBuilder(requireContext())
             .setPositiveButton(R.string.ok) { _, _ -> dismiss() }
-            .setMessage(message)
+            .setMessage(savedInstanceState?.getCharSequence("message"))
             .create()
     }
 }

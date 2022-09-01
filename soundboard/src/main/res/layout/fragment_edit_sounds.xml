@@ -6,7 +6,7 @@
     <data>
         <variable
             name="viewModel"
-            type="us.huseli.soundboard2.viewmodels.SoundAddViewModel" />
+            type="us.huseli.soundboard2.viewmodels.SoundEditViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -52,29 +52,63 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/soundName" />
 
-        <SeekBar
-            android:id="@+id/volume"
-            style="@style/Widget.AppCompat.SeekBar"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/volumeSection"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_normal"
-            android:max="100"
-            android:min="0"
-            android:progress="@{viewModel.volume}"
+            android:minHeight="48dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/volumeLabel"
-            tools:ignore="UnusedAttribute" />
+            app:layout_constraintTop_toBottomOf="@+id/volumeLabel">
+
+            <SeekBar
+                android:id="@+id/volume"
+                style="@style/Widget.AppCompat.SeekBar"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="@dimen/margin_normal"
+                android:foregroundGravity="center"
+                android:max="100"
+                android:min="0"
+                android:progress="@{viewModel.volume}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/keepVolume"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:enabled="@{!viewModel.keepVolume}"
+                tools:ignore="UnusedAttribute" />
+
+            <CheckBox
+                android:id="@+id/keepVolume"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:checked="@{viewModel.keepVolume}"
+                android:gravity="center"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/keepVolumeLabel"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/keepVolumeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:gravity="center"
+                android:text="@string/no_change"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:id="@+id/categoryLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_normal"
-            android:text="@string/category"
             android:labelFor="@+id/category"
+            android:text="@string/category"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/volume" />
+            app:layout_constraintTop_toBottomOf="@+id/volumeSection" />
 
         <Spinner
             android:id="@+id/category"
@@ -82,49 +116,11 @@
             android:layout_height="wrap_content"
             android:minHeight="48dp"
             android:selectedItemPosition="@{viewModel.selectedCategoryPosition}"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/categoryLabel"
             tools:ignore="DuplicateSpeakableTextCheck" />
-
-        <LinearLayout
-            android:id="@+id/duplicateBlock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_xlarge"
-            android:orientation="vertical"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/category"
-            app:visible="@{viewModel.hasDuplicates}"
-            tools:visible="true">
-
-            <TextView
-                android:id="@+id/duplicateText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text=""
-                tools:text="2 of the selected sounds already exist in the database. Do you want to add duplicates of them?" />
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/duplicateAdd"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="@{@plurals/add_duplicate(viewModel.duplicateCount ?? 0)}"
-                android:textOff="@string/no"
-                android:textOn="@string/yes"
-                app:switchMinWidth="50sp"
-                app:switchPadding="@dimen/margin_large"
-                android:checked="@{viewModel.duplicateAdd}"
-                tools:text="Add duplicates" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:text="Will add 2 sounds and skip 2."
-                android:text="@{@plurals/add_sound_counts(viewModel.addSoundCount ?? 0, viewModel.addSoundCount, viewModel.skipSoundCount)}" />
-
-        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

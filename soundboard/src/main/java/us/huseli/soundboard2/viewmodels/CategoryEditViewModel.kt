@@ -14,51 +14,54 @@ import javax.inject.Inject
 class CategoryEditViewModel @Inject constructor(private val repository: CategoryRepository) :
     BaseCategoryEditViewModel, ViewModel() {
 
+    private var _sortOrder = SoundSorting.Order.ASCENDING
+    private var _sortParameter = SoundSorting.Parameter.UNDEFINED
+
     private val _categoryId = MutableStateFlow<Int?>(null)
     private val _newBackgroundColor = MutableStateFlow<Int?>(null)
     private val _newName = MutableStateFlow<CharSequence?>(null)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val category: Flow<Category?> = _categoryId.flatMapLatest {
+    private val _category: Flow<Category?> = _categoryId.flatMapLatest {
         if (it != null) repository.get(it) else emptyFlow()
     }
 
-    val sortOrder = MutableLiveData(SoundSorting.Order.ASCENDING)
-    val sortParameter = MutableLiveData(SoundSorting.Parameter.UNDEFINED)
-    val sortOrderAscending: LiveData<Boolean> = sortOrder.map { it == SoundSorting.Order.ASCENDING }
+    val sortOrderAscending = _sortOrder == SoundSorting.Order.ASCENDING
 
     override val backgroundColor: LiveData<Int> = merge(
-        category.mapNotNull { it?.backgroundColor },
+        _category.mapNotNull { it?.backgroundColor },
         _newBackgroundColor.filterNotNull()
     ).asLiveData()
 
     val name: LiveData<CharSequence> = merge(
-        category.mapNotNull { it?.name },
+        _category.mapNotNull { it?.name },
         _newName.filterNotNull()
     ).asLiveData()
 
-    fun setCategoryId(value: Int) {
-        _categoryId.value = value
-    }
-
-    override fun setBackgroundColor(color: Int) {
-        _newBackgroundColor.value = color
-    }
-
-    fun setName(value: CharSequence) {
-        _newName.value = value
-    }
+    override fun setBackgroundColor(color: Int) { _newBackgroundColor.value = color }
+    fun setCategoryId(value: Int) { _categoryId.value = value }
+    fun setName(value: CharSequence) { _newName.value = value }
+    fun setSortOrder(value: SoundSorting.Order) { _sortOrder = value }
+    fun setSortParameter(value: SoundSorting.Parameter) { _sortParameter = value }
 
     fun reset() {
         _newBackgroundColor.value = null
         _newName.value = null
-        sortParameter.value = SoundSorting.Parameter.UNDEFINED
-        sortOrder.value = SoundSorting.Order.ASCENDING
+        _sortParameter = SoundSorting.Parameter.UNDEFINED
+        _sortOrder = SoundSorting.Order.ASCENDING
     }
 
-    fun save(name: CharSequence, soundSorting: SoundSorting) = viewModelScope.launch {
-        _categoryId.value?.let { categoryId ->
-            repository.update(categoryId, name, backgroundColor.value, soundSorting)
+    fun save(name: CharSequence) = viewModelScope.launch {
+        val category = _category.stateIn(viewModelScope).value?.clone(
+            name = name,
+            backgroundColor = _newBackgroundColor.value
+        )
+
+        if (category != null) {
+            val soundSorting = SoundSorting(_sortParameter, _sortOrder)
+            repository.update(category)
+            if (soundSorting.parameter != SoundSorting.Parameter.UNDEFINED)
+                repository.sortSounds(category.id, soundSorting)
         }
     }
 }

@@ -9,6 +9,8 @@ import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ActionMode
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -48,11 +50,38 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val scaleGestureDetector by lazy { ScaleGestureDetector(applicationContext, ScaleListener()) }
     private var watchFolderEnabled: Boolean = false
     private var watchFolderTrashMissing: Boolean = false
+    private var actionMode: ActionMode? = null
+    private val soundActionModeCallback = SoundActionModeCallback()
+    private var soundFilterTerm = ""
 
     inner class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
         override fun createIntent(context: Context, input: String): Intent {
             this@MainActivity.overridePendingTransition(0, 0)
             return super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    inner class SoundActionModeCallback : ActionMode.Callback {
+        override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            mode.menuInflater.inflate(R.menu.sound_actionmode_menu, menu)
+            return true
+        }
+
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+            return false
+        }
+
+        override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            when(item.itemId) {
+                R.id.selectAll -> appViewModel.selectAllSounds()
+                R.id.edit -> showFragment(SoundEditFragment::class.java)
+                R.id.delete -> showFragment(SoundDeleteFragment::class.java)
+            }
+            return true
+        }
+
+        override fun onDestroyActionMode(mode: ActionMode) {
+            appViewModel.unselectAllSounds()
         }
     }
 
@@ -90,6 +119,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
 
         appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
+
+        appViewModel.selectEnabled.observe(this) {
+            if (it) {
+                actionMode = startSupportActionMode(soundActionModeCallback)
+                showSnackbar(R.string.sound_selection_enabled)
+            } else {
+                actionMode?.finish()
+                showSnackbar(R.string.sound_selection_disabled)
+            }
+        }
 
         initCategoryList()
     }
@@ -145,18 +184,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             }
         }
 
-        appViewModel.selectEnabled.observe(this) {
-            if (it) showSnackbar(R.string.sound_selection_enabled)
-            else showSnackbar(R.string.sound_selection_disabled)
-        }
+        appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
 
-        return super.onCreateOptionsMenu(menu)
+        //return super.onCreateOptionsMenu(menu)
+        return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.actionAddSound -> {
-                if (watchFolderEnabled && watchFolderTrashMissing) showInfoDialog(R.string.cannot_add_sounds)
+                if (watchFolderEnabled && watchFolderTrashMissing)
+                    showFragment(InfoDialogFragment::class.java, bundleOf(Pair("message", getText(R.string.cannot_add_sounds))))
                 else addSoundLauncher.launch("audio/*")
             }
             R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
@@ -170,6 +208,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 startActivity(Intent(this, SettingsActivity::class.java))
                 overridePendingTransition(0, 0)
             }
+            else -> return super.onOptionsItemSelected(item)
         }
         return true
     }
@@ -205,14 +244,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             .commit()
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
-    fun showInfoDialog(message: Int) {
-        supportFragmentManager
-            .beginTransaction()
-            .add(InfoDialogFragment(message), InfoDialogFragment::class.java.simpleName)
-            .commit()
-    }
-
     fun showCategoryDeleteFragment(categoryId: Int) {
         categoryDeleteViewModel.setCategoryId(categoryId)
         showFragment(CategoryDeleteFragment::class.java)
@@ -237,7 +268,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     private fun addSoundsFromUris(uris: List<Uri>) {
         /** Used when adding sounds from within app and sharing sounds from other apps */
-        soundAddViewModel.reset()
         lifecycleScope.launch {
             val soundFiles = Functions.extractMetadata(applicationContext, uris)
             soundAddViewModel.setSoundFiles(soundFiles)
@@ -280,6 +310,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 return true
             }
         })
+
+        if (soundFilterTerm.isNotEmpty()) {
+            view.setQuery(soundFilterTerm, false)
+            item.expandActionView()
+        }
+        // if (view.query.isNotEmpty()) item.expandActionView()
     }
 
     fun showSnackbar(text: CharSequence) = Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()

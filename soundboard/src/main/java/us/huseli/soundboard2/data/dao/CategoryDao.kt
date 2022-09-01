@@ -2,6 +2,7 @@ package us.huseli.soundboard2.data.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.CategoryDeleteData
@@ -38,9 +39,9 @@ interface CategoryDao {
     @Query("DELETE FROM Category WHERE id = :categoryId")
     suspend fun delete(categoryId: Int)
 
-    @Query("UPDATE Category SET name = :name, backgroundColor = :backgroundColor WHERE id = :categoryId")
-    suspend fun update(categoryId: Int, name: String, backgroundColor: Int)
+    @Update
+    suspend fun update(category: Category)
 
-    @Query("UPDATE Category SET name = :name WHERE id = :categoryId")
-    suspend fun update(categoryId: Int, name: String)
+    @Update
+    suspend fun update(categories: List<Category>)
 }

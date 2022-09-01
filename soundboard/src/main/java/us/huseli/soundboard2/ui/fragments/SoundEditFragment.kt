@@ -2,8 +2,6 @@ package us.huseli.soundboard2.ui.fragments
 
 import android.app.Dialog
 import android.os.Bundle
-import android.text.Html
-import android.text.TextUtils
 import android.view.View
 import android.widget.AdapterView
 import android.widget.SeekBar
@@ -14,20 +12,23 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
-import us.huseli.soundboard2.databinding.FragmentAddSoundsBinding
+import us.huseli.soundboard2.databinding.FragmentEditSoundsBinding
 import us.huseli.soundboard2.ui.CategorySpinnerAdapter
-import us.huseli.soundboard2.viewmodels.SoundAddViewModel
+import us.huseli.soundboard2.viewmodels.SoundEditViewModel
 
-class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
-    private val viewModel by activityViewModels<SoundAddViewModel>()
+class SoundEditFragment : BaseDialogFragment<FragmentEditSoundsBinding>() {
+    private val viewModel by activityViewModels<SoundEditViewModel>()
     private var multiple = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         viewModel.reset()
-        binding = FragmentAddSoundsBinding.inflate(layoutInflater)
+        binding = FragmentEditSoundsBinding.inflate(layoutInflater)
         binding.viewModel = viewModel
 
-        binding.duplicateAdd.setOnCheckedChangeListener { _, isChecked -> viewModel.setDuplicateAdd(isChecked) }
+        binding.keepVolume.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setKeepVolume(isChecked)
+            binding.volume.isEnabled = !isChecked
+        }
 
         binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -37,20 +38,21 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
-        binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.setSelectedCategoryPosition(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
         binding.soundName.addTextChangedListener {
             if (it != null) viewModel.setName(it)
+        }
+
+        binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                viewModel.setCategoryPosition(position)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setPositiveButton(R.string.save, null)
             .setNegativeButton(R.string.cancel) { _, _ -> dismiss() }
+            .setTitle(resources.getQuantityString(R.plurals.edit_sounds, 1))
             .setView(binding.root)
             .create()
 
@@ -61,44 +63,38 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
         return dialog
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.soundCount.observe(this) {
+            multiple = it > 1
+            dialog?.setTitle(resources.getQuantityString(R.plurals.edit_sounds, it))
+            dialog?.show()
+        }
+
+        viewModel.categories.observe(this) {
+            binding.category.adapter = CategorySpinnerAdapter(requireContext(), it)
+        }
+    }
+
     private fun onPositiveButtonClick() {
         val soundName = binding.soundName.text.toString().trim()
         if (soundName.isEmpty() && !multiple) {
             Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
         }
         else {
-            viewModel.save(soundName, binding.volume.progress, binding.category.selectedItem as Category)
+            viewModel.save(
+                if (!multiple) soundName else null,
+                binding.keepVolume.isChecked,
+                binding.volume.progress,
+                binding.category.selectedItem as Category
+            )
             dismiss()
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        /**
-         * Observe viewModel.categories to set spinner items.
-         * Observe viewModel.multiple to set dialog title.
-         */
-        super.onViewCreated(view, savedInstanceState)
-
-        viewModel.duplicateData.observe(this) {
-            binding.duplicateText.text = Html.fromHtml(
-                resources.getQuantityString(
-                    R.plurals.sound_already_exists,
-                    it.count,
-                    it.count,
-                    TextUtils.htmlEncode(it.name)
-                ),
-                Html.FROM_HTML_MODE_LEGACY
-            )
-        }
-
-        viewModel.categories.observe(this) {
-            binding.category.adapter = CategorySpinnerAdapter(requireContext(), it)
-        }
-
-        viewModel.multiple.observe(this) {
-            multiple = it
-            dialog?.setTitle(resources.getQuantityString(R.plurals.add_sound, if (it) 2 else 1))
-            dialog?.show()
-        }
+    override fun dismiss() {
+        viewModel.reset()
+        super.dismiss()
     }
 }

@@ -47,6 +47,23 @@ Styles are a collection of view attributes; specific to a single type of widget"
         <item name="android:padding">@dimen/margin_large</item>
     </style>
 
+    <style name="Style.Soundboard.TextView" parent="Widget.AppCompat.TextView" />
+
+    <style name="Style.Soundboard.TextView.H1">
+        <item name="android:textSize">@dimen/text_h1</item>
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="Style.Soundboard.TextView.H2">
+        <item name="android:textSize">@dimen/text_h2</item>
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="Style.Soundboard.TextView.H3">
+        <item name="android:textSize">@dimen/text_h3</item>
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
     <style name="Style.Soundboard.Title.Text" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
         <item name="android:textSize">@dimen/title_text</item>
     </style>
@@ -63,25 +80,10 @@ Styles are a collection of view attributes; specific to a single type of widget"
     </style>
     
     <style name="Style.Soundboard.Toolbar.PopupMenu.Overflow" parent="Widget.MaterialComponents.PopupMenu.Overflow">
+        <item name="android:popupEnterTransition">@null</item>
+        <item name="android:popupExitTransition">@null</item>
         <item name="android:overlapAnchor">false</item>
         <item name="overlapAnchor">false</item>
         <item name="android:popupBackground">?attr/colorPrimaryDark</item>
-    </style>
-
-    <style name="Style.Soundboard.TextView" parent="Widget.AppCompat.TextView" />
-
-    <style name="Style.Soundboard.TextView.H1">
-        <item name="android:textSize">@dimen/text_h1</item>
-        <item name="android:textColor">@color/primary_text</item>
-    </style>
-
-    <style name="Style.Soundboard.TextView.H2">
-        <item name="android:textSize">@dimen/text_h2</item>
-        <item name="android:textColor">@color/primary_text</item>
-    </style>
-
-    <style name="Style.Soundboard.TextView.H3">
-        <item name="android:textSize">@dimen/text_h3</item>
-        <item name="android:textColor">@color/primary_text</item>
     </style>
 </resources>

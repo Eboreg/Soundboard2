@@ -9,6 +9,7 @@ import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.data.dao.SoundDao
+import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.helpers.LoggingObject
@@ -29,6 +30,8 @@ class SoundRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun listFiltered(): Flow<List<Sound>> = settingsRepository.soundFilterTerm.flatMapLatest { soundDao.flowListFiltered("%$it%") }
+
+    fun listByIds(soundIds: Collection<Int>): Flow<List<Sound>> = soundDao.flowListByIds(soundIds)
 
     fun listByChecksums(checksums: List<String>): Flow<List<Sound>> = soundDao.flowListByChecksums(checksums)
 
@@ -54,30 +57,42 @@ class SoundRepository @Inject constructor(
     suspend fun create(soundFile: SoundFile, categoryId: Int) =
         create(soundFile, null, Constants.DEFAULT_VOLUME, categoryId, null)
 
-    suspend fun delete(sound: Sound) = soundDao.delete(sound)
+    suspend fun delete(sounds: List<Sound>) = soundDao.delete(sounds)
+
+    suspend fun update(sounds: List<Sound>, name: String?, volume: Int?, category: Category?) {
+        var nextOrder = category?.let { soundDao.getNextOrder(it.id) }
+        val newSounds = sounds.map {
+            it.clone(
+                name = name,
+                volume = volume,
+                categoryId = category?.id,
+                order = if (it.categoryId != category?.id && nextOrder != null) nextOrder++ else null
+            )
+        }
+        soundDao.update(newSounds)
+    }
 
     /** SOUND SELECTION ******************************************************/
 
-    private val _selectedSounds = MutableStateFlow<Set<Int>>(emptySet())
+    private val _selectedSoundIds = MutableStateFlow<Set<Int>>(emptySet())
     private val _selectEnabled = MutableStateFlow<Boolean?>(null)
 
-    val lastSelected: Flow<Int?> = _selectedSounds.map { it.lastOrNull() }
+    val lastSelectedId: Flow<Int?> = _selectedSoundIds.map { it.lastOrNull() }
     val selectEnabled: Flow<Boolean> = _selectEnabled.filterNotNull()
-    val selectedSounds: StateFlow<Set<Int>> = _selectedSounds.asStateFlow()
+    val selectedSoundIds: StateFlow<Set<Int>> = _selectedSoundIds.asStateFlow()
 
     fun enableSelect() { _selectEnabled.value = true }
 
     @Suppress("MemberVisibilityCanBePrivate")
     fun disableSelect() {
         _selectEnabled.value = false
-        _selectedSounds.value = emptySet()
+        _selectedSoundIds.value = emptySet()
     }
 
-    fun selectSound(soundId: Int) { _selectedSounds.value += soundId }
+    fun select(soundId: Int) { _selectedSoundIds.value += soundId }
 
-    fun unselectSound(soundId: Int) {
-        _selectedSounds.value -= soundId
-        if (_selectedSounds.value.isEmpty()) disableSelect()
+    fun unselect(soundId: Int) {
+        _selectedSoundIds.value -= soundId
+        if (_selectedSoundIds.value.isEmpty()) disableSelect()
     }
-
 }

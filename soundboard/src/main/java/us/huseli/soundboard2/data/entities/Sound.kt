@@ -66,6 +66,29 @@ open class Sound(
         }
     }
 
+    fun clone(
+        categoryId: Int? = null,
+        name: String? = null,
+        uri: Uri? = null,
+        order: Int? = null,
+        duration: Long? = null,
+        checksum: String? = null,
+        volume: Int? = null,
+        added: Date? = null,
+        trashed: Boolean? = null
+    ) = Sound(
+        this.id,
+        categoryId ?: this.categoryId,
+        name ?: this.name,
+        uri ?: this.uri,
+        order ?: this.order,
+        duration ?: this.duration,
+        checksum ?: this.checksum,
+        volume ?: this.volume,
+        added ?: this.added,
+        trashed ?: this.trashed
+    )
+
     override fun equals(other: Any?) = other is Sound && other.id == id
 
     override fun hashCode() = id

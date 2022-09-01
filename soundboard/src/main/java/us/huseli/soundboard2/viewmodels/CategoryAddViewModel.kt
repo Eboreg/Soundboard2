@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.helpers.LoggingObject
@@ -17,35 +15,28 @@ import javax.inject.Inject
 class CategoryAddViewModel @Inject constructor(private val categoryRepository: CategoryRepository) :
     BaseCategoryEditViewModel, LoggingObject, ViewModel() {
 
-    private val _name = MutableStateFlow<CharSequence>("")
+    private var _name: CharSequence = ""
     private val _selectedBackgroundColor = MutableStateFlow<Int?>(null)
-
-    override val backgroundColor: LiveData<Int> = merge(
+    private val _backgroundColor: Flow<Int> = merge(
         categoryRepository.randomColor,
         _selectedBackgroundColor.filterNotNull()
-    ).asLiveData()
+    )
 
-    val name: LiveData<CharSequence>
-        get() = _name.asLiveData()
+    val name: CharSequence
+        get() = _name
 
-    fun setName(value: CharSequence) {
-        _name.value = value
-    }
+    override val backgroundColor: LiveData<Int> = _backgroundColor.asLiveData()
+    override fun setBackgroundColor(color: Int) { _selectedBackgroundColor.value = color }
 
-    override fun setBackgroundColor(color: Int) {
-        log("setBackgroundColor(): value=$color")
-        _selectedBackgroundColor.value = color
-    }
+    fun setName(value: CharSequence) { _name = value }
 
     fun reset() = viewModelScope.launch {
-        _name.value = ""
-        categoryRepository.randomColor.collect { setBackgroundColor(it) }
+        _name = ""
+        _selectedBackgroundColor.value = null
     }
 
     fun save() = viewModelScope.launch {
-        val backgroundColor = backgroundColor.value
-        val name = _name.value
-        log("save(): name=$name, backgroundColor=$backgroundColor")
-        if (backgroundColor != null && name != "") categoryRepository.create(name, backgroundColor)
+        val backgroundColor = _backgroundColor.stateIn(viewModelScope).value
+        if (_name != "") categoryRepository.create(_name, backgroundColor)
     }
 }

@@ -9,6 +9,7 @@ import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
+import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
@@ -63,26 +64,21 @@ class CategoryRepository @Inject constructor(
         }
         else {
             val nextOrder = soundDao.getNextOrder(moveSoundsTo)
-            sounds.forEachIndexed { idx, sound ->
-                log("delete(): categoryId=$categoryId, moveSoundsTo=$moveSoundsTo, idx=$idx, sound=$sound, nextOrder=$nextOrder")
-                soundDao.move(sound.id, moveSoundsTo, nextOrder + idx)
+            val newSounds = sounds.mapIndexed { index, sound ->
+                sound.clone(categoryId = moveSoundsTo, order = nextOrder + index)
             }
+            soundDao.update(newSounds)
         }
         categoryDao.delete(categoryId)
     }
 
-    suspend fun update(
-        categoryId: Int,
-        name: CharSequence,
-        backgroundColor: Int?,
-        soundSorting: SoundSorting
-    ) {
-        if (backgroundColor != null) categoryDao.update(categoryId, name.toString(), backgroundColor)
-        else categoryDao.update(categoryId, name.toString())
+    suspend fun update(category: Category) = categoryDao.update(category)
 
-        if (soundSorting.parameter != SoundSorting.Parameter.UNDEFINED) {
-            soundDao.sortWithinCategory(categoryId, soundSorting)
-        }
+    suspend fun sortSounds(categoryId: Int, soundSorting: SoundSorting) {
+        val sounds = soundDao.listByCategory(categoryId)
+            .sortedWith(Sound.Comparator(soundSorting))
+            .mapIndexed { index, sound -> sound.clone(order = index) }
+        soundDao.update(sounds)
     }
 
     suspend fun createDefault() = create("Dëfäult", randomColor.first())
