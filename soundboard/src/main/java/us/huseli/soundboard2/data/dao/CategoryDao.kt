@@ -28,10 +28,10 @@ interface CategoryDao {
     suspend fun getNextOrder(): Int
 
     @Query("""
-        INSERT INTO Category (name, backgroundColor, `order`, collapsed, autoImportCategory)
-        VALUES (:name, :backgroundColor, :order, :collapsed, :autoImportCategory)
+        INSERT INTO Category (name, backgroundColor, `order`, collapsed)
+        VALUES (:name, :backgroundColor, :order, :collapsed)
     """)
-    suspend fun create(name: String, backgroundColor: Int, order: Int, collapsed: Boolean = false, autoImportCategory: Boolean = false)
+    suspend fun create(name: String, backgroundColor: Int, order: Int, collapsed: Boolean = false)
 
     @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)

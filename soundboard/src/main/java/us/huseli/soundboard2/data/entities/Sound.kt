@@ -21,7 +21,7 @@ import java.util.*
 )
 open class Sound(
     @PrimaryKey(autoGenerate = true) open val id: Int,
-    open val categoryId: Int?,
+    open val categoryId: Int,
     open val name: String,
     open val uri: Uri,
     open val order: Int,
@@ -29,7 +29,6 @@ open class Sound(
     open val checksum: String,
     open val volume: Int,
     open val added: Date,
-    open val trashed: Boolean,
 ) {
     class Comparator(private val sorting: SoundSorting) : java.util.Comparator<Sound> {
         override fun compare(o1: Sound?, o2: Sound?): Int {
@@ -75,7 +74,6 @@ open class Sound(
         checksum: String? = null,
         volume: Int? = null,
         added: Date? = null,
-        trashed: Boolean? = null
     ) = Sound(
         this.id,
         categoryId ?: this.categoryId,
@@ -86,7 +84,6 @@ open class Sound(
         checksum ?: this.checksum,
         volume ?: this.volume,
         added ?: this.added,
-        trashed ?: this.trashed
     )
 
     override fun equals(other: Any?) = other is Sound && other.id == id

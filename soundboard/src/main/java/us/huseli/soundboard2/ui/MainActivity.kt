@@ -121,13 +121,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
 
         appViewModel.selectEnabled.observe(this) {
-            if (it) {
-                actionMode = startSupportActionMode(soundActionModeCallback)
-                showSnackbar(R.string.sound_selection_enabled)
-            } else {
-                actionMode?.finish()
-                showSnackbar(R.string.sound_selection_disabled)
-            }
+            if (it) actionMode = startSupportActionMode(soundActionModeCallback) else actionMode?.finish()
         }
 
         initCategoryList()

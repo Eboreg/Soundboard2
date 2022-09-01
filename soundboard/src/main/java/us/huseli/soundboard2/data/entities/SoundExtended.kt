@@ -6,7 +6,7 @@ import java.util.*
 
 data class SoundExtended(
     override val id: Int,
-    override val categoryId: Int?,
+    override val categoryId: Int,
     override val name: String,
     override val uri: Uri,
     override val order: Int,
@@ -14,6 +14,5 @@ data class SoundExtended(
     override val checksum: String,
     override val volume: Int,
     override val added: Date,
-    override val trashed: Boolean,
-    @ColorInt val backgroundColor: Int?,
-) : Sound(id, categoryId, name, uri, order, duration, checksum, volume, added, trashed)
+    @ColorInt val backgroundColor: Int,
+) : Sound(id, categoryId, name, uri, order, duration, checksum, volume, added)

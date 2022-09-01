@@ -44,8 +44,8 @@ interface SoundDao {
 
     @Query(
         """
-        INSERT INTO Sound (name, uri, duration, checksum, categoryId, `order`, volume, added, trashed)
-        VALUES (:name, :uri, :duration, :checksum, :categoryId, :order, :volume, :added, :trashed)
+        INSERT INTO Sound (name, uri, duration, checksum, categoryId, `order`, volume, added)
+        VALUES (:name, :uri, :duration, :checksum, :categoryId, :order, :volume, :added)
     """
     )
     suspend fun create(
@@ -55,9 +55,8 @@ interface SoundDao {
         checksum: String,
         volume: Int,
         added: Date,
-        trashed: Boolean = false,
-        categoryId: Int? = null,
-        order: Int? = null,
+        categoryId: Int,
+        order: Int,
     )
 
     @Delete

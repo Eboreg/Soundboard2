@@ -11,21 +11,18 @@ data class Category(
     @ColorInt val backgroundColor: Int,
     val order: Int,
     val collapsed: Boolean = false,
-    val autoImportCategory: Boolean = false,
 ) {
     fun clone(
         name: CharSequence? = null,
         backgroundColor: Int? = null,
         order: Int? = null,
         collapsed: Boolean? = null,
-        autoImportCategory: Boolean? = null
     ) = Category(
         this.id,
         name?.toString() ?: this.name,
         backgroundColor ?: this.backgroundColor,
         order ?: this.order,
-        collapsed ?: this.collapsed,
-        autoImportCategory ?: this.autoImportCategory
+        collapsed ?: this.collapsed
     )
 
     override fun toString() = name

@@ -49,8 +49,8 @@ class SoundRepository @Inject constructor(
             soundFile.checksum,
             volume,
             Date(),
-            categoryId = categoryId,
-            order = soundDao.getNextOrder(categoryId)
+            categoryId,
+            soundDao.getNextOrder(categoryId)
         )
     }
 
