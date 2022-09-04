@@ -40,7 +40,6 @@
     <string name="select_colour">Select colour</string>
     <string name="select_folder">Select folder</string>
     <string name="settings">Sëttings</string>
-    <string name="sort_by">Sort by</string>
     <string name="sound_selection_disabled">Sound selection is disabled.</string>
     <string name="sound_selection_enabled">Sound selection is enabled.</string>
     <string name="stop">Stop</string>
@@ -60,6 +59,7 @@
     <string name="edit">Edit</string>
     <string name="no_change">No change</string>
     <string name="not_changed">(Not changed)</string>
+    <string name="sort_sounds_by">Sort sounds by</string>
     <plurals name="add_duplicate">
         <item quantity="one">Add duplicate</item>
         <item quantity="other">Add duplicates</item>

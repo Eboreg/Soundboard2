@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.CategoryDeleteData
 import us.huseli.soundboard2.data.entities.Sound
+import us.huseli.soundboard2.helpers.SoundSorting
 
 @Dao
 interface CategoryDao {
@@ -32,10 +33,10 @@ interface CategoryDao {
     suspend fun getNextOrder(): Int
 
     @Query("""
-        INSERT INTO Category (name, backgroundColor, `order`, collapsed)
-        VALUES (:name, :backgroundColor, :order, :collapsed)
+        INSERT INTO Category (name, backgroundColor, `order`, soundSorting)
+        VALUES (:name, :backgroundColor, :order, :soundSorting)
     """)
-    suspend fun create(name: String, backgroundColor: Int, order: Int, collapsed: Boolean = false)
+    suspend fun create(name: String, backgroundColor: Int, order: Int, soundSorting: SoundSorting)
 
     @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)

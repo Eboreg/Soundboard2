@@ -1,5 +1,7 @@
 package us.huseli.soundboard2.helpers
 
+import android.content.Context
+import us.huseli.soundboard2.R
 import kotlin.math.absoluteValue
 
 class SoundSorting(val parameter: Parameter, val order: Order) {
@@ -19,10 +21,21 @@ class SoundSorting(val parameter: Parameter, val order: Order) {
         return "${parameter.name} / ${order.name}"
     }
 
+    class SortParameterItem(val value: Parameter, private val label: String) {
+        override fun toString() = label
+    }
+
     companion object {
         fun fromInt(value: Int) = SoundSorting(
             Parameter.values().firstOrNull { it.value == value.absoluteValue } ?: Parameter.CUSTOM,
             if (value < 0) Order.DESCENDING else Order.ASCENDING
+        )
+
+        fun getSortParameterItems(context: Context) = listOf(
+            SortParameterItem(Parameter.CUSTOM, context.getString(R.string.custom)),
+            SortParameterItem(Parameter.NAME, context.getString(R.string.name)),
+            SortParameterItem(Parameter.DURATION, context.getString(R.string.duration)),
+            SortParameterItem(Parameter.TIME_ADDED, context.getString(R.string.creation_time)),
         )
     }
 }

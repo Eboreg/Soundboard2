@@ -20,32 +20,23 @@ import us.huseli.soundboard2.viewmodels.CategoryEditViewModel
 @AndroidEntryPoint
 class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEditCategoryBinding>() {
     override val viewModel by activityViewModels<CategoryEditViewModel>()
-    private val sortParameterItems = listOf(
-        SortParameterItem(SoundSorting.Parameter.CUSTOM, R.string.custom),
-        SortParameterItem(SoundSorting.Parameter.NAME, R.string.name),
-        SortParameterItem(SoundSorting.Parameter.DURATION, R.string.duration),
-        SortParameterItem(SoundSorting.Parameter.TIME_ADDED, R.string.creation_time),
-    )
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         viewModel.reset()
         binding = FragmentEditCategoryBinding.inflate(layoutInflater)
         binding.viewModel = viewModel
         binding.selectColorButton.setOnClickListener { onSelectColorClick() }
-
-        binding.categoryName.addTextChangedListener {
-            if (it != null) viewModel.setName(it)
-        }
+        binding.categoryName.addTextChangedListener { if (it != null) viewModel.setName(it) }
 
         binding.sortBy.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            sortParameterItems
+            SoundSorting.getSortParameterItems(requireContext())
         )
 
         binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                (parent?.getItemAtPosition(position) as? SortParameterItem)?.let {
+                (parent?.getItemAtPosition(position) as? SoundSorting.SortParameterItem)?.let {
                     log("sortBy.onItemSelectedListener.onItemSelected: item=$it")
                     viewModel.setSortParameter(it.value)
                 }
@@ -94,7 +85,8 @@ class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEdi
             )
             // Set sortBy spinner to appropriate value
             binding.sortBy.setSelection(
-                sortParameterItems.indexOfFirst { item -> item.value == it.parameter }
+                SoundSorting.getSortParameterItems(requireContext())
+                    .indexOfFirst { item -> item.value == it.parameter }
             )
         }
     }
@@ -107,9 +99,5 @@ class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEdi
             viewModel.save(catName)
             dismiss()
         }
-    }
-
-    inner class SortParameterItem(val value: SoundSorting.Parameter, private val stringRes: Int) {
-        override fun toString() = getString(stringRes)
     }
 }
