@@ -44,7 +44,7 @@
     <string name="sound_selection_disabled">Sound selection is disabled.</string>
     <string name="sound_selection_enabled">Sound selection is enabled.</string>
     <string name="stop">Stop</string>
-    <string name="unchanged">(Unchanged)</string>
+    <string name="custom">Custom</string>
     <string name="undo">Undo</string>
     <string name="volume">Volume</string>
     <string name="watch_folder">Watch folder</string>

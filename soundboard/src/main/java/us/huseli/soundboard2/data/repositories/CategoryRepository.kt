@@ -25,7 +25,7 @@ class CategoryRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
-    val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
+    // val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
     val randomColor: Flow<Int> = categoryDao.flowListUsedColors().map { colorHelper.getRandomColor(exclude = it) }
 
     val firstCategory: Flow<Category> = categories.map {
@@ -34,8 +34,10 @@ class CategoryRepository @Inject constructor(
     }.filterNotNull()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun listSoundIdsFiltered(categoryId: Int): Flow<List<Int>> = settingsRepository.soundFilterTerm.flatMapLatest {
-        soundDao.flowListFilteredIdsByCategoryId(categoryId, "%$it%")
+    fun listSoundIdsFiltered(category: Category): Flow<List<Int>> = settingsRepository.soundFilterTerm.flatMapLatest { filterTerm ->
+        soundDao.flowListFilteredByCategoryId(category.id, "%$filterTerm%").map { sounds ->
+            sounds.sortedWith(Sound.Comparator(category.soundSorting)).map { it.id }
+        }
     }
 
     fun get(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)

@@ -6,6 +6,7 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.CategoryDeleteData
+import us.huseli.soundboard2.data.entities.Sound
 
 @Dao
 interface CategoryDao {
@@ -14,6 +15,9 @@ interface CategoryDao {
 
     @Query("SELECT id FROM Category")
     fun flowListIds(): Flow<List<Int>>
+
+    @Query("SELECT * FROM Category c JOIN Sound s ON c.id = s.categoryId ORDER BY c.`order`, s.`order`")
+    fun flowListWithSounds(): Flow<Map<Category, List<Sound>>>
 
     @Query("SELECT * FROM Category WHERE id = :categoryId")
     fun flowGet(categoryId: Int): Flow<Category?>

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Enums.RepressMode
+import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,7 +21,8 @@ import kotlin.math.roundToInt
 
 @Singleton
 class SettingsRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    categoryDao: CategoryDao
 ) : LoggingObject, SharedPreferences.OnSharedPreferenceChangeListener {
     private inner class SpanCounts(factor: Int) {
         val portrait = when (_orientation.value) {
@@ -52,6 +54,10 @@ class SettingsRepository @Inject constructor(
     private val _watchFolderCategoryId = MutableStateFlow(
         _preferences.getInt("watchFolderCategoryId", -1).let { if (it == -1) null else it }
     )
+    private val _watchFolderCategory = combine(_watchFolderCategoryId, categoryDao.flowList()) { categoryId, categories ->
+        if (categoryId != null) categories.firstOrNull { it.id == categoryId }
+            ?: kotlin.run { _preferences.edit().putInt("watchFolderCategoryId", -1).apply() }
+    }
     private val _watchFolderTrashMissing =
         MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
     private val _soundFilterTerm = MutableStateFlow("")

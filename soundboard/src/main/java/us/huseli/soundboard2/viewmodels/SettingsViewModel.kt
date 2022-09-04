@@ -26,7 +26,6 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     categoryRepository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val _categories = categoryRepository.categories
     private val _newWatchFolderUri = MutableStateFlow<Uri?>(null)
     private val _watchFolderString =
         MutableStateFlow(settingsRepository.watchFolderUri.value?.path?.split(":")?.last())
@@ -35,7 +34,7 @@ class SettingsViewModel @Inject constructor(
 
     private val _watchFolderCategoryPosition = combine(
         settingsRepository.watchFolderCategoryId,
-        _categories
+        categoryRepository.categories
     ) { categoryId, categories ->
         val result = categories.indexOfFirst { it.id == categoryId }
         log("_watchFolderCategoryPosition: categoryId=$categoryId, categories=$categories, result=$result")
@@ -49,7 +48,7 @@ class SettingsViewModel @Inject constructor(
     val watchFolderString: LiveData<String> =
         _watchFolderString.map { it ?: context.getString(R.string.not_set) }.asLiveData()
     val watchFolderCategoryPosition: LiveData<Int> = _watchFolderCategoryPosition.map { it }.asLiveData()
-    val categories: LiveData<List<Category>> = _categories.asLiveData()
+    val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
 
     fun setAnimationsEnabled(value: Boolean) {
         _animationsEnabled.value = value

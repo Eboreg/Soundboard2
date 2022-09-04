@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,7 +33,8 @@ class AppViewModel @Inject constructor(
 
     private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
 
-    val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
+    val categoryIds: LiveData<List<Int>> =
+        categoryRepository.categories.map { categories -> categories.map { it.id } }.asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()

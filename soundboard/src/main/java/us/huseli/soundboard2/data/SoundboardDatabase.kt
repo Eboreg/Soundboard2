@@ -16,7 +16,7 @@ import us.huseli.soundboard2.data.entities.Sound
 @Database(
     entities = [Sound::class, Category::class],
     exportSchema = false,
-    version = 3,
+    version = 4,
 )
 @TypeConverters(Converters::class)
 abstract class SoundboardDatabase : RoomDatabase() {
@@ -71,11 +71,18 @@ abstract class SoundboardDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE Category ADD COLUMN soundSorting INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
         fun build(context: Context): SoundboardDatabase {
             return Room
                 .databaseBuilder(context.applicationContext, SoundboardDatabase::class.java, Constants.DATABASE_NAME)
                 .addMigrations(MIGRATION_1_2)
                 .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_3_4)
                 .build()
         }
     }

@@ -13,14 +13,15 @@ import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.databinding.FragmentEditCategoryBinding
+import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
 import us.huseli.soundboard2.viewmodels.CategoryEditViewModel
 
 @AndroidEntryPoint
-class CategoryEditFragment : BaseCategoryEditFragment<FragmentEditCategoryBinding>() {
+class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEditCategoryBinding>() {
     override val viewModel by activityViewModels<CategoryEditViewModel>()
     private val sortParameterItems = listOf(
-        SortParameterItem(SoundSorting.Parameter.UNDEFINED, R.string.unchanged),
+        SortParameterItem(SoundSorting.Parameter.CUSTOM, R.string.custom),
         SortParameterItem(SoundSorting.Parameter.NAME, R.string.name),
         SortParameterItem(SoundSorting.Parameter.DURATION, R.string.duration),
         SortParameterItem(SoundSorting.Parameter.TIME_ADDED, R.string.creation_time),
@@ -45,18 +46,20 @@ class CategoryEditFragment : BaseCategoryEditFragment<FragmentEditCategoryBindin
         binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 (parent?.getItemAtPosition(position) as? SortParameterItem)?.let {
+                    log("sortBy.onItemSelectedListener.onItemSelected: item=$it")
                     viewModel.setSortParameter(it.value)
                 }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                viewModel.setSortParameter(SoundSorting.Parameter.UNDEFINED)
+                log("sortBy.onItemSelectedListener.onNothingSelected")
+                viewModel.setSortParameter(SoundSorting.Parameter.CUSTOM)
             }
         }
 
         binding.sortOrder.setOnCheckedChangeListener { _, checkedId ->
             viewModel.setSortOrder(
-                when(checkedId) {
+                when (checkedId) {
                     binding.sortOrderDescending.id -> SoundSorting.Order.DESCENDING
                     else -> SoundSorting.Order.ASCENDING
                 }
@@ -75,6 +78,25 @@ class CategoryEditFragment : BaseCategoryEditFragment<FragmentEditCategoryBindin
         }
 
         return dialog
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        viewModel.soundSorting.observe(this) {
+            // Check appropriate 'order' radio button
+            log("viewModel.soundSorting.observe: it=$it")
+            binding.sortOrder.check(
+                when (it.order) {
+                    SoundSorting.Order.DESCENDING -> binding.sortOrderDescending.id
+                    else -> binding.sortOrderAscending.id
+                }
+            )
+            // Set sortBy spinner to appropriate value
+            binding.sortBy.setSelection(
+                sortParameterItems.indexOfFirst { item -> item.value == it.parameter }
+            )
+        }
     }
 
     private fun onPositiveButtonClick() {

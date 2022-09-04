@@ -205,11 +205,6 @@ class MediaPlayerWrapper :
      *
      * Successful invoke of this method in a valid state transfers the object to the Initialized state. Calling this
      * method in an invalid state throws an IllegalStateException.
-     *
-     * @throws IllegalStateException
-     * @throws IOException
-     * @throws IllegalArgumentException
-     * @throws SecurityException
      */
     private fun setDataSource(path: String?) {
         try {
@@ -217,7 +212,7 @@ class MediaPlayerWrapper :
             changeState(State.INITIALIZED)
         } catch (e: Exception) {
             _error.value = "Error on setDataSource(): $e"
-            throw e
+            // throw e
         }
     }
 
@@ -240,7 +235,7 @@ class MediaPlayerWrapper :
         } catch (e: Exception) {
             // if (e is IllegalStateException) _state.value = State.ERROR
             _error.value = "Error on start(): $e"
-            throw e
+            // throw e
         }
     }
 

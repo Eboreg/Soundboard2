@@ -2,17 +2,18 @@ package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
+import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.helpers.ColorHelper
 
 class CategoryViewModel(
     private val repository: CategoryRepository,
+    soundRepository: SoundRepository,
     settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
     private val categoryId: Int
@@ -20,7 +21,13 @@ class CategoryViewModel(
     private val _category: Flow<Category?> = repository.get(categoryId)
     private val _moveButtonsVisible = MutableStateFlow(false)
 
-    val soundIds: LiveData<List<Int>> = repository.listSoundIdsFiltered(categoryId).asLiveData()
+    // @OptIn(ExperimentalCoroutinesApi::class)
+    // val soundIds: LiveData<List<Int>> =
+    //     _category.filterNotNull().flatMapLatest { repository.listSoundIdsFiltered(it) }.asLiveData()
+    // val _soundIds: LiveData<List<Int>> = repository.listSoundIdsFiltered(categoryId).asLiveData()
+    val soundIds: LiveData<List<Int>> =
+        soundRepository.sounds.map { sounds -> sounds.filter { it.categoryId == categoryId }.map { it.id } }.asLiveData()
+
     val backgroundColor: LiveData<Int?> = _category.map { it?.backgroundColor }.asLiveData()
     val textColor: LiveData<Int?> = backgroundColor.map { it?.let { colorHelper.getColorOnBackground(it) } }
     val name: LiveData<String?> = _category.map { it?.name }.asLiveData()
@@ -35,6 +42,7 @@ class CategoryViewModel(
 
     class Factory(
         private val repository: CategoryRepository,
+        private val soundRepository: SoundRepository,
         private val settingsRepository: SettingsRepository,
         private val colorHelper: ColorHelper,
         private val categoryId: Int
@@ -42,7 +50,7 @@ class CategoryViewModel(
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             if (modelClass.isAssignableFrom(CategoryViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return CategoryViewModel(repository, settingsRepository, colorHelper, categoryId) as T
+                return CategoryViewModel(repository, soundRepository, settingsRepository, colorHelper, categoryId) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

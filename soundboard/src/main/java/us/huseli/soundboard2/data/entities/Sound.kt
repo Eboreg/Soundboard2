@@ -39,27 +39,25 @@ open class Sound(
             else if (s1 == null) -1
             else if (s2 == null) 1
             else when(sorting.parameter) {
-                SoundSorting.Parameter.UNDEFINED -> 0
-                SoundSorting.Parameter.NAME -> {
-                    when {
-                        s1.name.lowercase(Locale.getDefault()) > s2.name.lowercase(Locale.getDefault()) -> 1
-                        s1.name.equals(s2.name, ignoreCase = true) -> 0
-                        else -> -1
-                    }
+                SoundSorting.Parameter.CUSTOM -> when {
+                    s1.order > s2.order -> 1
+                    s1.order == s2.order -> 0
+                    else -> -1
                 }
-                SoundSorting.Parameter.DURATION -> {
-                    when {
-                        s1.duration > s2.duration -> 1
-                        s1.duration == s2.duration -> 0
-                        else -> -1
-                    }
+                SoundSorting.Parameter.NAME -> when {
+                    s1.name.lowercase(Locale.getDefault()) > s2.name.lowercase(Locale.getDefault()) -> 1
+                    s1.name.equals(s2.name, ignoreCase = true) -> 0
+                    else -> -1
                 }
-                SoundSorting.Parameter.TIME_ADDED -> {
-                    when {
-                        s1.added > s2.added -> 1
-                        s1.added == s2.added -> 0
-                        else -> -1
-                    }
+                SoundSorting.Parameter.DURATION -> when {
+                    s1.duration > s2.duration -> 1
+                    s1.duration == s2.duration -> 0
+                    else -> -1
+                }
+                SoundSorting.Parameter.TIME_ADDED -> when {
+                    s1.added > s2.added -> 1
+                    s1.added == s2.added -> 0
+                    else -> -1
                 }
             }
         }
@@ -89,9 +87,4 @@ open class Sound(
     override fun equals(other: Any?) = other is Sound && other.id == id
 
     override fun hashCode() = id
-
-    override fun toString(): String {
-        val hashCode = Integer.toHexString(System.identityHashCode(this))
-        return "Sound $hashCode <id=$id, name=$name, categoryId=$categoryId>"
-    }
 }
