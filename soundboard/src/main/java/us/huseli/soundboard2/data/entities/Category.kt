@@ -28,7 +28,4 @@ data class Category(
         collapsed ?: this.collapsed,
         soundSorting ?: this.soundSorting
     )
-
-    override fun equals(other: Any?) = other is Category && other.id == id
-    override fun hashCode() = id
 }

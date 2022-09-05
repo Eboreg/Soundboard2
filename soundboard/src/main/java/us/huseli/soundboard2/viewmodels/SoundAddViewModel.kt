@@ -15,6 +15,7 @@ import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
+import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.helpers.LoggingObject
@@ -42,19 +43,17 @@ class SoundAddViewModel @Inject constructor(
         else context.getString(R.string.multiple_sounds_selected, it.size)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _duplicates: Flow<List<Sound>> = _soundFiles.flatMapLatest { files ->
-        val checksums = files.map { it.checksum }
-        soundRepository.listByChecksums(checksums)
-    }
+    private val _duplicates: Flow<List<SoundExtended>> =
+        combine(_soundFiles, soundRepository.allSounds) { files, sounds ->
+            val checksums = files.map { it.checksum }
+            sounds.filter { it.checksum in checksums }
+        }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _soundCounts: Flow<SoundCounts> = _duplicateAdd.flatMapLatest { add ->
-        _soundFiles.combine(_duplicates) { files: List<SoundFile>, dupes: List<Sound> ->
+    private val _soundCounts: Flow<SoundCounts> =
+        combine(_duplicateAdd, _soundFiles, _duplicates) { add, files, dupes ->
             if (add) SoundCounts(files.size, 0)
             else SoundCounts(files.size - dupes.size, dupes.size)
         }
-    }
 
     val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
     val duplicateCount: LiveData<Int?> = _duplicates.map { it.size }.asLiveData()
@@ -109,7 +108,7 @@ class SoundAddViewModel @Inject constructor(
             val duplicate = _duplicates.stateIn(viewModelScope).value.firstOrNull { it.checksum == soundFile.checksum }
             if (_duplicateAdd.value || duplicate == null) {
                 log("save(): soundFile=$soundFile, duplicate=$duplicate, volume=$volume, category=$category")
-                soundRepository.create(soundFile, if (!_multiple.stateIn(viewModelScope).value) name else null, volume, category.id, duplicate)
+                soundRepository.create(soundFile, if (!_multiple.stateIn(viewModelScope).value) name else null, volume, category, duplicate)
             }
         }
     }

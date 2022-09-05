@@ -1,8 +1,10 @@
 package us.huseli.soundboard2.viewmodels
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
@@ -15,18 +17,13 @@ import javax.inject.Inject
 class CategoryEditViewModel @Inject constructor(private val repository: CategoryRepository) :
     LoggingObject, BaseCategoryEditViewModel, ViewModel() {
 
+    private var _category = MutableStateFlow<Category?>(null)
     private val _sortOrder = MutableStateFlow<SoundSorting.Order?>(null)
     private val _sortParameter = MutableStateFlow<SoundSorting.Parameter?>(null)
-    private val _categoryId = MutableStateFlow<Int?>(null)
     private val _newBackgroundColor = MutableStateFlow<Int?>(null)
     private val _newName = MutableStateFlow<CharSequence?>(null)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _category: Flow<Category?> = _categoryId.flatMapLatest {
-        if (it != null) repository.get(it) else emptyFlow()
-    }
-
-    private val _soundSorting = merge(
+    private val __soundSorting = merge(
         _category.mapNotNull {
             log("_soundSorting: _category=$it, _category.soundSorting=${it?.soundSorting}")
             it?.soundSorting
@@ -36,6 +33,12 @@ class CategoryEditViewModel @Inject constructor(private val repository: Category
             SoundSorting(parameter, order)
         }
     )
+
+    private val _soundSorting = combine(_category.filterNotNull(), _sortParameter, _sortOrder) { category, parameter, order ->
+        log("_soundSorting: _sortOrder=$order, _sortParameter=$parameter, _category=$category")
+        if (parameter != null && order != null) SoundSorting(parameter, order)
+        else category.soundSorting
+    }
 
     val sortOrderAscending: LiveData<Boolean> =
         _soundSorting.map { it.order == SoundSorting.Order.ASCENDING }.asLiveData()
@@ -56,8 +59,9 @@ class CategoryEditViewModel @Inject constructor(private val repository: Category
         _newBackgroundColor.value = color
     }
 
-    fun setCategoryId(value: Int) {
-        _categoryId.value = value
+    fun setCategory(value: Category) {
+        // _categoryId.value = value
+        _category.value = value
     }
 
     fun setName(value: CharSequence) {

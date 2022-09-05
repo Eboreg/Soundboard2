@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
+import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
@@ -24,7 +25,7 @@ class SoundAdapter(
     private val soundRepository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     private val colorHelper: ColorHelper
-) : ListAdapter<Int, SoundAdapter.ViewHolder>(Comparator()) {
+) : ListAdapter<SoundExtended, SoundAdapter.ViewHolder>(Comparator()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
         ViewHolder(ItemSoundBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
@@ -33,7 +34,12 @@ class SoundAdapter(
     }
 
     class ViewHolder(private val binding: ItemSoundBinding) :
-        LoggingObject, View.OnTouchListener, View.OnLongClickListener, View.OnClickListener, RecyclerView.ViewHolder(binding.root) {
+        LoggingObject,
+        View.OnTouchListener,
+        View.OnLongClickListener,
+        View.OnClickListener,
+        RecyclerView.ViewHolder(binding.root)
+    {
         private lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
@@ -43,7 +49,7 @@ class SoundAdapter(
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
         internal fun bind(
-            soundId: Int,
+            sound: SoundExtended,
             activity: MainActivity,
             repository: SoundRepository,
             settingsRepository: SettingsRepository,
@@ -51,8 +57,8 @@ class SoundAdapter(
         ) {
             val viewModel = ViewModelProvider(
                 activity.viewModelStore,
-                SoundViewModel.Factory(repository, settingsRepository, colorHelper, soundId)
-            )[soundId.toString(), SoundViewModel::class.java]
+                SoundViewModel.Factory(repository, settingsRepository, colorHelper, sound)
+            )[sound.id.toString(), SoundViewModel::class.java]
 
             this.viewModel = viewModel
             binding.lifecycleOwner = activity
@@ -100,8 +106,7 @@ class SoundAdapter(
                 // Select is not enabled; enable it and select sound.
                 viewModel.enableSelect()
                 viewModel.select()
-            }
-            else {
+            } else {
                 // Select is enabled; if this sound is not selected, select it
                 // and all between it and the last selected one (if any).
                 viewModel.selectAllFromLastSelected()
@@ -114,8 +119,7 @@ class SoundAdapter(
             if (selectEnabled) {
                 if (selected) viewModel.unselect()
                 else viewModel.select()
-            }
-            else {
+            } else {
                 when (playState) {
                     PlayState.IDLE -> viewModel.play()
                     PlayState.STARTED -> when (repressMode) {
@@ -133,8 +137,15 @@ class SoundAdapter(
         }
     }
 
-    class Comparator: DiffUtil.ItemCallback<Int>() {
-        override fun areItemsTheSame(oldItem: Int, newItem: Int) = oldItem == newItem
-        override fun areContentsTheSame(oldItem: Int, newItem: Int) = oldItem == newItem
+    class Comparator : DiffUtil.ItemCallback<SoundExtended>() {
+        override fun areItemsTheSame(oldItem: SoundExtended, newItem: SoundExtended) = oldItem.id == newItem.id
+        override fun areContentsTheSame(oldItem: SoundExtended, newItem: SoundExtended) = (
+                oldItem.backgroundColor == newItem.backgroundColor &&
+                        oldItem.volume == newItem.volume &&
+                        oldItem.duration == newItem.duration &&
+                        oldItem.order == newItem.order &&
+                        oldItem.uri == newItem.uri &&
+                        oldItem.name == newItem.name
+                )
     }
 }

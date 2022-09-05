@@ -3,7 +3,6 @@ package us.huseli.soundboard2.data.repositories
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Functions
@@ -14,7 +13,7 @@ import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.helpers.LoggingObject
-import java.sql.Date
+import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,7 +22,7 @@ import javax.inject.Singleton
 class SoundRepository @Inject constructor(
     private val soundDao: SoundDao,
     categoryDao: CategoryDao,
-    private val settingsRepository: SettingsRepository,
+    settingsRepository: SettingsRepository,
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     /**
@@ -41,42 +40,36 @@ class SoundRepository @Inject constructor(
      * Flattened list of sounds with backgroundColor, sorted by their
      * respective categories' soundSorting.
      */
-    val sounds: Flow<List<SoundExtended>> = _categoriesWithSounds.map {
+    val allSounds: Flow<List<SoundExtended>> = soundDao.flowMap().map {
+        it.toMutableMap().apply {
+            replaceAll { soundSorting, sounds -> sounds.sortedWith(Sound.Comparator(soundSorting)) }
+        }.values.flatten()
+    }
+
+    val _allSounds: Flow<List<SoundExtended>> = _categoriesWithSounds.map {
         it.flatMap { entry -> entry.value.map { sound -> SoundExtended.create(sound, entry.key) } }
             .also { sounds -> log("sounds: $sounds") }
     }
 
-    val soundsFiltered: Flow<List<SoundExtended>> =
-        combine(settingsRepository.soundFilterTerm, sounds) { term, sounds -> sounds.filter { term in it.name } }
+    val allSoundsFiltered: Flow<List<SoundExtended>> =
+        combine(settingsRepository.soundFilterTerm, allSounds) { term, sounds ->
+            sounds.filter { it.name.contains(term) }
+        }
 
-    // val sounds: Flow<List<SoundExtended>> = soundDao.flowList()
-    // val allChecksums: Flow<List<String>> = soundDao.flowListAllChecksums()
-    val allChecksums: Flow<List<String>> = sounds.map { list -> list.map { it.checksum } }
+    val allChecksums: Flow<List<String>> = allSounds.map { list -> list.map { it.checksum } }
 
-    // fun get(soundId: Int): Flow<SoundExtended?> = soundDao.flowGet(soundId)
-    fun get(soundId: Int): Flow<SoundExtended?> = sounds.map { list -> list.firstOrNull { it.id == soundId } }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun listFiltered(): Flow<List<SoundExtended>> =
-        settingsRepository.soundFilterTerm.flatMapLatest { soundDao.flowListFiltered("%$it%") }
-
-    // fun listByIds(soundIds: Collection<Int>): Flow<List<Sound>> = soundDao.flowListByIds(soundIds)
-    fun listByIds(soundIds: Collection<Int>): Flow<List<Sound>> =
-        sounds.map { list -> list.filter { it.id in soundIds } }
-
-    // fun listByChecksums(checksums: List<String>): Flow<List<Sound>> = soundDao.flowListByChecksums(checksums)
-    fun listByChecksums(checksums: List<String>): Flow<List<Sound>> =
-        sounds.map { list -> list.filter { it.checksum in checksums } }
+    fun listByCategoryFiltered(category: Category): Flow<List<SoundExtended>> =
+        allSoundsFiltered.map { sounds -> sounds.filter { it.categoryId == category.id } }
 
     /** If duplicate == null: copy file to local storage. Otherwise: just use same path as duplicate. */
-    suspend fun create(soundFile: SoundFile, explicitName: String?, volume: Int, categoryId: Int, duplicate: Sound?) {
+    suspend fun create(soundFile: SoundFile, explicitName: String?, volume: Int, category: Category, duplicate: Sound?) {
         val uri = duplicate?.uri ?: Functions.copyFileToLocal(context, soundFile).toUri()
         val name = explicitName ?: duplicate?.name ?: soundFile.name
 
         log("""
             create(): name=$name, uri=$uri, soundFile.duration=${soundFile.duration}, 
-            soundFile.checksum=${soundFile.checksum}, volume=$volume, Date()=${Date()}, categoryId=$categoryId,
-            soundDao.getNextOrder(categoryId)=${soundDao.getNextOrder(categoryId)}
+            soundFile.checksum=${soundFile.checksum}, volume=$volume, Date()=${Date()}, category=$category,
+            soundDao.getNextOrder(categoryId)=${soundDao.getNextOrder(category.id)}
         """.trimIndent())
 
         soundDao.create(
@@ -86,13 +79,13 @@ class SoundRepository @Inject constructor(
             soundFile.checksum,
             volume,
             Date(),
-            categoryId,
-            soundDao.getNextOrder(categoryId)
+            category.id,
+            soundDao.getNextOrder(category.id)
         )
     }
 
-    suspend fun create(soundFile: SoundFile, categoryId: Int) =
-        create(soundFile, null, Constants.DEFAULT_VOLUME, categoryId, null)
+    suspend fun create(soundFile: SoundFile, category: Category) =
+        create(soundFile, null, Constants.DEFAULT_VOLUME, category, null)
 
     suspend fun delete(sounds: List<Sound>) = soundDao.delete(sounds)
 
@@ -112,11 +105,12 @@ class SoundRepository @Inject constructor(
     /** SOUND SELECTION ******************************************************/
 
     private val _selectedSoundIds = MutableStateFlow<Set<Int>>(emptySet())
+    private val _selectedSounds = MutableStateFlow<Set<Sound>>(emptySet())
     private val _selectEnabled = MutableStateFlow<Boolean?>(null)
 
-    val lastSelectedId: Flow<Int?> = _selectedSoundIds.map { it.lastOrNull() }
+    val lastSelected: Flow<Sound?> = _selectedSounds.map { it.lastOrNull() }
     val selectEnabled: Flow<Boolean> = _selectEnabled.filterNotNull()
-    val selectedSoundIds: StateFlow<Set<Int>> = _selectedSoundIds.asStateFlow()
+    val selectedSounds: Flow<List<Sound>> = _selectedSounds.map { it.toList() }
 
     fun enableSelect() { _selectEnabled.value = true }
 
@@ -124,12 +118,13 @@ class SoundRepository @Inject constructor(
     fun disableSelect() {
         _selectEnabled.value = false
         _selectedSoundIds.value = emptySet()
+        _selectedSounds.value = emptySet()
     }
 
-    fun select(soundId: Int) { _selectedSoundIds.value += soundId }
+    fun select(sound: Sound) { _selectedSounds.value += sound }
 
-    fun unselect(soundId: Int) {
-        _selectedSoundIds.value -= soundId
-        if (_selectedSoundIds.value.isEmpty()) disableSelect()
+    fun unselect(sound: Sound) {
+        _selectedSounds.value -= sound
+        if (_selectedSounds.value.isEmpty()) disableSelect()
     }
 }

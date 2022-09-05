@@ -25,27 +25,25 @@ class SoundEditViewModel @Inject constructor(
     private var _keepVolume = true
     private var _selectedCategoryPosition = 0
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _sounds = repository.selectedSoundIds.flatMapLatest { soundIds -> repository.listByIds(soundIds) }
     private val _categories = categoryRepository.categories.map { listOf(_emptyCategory) + it }
 
     private val _name = MutableStateFlow<CharSequence>("")
     private val _volume = MutableStateFlow<Int?>(null)
 
-    private val _originalName: Flow<String> = _sounds.map {
+    private val _originalName: Flow<String> = repository.selectedSounds.map {
         if (it.size == 1) it[0].name
         else context.getString(R.string.multiple_sounds_selected, it.size)
     }
     
-    private val _originalVolume: Flow<Int> = _sounds.map { sounds ->
+    private val _originalVolume: Flow<Int> = repository.selectedSounds.map { sounds ->
         val volumes = sounds.map { it.volume }.toSet()
         if (volumes.size == 1) volumes.first()
         else Constants.DEFAULT_VOLUME
     }
 
     val categories = _categories.asLiveData()
-    val nameIsEditable: LiveData<Boolean> = _sounds.map { it.size == 1 }.asLiveData()
-    val soundCount: LiveData<Int> = _sounds.map { it.size }.asLiveData()
+    val nameIsEditable: LiveData<Boolean> = repository.selectedSounds.map { it.size == 1 }.asLiveData()
+    val soundCount: LiveData<Int> = repository.selectedSounds.map { it.size }.asLiveData()
 
     val name: LiveData<CharSequence> = merge(_originalName, _name.filter { it != "" } ).asLiveData()
     val volume: LiveData<Int> = merge(_originalVolume, _volume.filterNotNull()).asLiveData()
@@ -62,7 +60,7 @@ class SoundEditViewModel @Inject constructor(
     fun setCategoryPosition(value: Int) { _selectedCategoryPosition = value }
 
     fun save(name: String?, keepVolume: Boolean, volume: Int, category: Category) = viewModelScope.launch {
-        val sounds = _sounds.stateIn(viewModelScope).value
+        val sounds = repository.selectedSounds.stateIn(viewModelScope).value
         repository.update(
             sounds,
             name,

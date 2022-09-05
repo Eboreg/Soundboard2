@@ -21,6 +21,7 @@ import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
+import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
@@ -238,13 +239,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             .commit()
     }
 
-    fun showCategoryDeleteFragment(categoryId: Int) {
-        categoryDeleteViewModel.setCategoryId(categoryId)
+    fun showCategoryDeleteFragment(category: Category) {
+        categoryDeleteViewModel.setCategory(category)
         showFragment(CategoryDeleteFragment::class.java)
     }
 
-    fun showCategoryEditFragment(categoryId: Int) {
-        categoryEditViewModel.setCategoryId(categoryId)
+    fun showCategoryEditFragment(category: Category) {
+        categoryEditViewModel.setCategory(category)
         showFragment(CategoryEditFragment::class.java)
     }
 
@@ -273,7 +274,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         val adapter = CategoryAdapter(this, categoryRepository, soundRepository, settingsRepository, colorHelper)
         binding.categoryList.adapter = adapter
         binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
-        appViewModel.categoryIds.observe(this) {
+        appViewModel.categories.observe(this) {
             adapter.submitList(it)
             if (it.isEmpty()) appViewModel.createDefaultCategory()
         }

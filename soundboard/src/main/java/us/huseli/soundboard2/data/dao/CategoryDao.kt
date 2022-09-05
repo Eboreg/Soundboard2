@@ -1,11 +1,8 @@
 package us.huseli.soundboard2.data.dao
 
-import androidx.room.Dao
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
-import us.huseli.soundboard2.data.entities.CategoryDeleteData
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.helpers.SoundSorting
 
@@ -14,20 +11,17 @@ interface CategoryDao {
     @Query("SELECT * FROM Category")
     fun flowList(): Flow<List<Category>>
 
-    @Query("SELECT id FROM Category")
-    fun flowListIds(): Flow<List<Int>>
+    @Query("SELECT * FROM Category WHERE id = :categoryId")
+    fun flowGet(categoryId: Int): Flow<Category?>
 
     @Query("SELECT * FROM Category c JOIN Sound s ON c.id = s.categoryId ORDER BY c.`order`, s.`order`")
     fun flowListWithSounds(): Flow<Map<Category, List<Sound>>>
 
-    @Query("SELECT * FROM Category WHERE id = :categoryId")
-    fun flowGet(categoryId: Int): Flow<Category?>
-
     @Query("SELECT DISTINCT backgroundColor FROM Category")
     fun flowListUsedColors(): Flow<List<Int>>
 
-    @Query("SELECT c.name, COUNT(s.id) as soundCount FROM Category c LEFT JOIN Sound s ON s.categoryId = c.id WHERE c.id = :categoryId")
-    fun flowGetCategoryDeleteData(categoryId: Int): Flow<CategoryDeleteData?>
+    @Query("SELECT COUNT(*) FROM Sound WHERE categoryId = :categoryId")
+    fun flowGetSoundCount(categoryId: Int): Flow<Int>
 
     @Query("SELECT COALESCE(MAX(`order`), -1) + 1 FROM Category")
     suspend fun getNextOrder(): Int
@@ -41,8 +35,8 @@ interface CategoryDao {
     @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)
 
-    @Query("DELETE FROM Category WHERE id = :categoryId")
-    suspend fun delete(categoryId: Int)
+    @Delete
+    suspend fun delete(category: Category)
 
     @Update
     suspend fun update(category: Category)

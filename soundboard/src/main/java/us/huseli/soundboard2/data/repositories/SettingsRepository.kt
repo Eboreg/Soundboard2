@@ -12,6 +12,7 @@ import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.dao.CategoryDao
+import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,10 +55,6 @@ class SettingsRepository @Inject constructor(
     private val _watchFolderCategoryId = MutableStateFlow(
         _preferences.getInt("watchFolderCategoryId", -1).let { if (it == -1) null else it }
     )
-    private val _watchFolderCategory = combine(_watchFolderCategoryId, categoryDao.flowList()) { categoryId, categories ->
-        if (categoryId != null) categories.firstOrNull { it.id == categoryId }
-            ?: kotlin.run { _preferences.edit().putInt("watchFolderCategoryId", -1).apply() }
-    }
     private val _watchFolderTrashMissing =
         MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
     private val _soundFilterTerm = MutableStateFlow("")
@@ -73,6 +70,10 @@ class SettingsRepository @Inject constructor(
     val watchFolderEnabled: StateFlow<Boolean> = _watchFolderEnabled.asStateFlow()
     val watchFolderUri: StateFlow<Uri?> = _watchFolderUri.asStateFlow()
     val watchFolderCategoryId: StateFlow<Int?> = _watchFolderCategoryId.asStateFlow()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val watchFolderCategory: Flow<Category?> = _watchFolderCategoryId.flatMapLatest { categoryId ->
+        categoryId?.let { categoryDao.flowGet(it) } ?: emptyFlow()
+    }
     val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
     val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
 

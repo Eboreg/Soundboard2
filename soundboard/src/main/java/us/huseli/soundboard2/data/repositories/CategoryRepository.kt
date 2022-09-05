@@ -3,13 +3,14 @@ package us.huseli.soundboard2.data.repositories
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
-import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
@@ -20,12 +21,10 @@ import javax.inject.Singleton
 class CategoryRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val soundDao: SoundDao,
-    private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
-    // val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
     val randomColor: Flow<Int> = categoryDao.flowListUsedColors().map { colorHelper.getRandomColor(exclude = it) }
 
     val firstCategory: Flow<Category> = categories.map {
@@ -33,28 +32,19 @@ class CategoryRepository @Inject constructor(
         it.firstOrNull()
     }.filterNotNull()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun listSoundIdsFiltered(category: Category): Flow<List<Int>> = settingsRepository.soundFilterTerm.flatMapLatest { filterTerm ->
-        soundDao.flowListFilteredByCategoryId(category.id, "%$filterTerm%").map { sounds ->
-            sounds.sortedWith(Sound.Comparator(category.soundSorting)).map { it.id }
-        }
-    }
+    fun getSoundCount(category: Category) = categoryDao.flowGetSoundCount(category.id)
 
-    fun get(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
-
-    fun getDeleteData(categoryId: Int) = categoryDao.flowGetCategoryDeleteData(categoryId)
-
-    suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
+    suspend fun toggleCollapsed(category: Category) = categoryDao.toggleCollapsed(category.id)
 
     suspend fun create(name: CharSequence, backgroundColor: Int, soundSorting: SoundSorting) =
         categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder(), soundSorting)
 
-    suspend fun delete(categoryId: Int, moveSoundsTo: Int?) {
-        val sounds = soundDao.listByCategory(categoryId)
+    suspend fun delete(category: Category, moveSoundsTo: Int?) {
+        val sounds = soundDao.listByCategoryId(category.id)
 
         if (moveSoundsTo == null) {
             val duplicateUris = soundDao.listByChecksums(sounds.map { it.checksum })
-                .filter { it.categoryId != categoryId }
+                .filter { it.categoryId != category.id }
                 .map { it.uri }
                 .toSet()
             val urisToDelete = sounds.map { it.uri }.subtract(duplicateUris)
@@ -62,7 +52,7 @@ class CategoryRepository @Inject constructor(
             context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE)
                 ?.listFiles()
                 ?.forEach { if (urisToDelete.contains(it.toUri())) it.delete() }
-            soundDao.deleteByCategory(categoryId)
+            soundDao.deleteByCategoryId(category.id)
         }
         else {
             val nextOrder = soundDao.getNextOrder(moveSoundsTo)
@@ -71,17 +61,10 @@ class CategoryRepository @Inject constructor(
             }
             soundDao.update(newSounds)
         }
-        categoryDao.delete(categoryId)
+        categoryDao.delete(category)
     }
 
     suspend fun update(category: Category) = categoryDao.update(category)
-
-    suspend fun sortSounds(categoryId: Int, soundSorting: SoundSorting) {
-        val sounds = soundDao.listByCategory(categoryId)
-            .sortedWith(Sound.Comparator(soundSorting))
-            .mapIndexed { index, sound -> sound.clone(order = index) }
-        soundDao.update(sounds)
-    }
 
     suspend fun createDefault() = create(
         "Dëfäult",

@@ -63,6 +63,10 @@ open class Sound(
         }
     }
 
+    override fun equals(other: Any?) = other is Sound && other.id == id
+
+    override fun hashCode() = id
+
     fun clone(
         categoryId: Int? = null,
         name: String? = null,
@@ -83,8 +87,4 @@ open class Sound(
         volume ?: this.volume,
         added ?: this.added,
     )
-
-    override fun equals(other: Any?) = other is Sound && other.id == id
-
-    override fun hashCode() = id
 }

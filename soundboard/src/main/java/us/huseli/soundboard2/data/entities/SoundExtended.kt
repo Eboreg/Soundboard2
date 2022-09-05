@@ -16,7 +16,7 @@ data class SoundExtended(
     override val volume: Int,
     override val added: Date,
     @ColorInt val backgroundColor: Int,
-    val soundSorting: SoundSorting
+    // val soundSorting: SoundSorting
 ) : Sound(id, categoryId, name, uri, order, duration, checksum, volume, added) {
     companion object {
         fun create(sound: Sound, category: Category): SoundExtended = SoundExtended(
@@ -30,7 +30,7 @@ data class SoundExtended(
             sound.volume,
             sound.added,
             category.backgroundColor,
-            category.soundSorting
+//             category.soundSorting
         )
     }
 }

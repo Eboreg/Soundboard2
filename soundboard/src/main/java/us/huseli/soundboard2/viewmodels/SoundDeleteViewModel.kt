@@ -17,15 +17,12 @@ import javax.inject.Inject
 class SoundDeleteViewModel @Inject constructor(private val repository: SoundRepository) : ViewModel() {
     data class SoundDeleteData(val count: Int, val name: String)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _sounds = repository.selectedSoundIds.flatMapLatest { soundIds -> repository.listByIds(soundIds) }
-
-    val soundData: LiveData<SoundDeleteData> = _sounds.map {
+    val soundData: LiveData<SoundDeleteData> = repository.selectedSounds.map {
         SoundDeleteData(it.size, if (it.size == 1) it[0].name else "")
     }.asLiveData()
 
     fun delete() = viewModelScope.launch {
-        repository.delete(_sounds.stateIn(viewModelScope).value)
+        repository.delete(repository.selectedSounds.stateIn(viewModelScope).value)
         repository.disableSelect()
     }
 }

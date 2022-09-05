@@ -9,12 +9,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Functions
+import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
@@ -33,8 +33,7 @@ class AppViewModel @Inject constructor(
 
     private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
 
-    val categoryIds: LiveData<List<Int>> =
-        categoryRepository.categories.map { categories -> categories.map { it.id } }.asLiveData()
+    val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
@@ -55,14 +54,14 @@ class AppViewModel @Inject constructor(
     fun zoomOut() = settingsRepository.zoomOut()
 
     fun selectAllSounds() = viewModelScope.launch {
-        soundRepository.listFiltered().stateIn(viewModelScope).value.forEach { sound ->
-            soundRepository.select(sound.id)
+        soundRepository.allSoundsFiltered.stateIn(viewModelScope).value.forEach { sound ->
+            soundRepository.select(sound)
         }
     }
 
     fun unselectAllSounds() = viewModelScope.launch {
-        soundRepository.sounds.stateIn(viewModelScope).value.forEach { sound ->
-            soundRepository.unselect(sound.id)
+        soundRepository.allSounds.stateIn(viewModelScope).value.forEach { sound ->
+            soundRepository.unselect(sound)
         }
     }
 
@@ -74,9 +73,9 @@ class AppViewModel @Inject constructor(
 
         if (treeUri != null) {
             // TODO: Does this work when there are no categories?
-            val categoryId =
-                settingsRepository.watchFolderCategoryId.value ?:
-                categoryRepository.firstCategory.stateIn(viewModelScope).value.id
+            val category =
+                settingsRepository.watchFolderCategory.stateIn(viewModelScope).value ?:
+                categoryRepository.firstCategory.stateIn(viewModelScope).value
             val trashMissing = settingsRepository.watchFolderTrashMissing.value
             val fileUris = DocumentFile.fromTreeUri(context, treeUri)
                 ?.listFiles()
@@ -91,7 +90,7 @@ class AppViewModel @Inject constructor(
             urisAndChecksums.forEach {
                 if (!soundRepository.allChecksums.stateIn(viewModelScope).value.contains(it.second)) {
                     val soundFile = Functions.extractMetadata(context, it.first, it.second)
-                    soundRepository.create(soundFile, categoryId)
+                    soundRepository.create(soundFile, category)
                     added++
                 }
             }
@@ -99,7 +98,7 @@ class AppViewModel @Inject constructor(
             if (trashMissing) {
                 // If trashMissing == true, it means that the sounds we got from the watched folder are the ONLY
                 // sounds there should be.
-                val sounds = soundRepository.sounds.stateIn(viewModelScope).value
+                val sounds = soundRepository.allSounds.stateIn(viewModelScope).value
                     .filterNot { sound -> sound.checksum in urisAndChecksums.map { it.second } }
                 soundRepository.delete(sounds)
                 deleted = sounds.size

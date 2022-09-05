@@ -4,7 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Enums.PlayState
 
-class SoundPlayer : LoggingObject {
+class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
     private val _player = MediaPlayerWrapper()
     private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
     private var _path: String? = null
@@ -64,6 +64,8 @@ class SoundPlayer : LoggingObject {
             mp.reset()
             true
         }
+        if (path != null) setPath(path)
+        if (volume != null) setVolume(volume)
         // _player.setOnCompletionListener { mp -> mp.reset() }
     }
 
@@ -109,6 +111,7 @@ class SoundPlayer : LoggingObject {
         }
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun setPath(path: String?) {
         if (path != _path) {
             _path = path
@@ -116,6 +119,7 @@ class SoundPlayer : LoggingObject {
         }
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
     fun setVolume(volume: Float) {
         if (volume != _volume) {
             _volume = volume
