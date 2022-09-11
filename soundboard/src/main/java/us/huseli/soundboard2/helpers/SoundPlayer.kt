@@ -4,33 +4,26 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Enums.PlayState
 
-class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
+class SoundPlayer(path: String? = null, volume: Int? = null) : LoggingObject {
     private val _player = MediaPlayerWrapper()
     private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
     private var _path: String? = null
-    private var _volume: Float? = null
+    private var _volume: Int? = null
 
     // This SHOULD produce a flow of State arrays, with one array entry for
     // each of the current _parallelPlayers. So a new array will be emitted
     // whenever any of those players change state.
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _parallelPlayerStates: Flow<Array<MediaPlayerWrapper.State>> = _parallelPlayers.flatMapLatest { players ->
-        // log("_parallelPlayerStates: players=$players")
-        combine(players.map {
-            // log("_parallelPlayerStates.flows: it=$it")
-            it.state
-        }) {
-            // log("_parallelPlayerStates.transform: it=$it")
+        combine(players.map { it.state }) {
             it
         }.onStart {
-            // log("_parallelPlayerStates.onStart: will emit empty array")
             emit(emptyArray())
         }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _parallelPlayerPositions: Flow<Array<Int?>> = _parallelPlayers.flatMapLatest { players ->
-        // log("_parallelPlayerPositions: players=$players")
         combine(players.map { it.currentPosition }) { it }.onStart { emit(emptyArray()) }
     }
 
@@ -39,12 +32,11 @@ class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
     private val _playerStates = combine(_player.state, _parallelPlayerStates) { a, b -> b + a }
 
     val state = _playerStates.map { states ->
-        // log("state: states=${states.map { it.name }}")
-        // If any player is STARTED, state is STARTED
+        // If any player is STARTED, state is STARTED:
         if (states.contains(MediaPlayerWrapper.State.STARTED)) PlayState.STARTED
-        // If any player is PAUSED, state is PAUSED
+        // If any player is PAUSED, state is PAUSED:
         else if (states.contains(MediaPlayerWrapper.State.PAUSED)) PlayState.PAUSED
-        // Otherwise, state is IDLE
+        // Otherwise, state is IDLE:
         else PlayState.IDLE
     }
 
@@ -55,18 +47,13 @@ class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
     )
 
     val currentPosition = combine(_player.currentPosition, _parallelPlayerPositions) { position, parallelPositions ->
-        // log("currentPosition: position=$position, parallelPositions=$parallelPositions")
         (parallelPositions + position).filterNotNull().maxOrNull()
     }
 
     init {
-        _player.setOnErrorListener { mp, _, _ ->
-            mp.reset()
-            true
-        }
+        _player.setOnErrorListener { it.reset() }
         if (path != null) setPath(path)
         if (volume != null) setVolume(volume)
-        // _player.setOnCompletionListener { mp -> mp.reset() }
     }
 
     private fun _startParallel() {
@@ -89,7 +76,7 @@ class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
         try {
             _parallelPlayers.value += player
             player.setPath(_path)
-            player.setVolume(_volume)
+            _volume?.let { player.setVolume(it.toFloat() / 100) }
             player.play()
         } catch (e: Exception) {
             player.release()
@@ -101,14 +88,7 @@ class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
         if (_player.state.value == MediaPlayerWrapper.State.STARTED) {
             if (allowParallel) _startParallel()
         }
-        else {
-            try {
-                _player.play()
-            } catch (e: Exception) {
-                _player.reset()
-                // mutex.unlock()
-            }
-        }
+        else _player.play()
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
@@ -120,38 +100,28 @@ class SoundPlayer(path: String? = null, volume: Float? = null) : LoggingObject {
     }
 
     @Suppress("MemberVisibilityCanBePrivate")
-    fun setVolume(volume: Float) {
+    fun setVolume(volume: Int) {
         if (volume != _volume) {
             _volume = volume
-            _player.setVolume(volume)
+            _player.setVolume(volume.toFloat() / 100)
         }
     }
 
     fun pause() {
-        _parallelPlayers.value.forEach {
-            it.stop()
-            // _parallelPlayers.value -= it
-        }
+        _parallelPlayers.value.forEach { it.stop() }
         _player.pause()
     }
 
     fun restart() {
         /** If playing, stop and start again from the beginning. Otherwise, just start. */
-        _parallelPlayers.value.forEach {
-            it.stop()
-            // _parallelPlayers.value -= it
-        }
+        _parallelPlayers.value.forEach { it.stop() }
         if (_player.isPlaying) _player.stop()
         start()
     }
 
     fun stop(onlyPaused: Boolean = false) {
-        _parallelPlayers.value.forEach {
-            if (!onlyPaused || !it.isPlaying) {
-                it.stop()
-                // _parallelPlayers.value -= it
-            }
-        }
+        log("stop: _path=$_path, onlyPaused=$onlyPaused, _player.isPaused=${_player.isPaused}, _player.isPlaying=${_player.isPlaying}")
+        _parallelPlayers.value.forEach { if (!onlyPaused || !it.isPlaying) it.stop() }
         if (_player.isPaused || (!onlyPaused && _player.isPlaying)) _player.stop()
     }
 

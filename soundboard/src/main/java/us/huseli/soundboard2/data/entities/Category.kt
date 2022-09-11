@@ -28,4 +28,6 @@ data class Category(
         collapsed ?: this.collapsed,
         soundSorting ?: this.soundSorting
     )
+
+    override fun toString() = name
 }

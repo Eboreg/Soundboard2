@@ -3,10 +3,7 @@ package us.huseli.soundboard2.ui.fragments
 import android.app.Dialog
 import android.os.Bundle
 import android.view.View
-import android.widget.AdapterView
-import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -21,32 +18,11 @@ class SoundEditFragment : BaseDialogFragment<FragmentEditSoundsBinding>() {
     private var multiple = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        viewModel.reset()
         binding = FragmentEditSoundsBinding.inflate(layoutInflater)
         binding.viewModel = viewModel
 
         binding.keepVolume.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setKeepVolume(isChecked)
             binding.volume.isEnabled = !isChecked
-        }
-
-        binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) viewModel.setVolume(progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        binding.soundName.addTextChangedListener {
-            if (it != null) viewModel.setName(it)
-        }
-
-        binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.setCategoryPosition(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
@@ -93,8 +69,11 @@ class SoundEditFragment : BaseDialogFragment<FragmentEditSoundsBinding>() {
         }
     }
 
-    override fun dismiss() {
-        viewModel.reset()
-        super.dismiss()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        viewModel.setCategory(binding.category.selectedItem as Category)
+        viewModel.setName(binding.soundName.text)
+        viewModel.setVolume(binding.volume.progress)
+        viewModel.setKeepVolume(binding.keepVolume.isChecked)
     }
 }

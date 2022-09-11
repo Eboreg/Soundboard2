@@ -44,6 +44,10 @@
         <entry key="soundboard/src/main/res/drawable/repress_mode_icon_with_caret.xml" value="0.22" />
         <entry key="soundboard/src/main/res/drawable/repress_mode_menu_icon.xml" value="0.189" />
         <entry key="soundboard/src/main/res/drawable/sound_progress.xml" value="0.322" />
+        <entry key="soundboard/src/main/res/layout-land/fragment_add_category.xml" value="0.30097087378640774" />
+        <entry key="soundboard/src/main/res/layout-land/fragment_add_sounds.xml" value="0.30097087378640774" />
+        <entry key="soundboard/src/main/res/layout-land/fragment_edit_category.xml" value="0.25" />
+        <entry key="soundboard/src/main/res/layout-land/fragment_edit_sounds.xml" value="0.30097087378640774" />
         <entry key="soundboard/src/main/res/layout/action_bar.xml" value="0.33" />
         <entry key="soundboard/src/main/res/layout/action_bar_main.xml" value="0.29243266353142366" />
         <entry key="soundboard/src/main/res/layout/action_bar_settings.xml" value="0.29243266353142366" />

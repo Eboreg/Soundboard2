@@ -5,10 +5,7 @@ import android.os.Bundle
 import android.text.Html
 import android.text.TextUtils
 import android.view.View
-import android.widget.AdapterView
-import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
-import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -29,25 +26,6 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
 
         binding.duplicateAdd.setOnCheckedChangeListener { _, isChecked -> viewModel.setDuplicateAdd(isChecked) }
 
-        binding.volume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) viewModel.setVolume(progress)
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
-
-        binding.category.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.setSelectedCategoryPosition(position)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
-        binding.soundName.addTextChangedListener {
-            if (it != null) viewModel.setName(it)
-        }
-
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setPositiveButton(R.string.save, null)
             .setNegativeButton(R.string.cancel) { _, _ -> dismiss() }
@@ -63,9 +41,8 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
 
     private fun onPositiveButtonClick() {
         val soundName = binding.soundName.text.toString().trim()
-        if (soundName.isEmpty() && !multiple) {
+        if (soundName.isEmpty() && !multiple)
             Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
-        }
         else {
             viewModel.save(soundName, binding.volume.progress, binding.category.selectedItem as Category)
             dismiss()
@@ -100,5 +77,13 @@ class SoundAddFragment : BaseDialogFragment<FragmentAddSoundsBinding>() {
             dialog?.setTitle(resources.getQuantityString(R.plurals.add_sound, if (it) 2 else 1))
             dialog?.show()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        viewModel.setName(binding.soundName.text)
+        viewModel.setCategory(binding.category.selectedItem as Category)
+        viewModel.setVolume(binding.volume.progress)
+        viewModel.setDuplicateAdd(binding.duplicateAdd.isChecked)
     }
 }

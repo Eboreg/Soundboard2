@@ -21,7 +21,6 @@ import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
-import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
@@ -110,6 +109,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 log("appViewModel.watchFolderSyncResult.collect: snackbarString=$snackbarString")
                 showSnackbar(snackbarString)
             }
+
+            appViewModel.snackbarText.collect { showSnackbar(it) }
         }
 
         // If we are supposed to watch a folder, now is the time to sync it.
@@ -181,7 +182,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
 
-        //return super.onCreateOptionsMenu(menu)
         return true
     }
 
@@ -216,10 +216,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     override fun onDialogDismissed(dialogId: Int) {}
 
-    override fun onTouch(view: View?, event: MotionEvent?): Boolean {
-        when (event?.actionMasked) {
+    override fun onTouch(view: View, event: MotionEvent): Boolean {
+        when (event.actionMasked) {
             MotionEvent.ACTION_UP -> {
-                view?.performClick()
+                view.performClick()
                 return false
             }
             MotionEvent.ACTION_MOVE -> {
@@ -239,13 +239,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             .commit()
     }
 
-    fun showCategoryDeleteFragment(category: Category) {
-        categoryDeleteViewModel.setCategory(category)
+    fun showCategoryDeleteFragment(categoryId: Int) {
+        categoryDeleteViewModel.setCategoryId(categoryId)
         showFragment(CategoryDeleteFragment::class.java)
     }
 
-    fun showCategoryEditFragment(category: Category) {
-        categoryEditViewModel.setCategory(category)
+    fun showCategoryEditFragment(categoryId: Int) {
+        categoryEditViewModel.setCategoryId(categoryId)
         showFragment(CategoryEditFragment::class.java)
     }
 
@@ -274,7 +274,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         val adapter = CategoryAdapter(this, categoryRepository, soundRepository, settingsRepository, colorHelper)
         binding.categoryList.adapter = adapter
         binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
-        appViewModel.categories.observe(this) {
+        appViewModel.categoryIds.observe(this) {
             adapter.submitList(it)
             if (it.isEmpty()) appViewModel.createDefaultCategory()
         }
@@ -295,11 +295,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         })
 
         item.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
-            override fun onMenuItemActionExpand(item: MenuItem?): Boolean {
+            override fun onMenuItemActionExpand(item: MenuItem): Boolean {
                 view.isIconified = false
                 return true
             }
-            override fun onMenuItemActionCollapse(item: MenuItem?): Boolean {
+            override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                 view.setQuery("", true)
                 view.clearFocus()
                 return true
@@ -310,7 +310,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             view.setQuery(soundFilterTerm, false)
             item.expandActionView()
         }
-        // if (view.query.isNotEmpty()) item.expandActionView()
     }
 
     fun showSnackbar(text: CharSequence) = Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
@@ -320,18 +319,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
 
     private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        override fun onScale(detector: ScaleGestureDetector?): Boolean {
-            detector?.scaleFactor?.let { scaleFactor ->
-                if (scaleFactor <= 0.8) {
-                    zoomOut()
-                    return true
-                }
-                else if (scaleFactor >= 1.3) {
-                    zoomIn()
-                    return true
-                }
-            }
-            return super.onScale(detector)
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            return if (detector.scaleFactor <= 0.8) {
+                zoomOut()
+                true
+            } else if (detector.scaleFactor >= 1.3) {
+                zoomIn()
+                true
+            } else super.onScale(detector)
         }
     }
 }

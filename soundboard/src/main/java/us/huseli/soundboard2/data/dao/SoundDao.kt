@@ -1,28 +1,28 @@
 package us.huseli.soundboard2.data.dao
 
 import android.net.Uri
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
-import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 
 @Dao
 interface SoundDao {
-    @Query("SELECT s.*, c.backgroundColor, c.soundSorting FROM Sound s JOIN Category c on s.categoryId = c.id")
+    @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
+    fun flowGet(soundId: Int): Flow<SoundExtended>
+
+    @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id")
     fun flowList(): Flow<List<SoundExtended>>
 
-    @Query("""
-        SELECT s.*, c.backgroundColor, c.soundSorting 
-        FROM Sound s JOIN Category c ON s.categoryId = c.id 
-        WHERE s.name LIKE :filterTerm ORDER BY c.`order`, s.`order`
-    """)
-    fun flowListFiltered(filterTerm: String): Flow<List<SoundExtended>>
+    @Query("SELECT * FROM Sound WHERE id IN (:soundIds)")
+    fun flowListByIds(soundIds: List<Int>): Flow<List<Sound>>
 
-    @MapInfo(keyColumn = "soundSorting")
-    @Query("SELECT c.soundSorting, s.*, c.backgroundColor FROM Sound s JOIN Category c on s.categoryId = c.id")
-    fun flowMap(): Flow<Map<SoundSorting, List<SoundExtended>>>
+    @Query("SELECT id FROM Sound")
+    fun flowListIds(): Flow<List<Int>>
 
     @Query("SELECT * FROM Sound WHERE checksum IN (:checksums) GROUP BY `checksum`")
     suspend fun listByChecksums(checksums: List<String>): List<Sound>

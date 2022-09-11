@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Functions
-import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
@@ -32,8 +31,9 @@ class AppViewModel @Inject constructor(
     data class WatchFolderSyncResult(val added: Int, val deleted: Int)
 
     private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
+    private val _snackbarText = Channel<CharSequence>()
 
-    val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
+    val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
@@ -42,28 +42,25 @@ class AppViewModel @Inject constructor(
     val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
     val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
     val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
+    val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
-
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
-
     fun setSoundFilterTerm(value: String) { settingsRepository.setSoundFilterTerm(value) }
-
     fun zoomIn() = settingsRepository.zoomIn()
-
     fun zoomOut() = settingsRepository.zoomOut()
 
     fun selectAllSounds() = viewModelScope.launch {
-        soundRepository.allSoundsFiltered.stateIn(viewModelScope).value.forEach { sound ->
-            soundRepository.select(sound)
-        }
+        soundRepository.filteredSoundIdsOrdered.stateIn(viewModelScope).value.forEach { soundRepository.select(it) }
     }
 
     fun unselectAllSounds() = viewModelScope.launch {
-        soundRepository.allSounds.stateIn(viewModelScope).value.forEach { sound ->
-            soundRepository.unselect(sound)
+        soundRepository.allSoundIds.stateIn(viewModelScope).value.forEach { soundId ->
+            soundRepository.unselect(soundId)
         }
     }
+
+    fun setSnackbarText(text: CharSequence) { _snackbarText.trySend(text) }
 
     fun syncWatchFolder() = viewModelScope.launch {
         val treeUri = settingsRepository.watchFolderUri.value

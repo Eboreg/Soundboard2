@@ -6,18 +6,22 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.viewModels
+import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
 import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
-import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
 import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.helpers.LifecycleAdapter
+import us.huseli.soundboard2.helpers.LifecycleViewHolder
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.viewmodels.AppViewModel
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(
@@ -25,12 +29,28 @@ class SoundAdapter(
     private val soundRepository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     private val colorHelper: ColorHelper
-) : ListAdapter<SoundExtended, SoundAdapter.ViewHolder>(Comparator()) {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder =
+) : LifecycleAdapter<Int, SoundAdapter.ViewHolder>(Comparator()), LoggingObject {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         ViewHolder(ItemSoundBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position), activity, soundRepository, settingsRepository, colorHelper)
+        super.onBindViewHolder(holder, position)
+    }
+
+    override fun onViewAttachedToWindow(holder: ViewHolder) {
+        super.onViewAttachedToWindow(holder)
+        log("onViewAttachedToWindow: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+    }
+
+    override fun onViewDetachedFromWindow(holder: ViewHolder) {
+        super.onViewDetachedFromWindow(holder)
+        log("onViewDetachedFromWindow: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+    }
+
+    override fun onFailedToRecycleView(holder: ViewHolder): Boolean {
+        log("onFailedToRecycleView: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+        return super.onFailedToRecycleView(holder)
     }
 
     class ViewHolder(private val binding: ItemSoundBinding) :
@@ -38,9 +58,10 @@ class SoundAdapter(
         View.OnTouchListener,
         View.OnLongClickListener,
         View.OnClickListener,
-        RecyclerView.ViewHolder(binding.root)
+        LifecycleViewHolder(binding.root)
     {
-        private lateinit var viewModel: SoundViewModel
+        override val lifecycleRegistry = LifecycleRegistry(this)
+        internal lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
         private var selectEnabled = false
@@ -49,7 +70,7 @@ class SoundAdapter(
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
         internal fun bind(
-            sound: SoundExtended,
+            soundId: Int,
             activity: MainActivity,
             repository: SoundRepository,
             settingsRepository: SettingsRepository,
@@ -57,40 +78,40 @@ class SoundAdapter(
         ) {
             val viewModel = ViewModelProvider(
                 activity.viewModelStore,
-                SoundViewModel.Factory(repository, settingsRepository, colorHelper, sound)
-            )[sound.id.toString(), SoundViewModel::class.java]
+                SoundViewModel.Factory(repository, settingsRepository, colorHelper, soundId)
+            )[soundId.toString(), SoundViewModel::class.java]
 
             this.viewModel = viewModel
-            binding.lifecycleOwner = activity
+            binding.lifecycleOwner = this
             binding.viewModel = viewModel
 
             binding.root.setOnTouchListener(this)
             binding.root.setOnLongClickListener(this)
             binding.root.setOnClickListener(this)
 
-            viewModel.repressMode.observe(activity) {
+            viewModel.repressMode.observe(this) {
                 repressMode = it
                 // If changing to anything but PAUSE, make sure any paused sounds are stopped.
                 if (it != RepressMode.PAUSE) viewModel.stopPaused()
             }
 
-            viewModel.animationsEnabled.observe(activity) { animationsEnabled = it }
-            viewModel.selectEnabled.observe(activity) { selectEnabled = it }
-            viewModel.playState.observe(activity) {
+            viewModel.animationsEnabled.observe(this) { animationsEnabled = it }
+            viewModel.selectEnabled.observe(this) { selectEnabled = it }
+            viewModel.playState.observe(this) {
                 log("playState.observe: new playState=$it, was=$playState")
                 playState = it
             }
-            viewModel.selected.observe(activity) { selected = it }
-
-            viewModel.playerError.observe(activity) { playerError ->
+            viewModel.selected.observe(this) { selected = it }
+            viewModel.playerError.observe(this) { playerError ->
                 if (playerError != null) activity.showSnackbar(playerError)
             }
+            viewModel.volume.observe(this) { viewModel.setPlayerVolume(it) }
+            viewModel.path.observe(this) { viewModel.setPlayerPath(it) }
         }
 
         @SuppressLint("ClickableViewAccessibility")
         override fun onTouch(v: View?, event: MotionEvent?): Boolean {
             /** This seems to work, but I don't know exactly why. */
-            log("onTouch: v=$v, event=$event")
             if (animationsEnabled) {
                 when (event?.actionMasked) {
                     MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
@@ -135,17 +156,31 @@ class SoundAdapter(
                 }
             }
         }
+
+        override fun markCreated() {
+            super.markCreated()
+            log("markCreated: viewModel.sound=${viewModel.soundId}")
+        }
+
+        override fun markAttach() {
+            super.markAttach()
+            log("markAttach: viewModel.sound=${viewModel.soundId}")
+        }
+
+        override fun markDetach() {
+            super.markDetach()
+            log("markDetach: viewModel.sound=${viewModel.soundId}")
+        }
+
+        override fun markDestroyed() {
+            super.markDestroyed()
+            log("markDestroyed: viewModel.sound=${viewModel.soundId}")
+        }
+
     }
 
-    class Comparator : DiffUtil.ItemCallback<SoundExtended>() {
-        override fun areItemsTheSame(oldItem: SoundExtended, newItem: SoundExtended) = oldItem.id == newItem.id
-        override fun areContentsTheSame(oldItem: SoundExtended, newItem: SoundExtended) = (
-                oldItem.backgroundColor == newItem.backgroundColor &&
-                        oldItem.volume == newItem.volume &&
-                        oldItem.duration == newItem.duration &&
-                        oldItem.order == newItem.order &&
-                        oldItem.uri == newItem.uri &&
-                        oldItem.name == newItem.name
-                )
+    class Comparator : DiffUtil.ItemCallback<Int>() {
+        override fun areItemsTheSame(oldItem: Int, newItem: Int) = oldItem == newItem
+        override fun areContentsTheSame(oldItem: Int, newItem: Int) = oldItem == newItem
     }
 }

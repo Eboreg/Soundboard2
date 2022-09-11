@@ -17,18 +17,20 @@ import javax.inject.Inject
 class CategoryDeleteViewModel @Inject constructor(
     private val repository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val _category = MutableStateFlow<Category?>(null)
+    private val _categoryId = MutableStateFlow<Int?>(null)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val _category: Flow<Category?> = _categoryId.filterNotNull().flatMapLatest { repository.get(it) }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _otherCategories: Flow<List<Category>> = _category.flatMapLatest { category ->
-        if (category != null)
-            repository.categories.map { list -> list.filter { it.id != category.id } }
+    private val _otherCategories: Flow<List<Category>> = _categoryId.flatMapLatest { categoryId ->
+        if (categoryId != null)
+            repository.categories.map { list -> list.filter { it.id != categoryId } }
         else emptyFlow()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _soundCount: Flow<Int> = _category.flatMapLatest { category ->
-        if (category != null) repository.getSoundCount(category) else emptyFlow()
+    private val _soundCount: Flow<Int> = _categoryId.flatMapLatest { categoryId ->
+        if (categoryId != null) repository.getSoundCount(categoryId) else emptyFlow()
     }
 
     private val _isLastCategory = merge(
@@ -47,12 +49,12 @@ class CategoryDeleteViewModel @Inject constructor(
     val isLastCategory: LiveData<Boolean> = _isLastCategory.asLiveData()
     val showSoundAction: LiveData<Boolean> = _showSoundAction.asLiveData()
 
-    fun setCategory(value: Category) {
-        _category.value = value
+    fun setCategoryId(value: Int) {
+        _categoryId.value = value
     }
 
     fun delete(moveSoundsTo: Int?) = viewModelScope.launch {
-        _category.value?.let { category ->
+        _category.stateIn(viewModelScope).value?.let { category ->
             log("delete(): category=$category, moveSoundsTo=$moveSoundsTo")
             repository.delete(category, moveSoundsTo)
         }

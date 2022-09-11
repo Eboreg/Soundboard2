@@ -7,14 +7,12 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.data.entities.Category
-import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
@@ -31,13 +29,11 @@ class SoundAddViewModel @Inject constructor(
     data class DuplicateData(val count: Int, val name: String)
 
     private val _duplicateAdd = MutableStateFlow(false)
-    private var _selectedCategoryPosition = 0
     private val _name = MutableStateFlow<CharSequence>("")
     private var _volume = Constants.DEFAULT_VOLUME
     private val _soundFiles = MutableStateFlow<List<SoundFile>>(emptyList())
-
     private val _multiple: Flow<Boolean> = _soundFiles.map { it.size > 1 }
-
+    private val _category = MutableStateFlow<Category?>(null)
     private val _computedName: Flow<String> = _soundFiles.map {
         if (it.size == 1) it[0].name
         else context.getString(R.string.multiple_sounds_selected, it.size)
@@ -62,8 +58,9 @@ class SoundAddViewModel @Inject constructor(
     val multiple: LiveData<Boolean> = _multiple.asLiveData()
     val nameIsEditable: LiveData<Boolean> = _multiple.map { !it }.asLiveData()
 
-    val selectedCategoryPosition: Int
-        get() = _selectedCategoryPosition
+    val categoryPosition: LiveData<Int> = combine(categoryRepository.categories, _category) { categories, category ->
+        categories.indexOfFirst { it.id == category?.id }
+    }.filter { it >= 0 }.asLiveData()
 
     val volume: Int
         get() = _volume
@@ -94,13 +91,14 @@ class SoundAddViewModel @Inject constructor(
     fun setSoundFiles(value: List<SoundFile>) { _soundFiles.value = value }
     fun setName(value: CharSequence) { _name.value = value }
     fun setDuplicateAdd(value: Boolean) { _duplicateAdd.value = value }
-    fun setSelectedCategoryPosition(value: Int) { _selectedCategoryPosition = value }
+    fun setCategory(value: Category) { _category.value = value }
 
     fun reset() {
         _soundFiles.value = emptyList()
         _volume = Constants.DEFAULT_VOLUME
         _duplicateAdd.value = false
         _name.value = ""
+        _category.value = null
     }
 
     fun save(name: String, volume: Int, category: Category) = viewModelScope.launch {

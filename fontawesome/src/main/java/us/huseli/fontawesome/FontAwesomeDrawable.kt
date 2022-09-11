@@ -288,15 +288,15 @@ open class FontAwesomeDrawable(
     }
 
     /** Update the internal bounds in response to any external requests. */
-    override fun onBoundsChange(bounds: Rect?) {
-        if (bounds != null) textBounds = bounds
+    override fun onBoundsChange(bounds: Rect) {
+        textBounds = bounds
     }
 
     /** The drawable's ability to represent state is based on the text colour list set. */
     override fun isStateful() = textColors.isStateful
 
     /** Upon state changes, grab the correct text colour. */
-    override fun onStateChange(state: IntArray?) = updateTextColors()
+    override fun onStateChange(state: IntArray): Boolean = updateTextColors()
 
     /** Return the measured vertical bounds, or -1 if none. */
     override fun getIntrinsicHeight() = if (!textBounds.isEmpty) textBounds.bottom - textBounds.top else -1

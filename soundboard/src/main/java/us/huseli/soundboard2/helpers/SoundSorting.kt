@@ -28,16 +28,25 @@ class SoundSorting(val parameter: Parameter, val order: Order) {
     }
 
     companion object {
+        val sortParameters = listOf(
+            Parameter.CUSTOM,
+            Parameter.NAME,
+            Parameter.DURATION,
+            Parameter.TIME_ADDED,
+        )
+
         fun fromInt(value: Int) = SoundSorting(
             Parameter.values().firstOrNull { it.value == value.absoluteValue } ?: Parameter.CUSTOM,
             if (value < 0) Order.DESCENDING else Order.ASCENDING
         )
 
-        fun getSortParameterItems(context: Context) = listOf(
-            SortParameterItem(Parameter.CUSTOM, context.getString(R.string.custom)),
-            SortParameterItem(Parameter.NAME, context.getString(R.string.name)),
-            SortParameterItem(Parameter.DURATION, context.getString(R.string.duration)),
-            SortParameterItem(Parameter.TIME_ADDED, context.getString(R.string.creation_time)),
-        )
+        fun listSortParameterItems(context: Context) = sortParameters.map {
+            SortParameterItem(it, when (it) {
+                Parameter.CUSTOM -> context.getString(R.string.custom)
+                Parameter.NAME -> context.getString(R.string.name)
+                Parameter.DURATION -> context.getString(R.string.duration)
+                Parameter.TIME_ADDED -> context.getString(R.string.creation_time)
+            })
+        }
     }
 }

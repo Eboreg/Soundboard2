@@ -7,7 +7,7 @@ interface LoggingObject {
     fun log(msg: String, level: Int = Log.INFO) {
         if (BuildConfig.DEBUG) Log.println(
             level,
-            javaClass.simpleName,
+            "${javaClass.simpleName}<${System.identityHashCode(this)}>",
             "[${Thread.currentThread()}] $msg"
         )
     }

@@ -30,7 +30,7 @@ class CategoryAddFragment : BaseCategoryEditFragment<FragmentAddCategoryBinding>
         binding.sortBy.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_item,
-            SoundSorting.getSortParameterItems(requireContext())
+            SoundSorting.listSortParameterItems(requireContext())
         )
 
         binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -72,5 +72,11 @@ class CategoryAddFragment : BaseCategoryEditFragment<FragmentAddCategoryBinding>
             viewModel.save()
             dismiss()
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        viewModel.setSortParameter((binding.sortBy.selectedItem as SoundSorting.SortParameterItem).value)
+        viewModel.setSortOrder(if (binding.sortOrderAscending.isChecked) SoundSorting.Order.ASCENDING else SoundSorting.Order.DESCENDING)
     }
 }

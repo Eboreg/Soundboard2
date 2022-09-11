@@ -28,20 +28,17 @@
             android:id="@+id/soundName"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:ems="10"
             android:enabled="@{viewModel.nameIsEditable}"
-            android:focusedByDefault="true"
             android:hint="@string/name"
-            android:importantForAutofill="no"
             android:inputType="text"
             android:minHeight="48dp"
-            android:singleLine="true"
             android:text="@{viewModel.name}"
             android:textColor="@android:color/primary_text_dark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/soundNameLabel"
-            tools:ignore="UnusedAttribute,DuplicateSpeakableTextCheck" />
+            tools:ignore="DuplicateSpeakableTextCheck"
+            android:importantForAutofill="no" />
 
         <TextView
             android:id="@+id/volumeLabel"
@@ -59,7 +56,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_normal"
             android:max="100"
-            android:min="0"
             android:progress="@{viewModel.volume}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -72,7 +68,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_normal"
             android:text="@string/category"
-            android:labelFor="@+id/category"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/volume" />
 
@@ -81,11 +76,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:selectedItemPosition="@{viewModel.selectedCategoryPosition}"
+            android:selectedItemPosition="@{viewModel.categoryPosition}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/categoryLabel"
-            tools:ignore="DuplicateSpeakableTextCheck" />
+            app:layout_constraintTop_toBottomOf="@+id/categoryLabel" />
 
         <LinearLayout
             android:id="@+id/duplicateBlock"
@@ -107,15 +101,15 @@
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/duplicateAdd"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
+                android:checked="@{viewModel.duplicateAdd}"
                 android:text="@{@plurals/add_duplicate(viewModel.duplicateCount ?? 0)}"
                 android:textOff="@string/no"
                 android:textOn="@string/yes"
                 app:switchMinWidth="50sp"
                 app:switchPadding="@dimen/margin_large"
-                android:checked="@{viewModel.duplicateAdd}"
                 tools:text="Add duplicates" />
 
             <TextView

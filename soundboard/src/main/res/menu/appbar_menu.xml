@@ -89,11 +89,6 @@
                 android:id="@+id/actionSettings"
                 android:icon="@drawable/fas_gear"
                 android:title="@string/settings" />
-
-            <item
-                android:id="@+id/actionHelp"
-                android:icon="@drawable/fa_circle_question"
-                android:title="@string/help" />
         </menu>
     </item>
 </menu>

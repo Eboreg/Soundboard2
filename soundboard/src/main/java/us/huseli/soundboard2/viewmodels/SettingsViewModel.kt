@@ -34,10 +34,10 @@ class SettingsViewModel @Inject constructor(
 
     private val _watchFolderCategoryPosition = combine(
         settingsRepository.watchFolderCategoryId,
-        categoryRepository.categories
-    ) { categoryId, categories ->
-        val result = categories.indexOfFirst { it.id == categoryId }
-        log("_watchFolderCategoryPosition: categoryId=$categoryId, categories=$categories, result=$result")
+        categoryRepository.categoryIds
+    ) { categoryId, categoryIds ->
+        val result = categoryIds.indexOfFirst { it == categoryId }
+        log("_watchFolderCategoryPosition: categoryId=$categoryId, categoryIds=$categoryIds, result=$result")
         result
     }.filter { it != -1 }
 

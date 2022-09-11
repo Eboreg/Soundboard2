@@ -2,10 +2,12 @@ package us.huseli.soundboard2.viewmodels
 
 import android.content.Context
 import android.graphics.Color
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
@@ -23,12 +25,10 @@ class SoundEditViewModel @Inject constructor(
 ) : ViewModel() {
     private val _emptyCategory = Category(-1, context.getString(R.string.not_changed), Color.DKGRAY, -1)
     private var _keepVolume = true
-    private var _selectedCategoryPosition = 0
-
-    private val _categories = categoryRepository.categories.map { listOf(_emptyCategory) + it }
-
     private val _name = MutableStateFlow<CharSequence>("")
     private val _volume = MutableStateFlow<Int?>(null)
+    private val _categories: Flow<List<Category>> = categoryRepository.categories.map { listOf(_emptyCategory) + it }
+    private val _category = MutableStateFlow(_emptyCategory)
 
     private val _originalName: Flow<String> = repository.selectedSounds.map {
         if (it.size == 1) it[0].name
@@ -41,15 +41,15 @@ class SoundEditViewModel @Inject constructor(
         else Constants.DEFAULT_VOLUME
     }
 
-    val categories = _categories.asLiveData()
-    val nameIsEditable: LiveData<Boolean> = repository.selectedSounds.map { it.size == 1 }.asLiveData()
-    val soundCount: LiveData<Int> = repository.selectedSounds.map { it.size }.asLiveData()
-
+    val categories: LiveData<List<Category>> = _categories.asLiveData()
+    val nameIsEditable: LiveData<Boolean> = repository.selectedSoundIds.map { it.size == 1 }.asLiveData()
+    val soundCount: LiveData<Int> = repository.selectedSoundIds.map { it.size }.asLiveData()
     val name: LiveData<CharSequence> = merge(_originalName, _name.filter { it != "" } ).asLiveData()
     val volume: LiveData<Int> = merge(_originalVolume, _volume.filterNotNull()).asLiveData()
 
-    val selectedCategoryPosition: Int
-        get() = _selectedCategoryPosition
+    val categoryPosition: LiveData<Int> = combine(_categories, _category) { categories, category ->
+        categories.indexOfFirst { it.id == category.id }
+    }.filter { it >= 0 }.asLiveData()
 
     val keepVolume: Boolean
         get() = _keepVolume
@@ -57,7 +57,7 @@ class SoundEditViewModel @Inject constructor(
     fun setName(value: CharSequence) { _name.value = value }
     fun setVolume(value: Int) { _volume.value = value }
     fun setKeepVolume(value: Boolean) { _keepVolume = value }
-    fun setCategoryPosition(value: Int) { _selectedCategoryPosition = value }
+    fun setCategory(value: Category) { _category.value = value }
 
     fun save(name: String?, keepVolume: Boolean, volume: Int, category: Category) = viewModelScope.launch {
         val sounds = repository.selectedSounds.stateIn(viewModelScope).value
@@ -74,6 +74,6 @@ class SoundEditViewModel @Inject constructor(
         _name.value = ""
         _volume.value = null
         _keepVolume = true
-        _selectedCategoryPosition = 0
+        _category.value = _emptyCategory
     }
 }

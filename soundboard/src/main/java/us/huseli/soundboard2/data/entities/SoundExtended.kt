@@ -2,7 +2,6 @@ package us.huseli.soundboard2.data.entities
 
 import android.net.Uri
 import androidx.annotation.ColorInt
-import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 
 data class SoundExtended(
@@ -16,7 +15,6 @@ data class SoundExtended(
     override val volume: Int,
     override val added: Date,
     @ColorInt val backgroundColor: Int,
-    // val soundSorting: SoundSorting
 ) : Sound(id, categoryId, name, uri, order, duration, checksum, volume, added) {
     companion object {
         fun create(sound: Sound, category: Category): SoundExtended = SoundExtended(
@@ -30,7 +28,6 @@ data class SoundExtended(
             sound.volume,
             sound.added,
             category.backgroundColor,
-//             category.soundSorting
         )
     }
 }

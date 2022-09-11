@@ -3,22 +3,26 @@ package us.huseli.soundboard2.data.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
-import us.huseli.soundboard2.data.entities.Sound
+import us.huseli.soundboard2.data.entities.CategoryWithSounds
 import us.huseli.soundboard2.helpers.SoundSorting
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM Category")
+    @Query("SELECT * FROM Category ORDER BY `order`")
     fun flowList(): Flow<List<Category>>
+
+    @Query("SELECT id FROM Category ORDER BY `order`")
+    fun flowListIds(): Flow<List<Int>>
 
     @Query("SELECT * FROM Category WHERE id = :categoryId")
     fun flowGet(categoryId: Int): Flow<Category?>
 
-    @Query("SELECT * FROM Category c JOIN Sound s ON c.id = s.categoryId ORDER BY c.`order`, s.`order`")
-    fun flowListWithSounds(): Flow<Map<Category, List<Sound>>>
-
     @Query("SELECT DISTINCT backgroundColor FROM Category")
     fun flowListUsedColors(): Flow<List<Int>>
+
+    @Transaction
+    @Query("SELECT * FROM Category ORDER BY `order`")
+    fun flowListWithSounds(): Flow<List<CategoryWithSounds>>
 
     @Query("SELECT COUNT(*) FROM Sound WHERE categoryId = :categoryId")
     fun flowGetSoundCount(categoryId: Int): Flow<Int>
@@ -40,7 +44,4 @@ interface CategoryDao {
 
     @Update
     suspend fun update(category: Category)
-
-    @Update
-    suspend fun update(categories: List<Category>)
 }

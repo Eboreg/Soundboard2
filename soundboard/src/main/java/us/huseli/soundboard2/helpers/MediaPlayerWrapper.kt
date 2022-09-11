@@ -2,8 +2,10 @@ package us.huseli.soundboard2.helpers
 
 import android.media.MediaPlayer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.lang.Integer.min
 import kotlin.math.roundToInt
@@ -17,7 +19,7 @@ class MediaPlayerWrapper :
     enum class State { IDLE, INITIALIZED, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, END }
 
     fun interface OnErrorListener {
-        fun onError(mp: MediaPlayerWrapper, what: Int, extra: Int): Boolean
+        fun onError(mp: MediaPlayerWrapper)
     }
 
     fun interface OnCompletionListener {
@@ -30,7 +32,7 @@ class MediaPlayerWrapper :
 
     private val _mp: MediaPlayer = MediaPlayer()
     private val _state = MutableStateFlow(State.IDLE)
-    private val _error = MutableStateFlow<String?>(null)
+    private val _error = Channel<String>()
     private var _onCompletionListener: OnCompletionListener? = null
     private var _onErrorListener: OnErrorListener? = null
     private var _onStateChangeListener: OnStateChangeListener? = null
@@ -42,19 +44,19 @@ class MediaPlayerWrapper :
         else null
 
     val state: StateFlow<State> = _state
-    val error = _error.filterNotNull()  // Only updated when there actually is an error
-    val isPlaying = _state.value == State.STARTED
-    val isPaused = _state.value == State.PAUSED
+    val error: Flow<String> = _error.receiveAsFlow()
+    val isPlaying: Boolean
+        get() = _state.value == State.STARTED
+    val isPaused: Boolean
+        get() = _state.value == State.PAUSED
     val duration: Int?
         get() = if (_state.value in listOf(State.IDLE, State.INITIALIZED, State.ERROR)) null else _mp.duration
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val currentPosition: Flow<Int?> = _state.flatMapLatest { state ->
-        // log("currentPosition: state=$state")
         flow {
             emit(_currentPosition)
             while (state == State.STARTED) {
-                // log("currentPosition: state=$state, _currentPosition=$_currentPosition")
                 delay(200)
                 emit(_currentPosition)
             }
@@ -85,9 +87,8 @@ class MediaPlayerWrapper :
             if (_state.value == State.STARTED) changeState(State.PAUSED)
             _mp.pause()
         } catch (e: Exception) {
-            // if (e is IllegalStateException) _state.value = State.ERROR
-            _error.value = "Error on pause(): $e"
-            throw e
+            changeState(State.ERROR)
+            _error.trySend("Error on pause(): $e")
         }
     }
 
@@ -98,11 +99,13 @@ class MediaPlayerWrapper :
     }
 
     fun reset() {
-        changeState(State.IDLE)
+        log("reset(): _state=${_state.value}")
         _mp.reset()
+        changeState(State.IDLE)
     }
 
     fun play() {
+        log("play(): _state=${_state.value}")
         if (_state.value == State.ERROR) reset()
         if (_state.value == State.IDLE) setDataSource(_path)
         if (_state.value == State.STARTED) stop()
@@ -133,6 +136,7 @@ class MediaPlayerWrapper :
     }
 
     fun setVolume(value: Float?) {
+        log("setVolume(): value=$value, _state=${_state.value}")
         if (value != null) {
             _volume = value
             _mp.setVolume(value, value)
@@ -155,12 +159,13 @@ class MediaPlayerWrapper :
      * to run prepare() again for no good reason.
      */
     fun stop() {
+        log("stop(): _state=${_state.value}")
         try {
-            if (_state.value in listOf(State.STARTED, State.PAUSED)) changeState(State.STOPPED)
             _mp.stop()
+            if (_state.value in listOf(State.STARTED, State.PAUSED)) changeState(State.STOPPED)
         } catch (e: Exception) {
-            // if (e is IllegalStateException) _state.value = State.ERROR
-            _error.value = "Error on stop(): $e"
+            changeState(State.ERROR)
+            _error.trySend("Error on stop(): $e")
         }
     }
 
@@ -189,13 +194,14 @@ class MediaPlayerWrapper :
      * @throws IOException
      */
     private fun prepare() {
+        log("prepare(): _state=${_state.value}")
         try {
             _mp.syncParams.tolerance = 0.1f
-            if (_state.value in listOf(State.INITIALIZED, State.STOPPED)) changeState(State.PREPARED)
             _mp.prepare()
+            if (_state.value in listOf(State.INITIALIZED, State.STOPPED)) changeState(State.PREPARED)
         } catch (e: Exception) {
-            _error.value = "Error on prepare(): $e"
-            throw e
+            changeState(State.ERROR)
+            _error.trySend("Error on prepare(): $e")
         }
     }
 
@@ -207,12 +213,18 @@ class MediaPlayerWrapper :
      * method in an invalid state throws an IllegalStateException.
      */
     private fun setDataSource(path: String?) {
+        log("setDataSource(): path=$path, _state=${_state.value}")
         try {
             _mp.setDataSource(path)
             changeState(State.INITIALIZED)
-        } catch (e: Exception) {
-            _error.value = "Error on setDataSource(): $e"
-            // throw e
+        }
+        catch (e: Exception) {
+            log("setDataSource(): e=$e, path=$path, _state=${_state.value}")
+            changeState(State.ERROR)
+            _error.trySend(
+                if (e is FileNotFoundException) "File not found: $path"
+                else "Error on setDataSource(): $e"
+            )
         }
     }
 
@@ -229,13 +241,13 @@ class MediaPlayerWrapper :
      * will be invoked by the internal player engine and the object will be transfered to the Error state.
      */
     private fun start() {
+        log("start(): _state=${_state.value}")
         try {
-            if (_state.value in listOf(State.PREPARED, State.PAUSED, State.PLAYBACK_COMPLETED)) changeState(State.STARTED)
             _mp.start()
+            if (_state.value in listOf(State.PREPARED, State.PAUSED, State.PLAYBACK_COMPLETED)) changeState(State.STARTED)
         } catch (e: Exception) {
-            // if (e is IllegalStateException) _state.value = State.ERROR
-            _error.value = "Error on start(): $e"
-            // throw e
+            changeState(State.ERROR)
+            _error.trySend("Error on start(): $e")
         }
     }
 
@@ -259,8 +271,10 @@ class MediaPlayerWrapper :
             MediaPlayer.MEDIA_ERROR_TIMED_OUT -> "Timeout"
             else -> "Other ($extra)"
         }
+        log("onError(): what=$what, extra=$extra, _state=${_state.value}")
+        if (_state.value != State.ERROR) _error.trySend("$whatStr: $extraStr")
         changeState(State.ERROR)
-        _error.value = "$whatStr: $extraStr"
-        return _onErrorListener?.onError(this, what, extra) ?: true
+        _onErrorListener?.onError(this)
+        return true
     }
 }

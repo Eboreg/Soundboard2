@@ -25,6 +25,7 @@ class CategoryRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : LoggingObject {
     val categories: Flow<List<Category>> = categoryDao.flowList()
+    val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
     val randomColor: Flow<Int> = categoryDao.flowListUsedColors().map { colorHelper.getRandomColor(exclude = it) }
 
     val firstCategory: Flow<Category> = categories.map {
@@ -32,9 +33,9 @@ class CategoryRepository @Inject constructor(
         it.firstOrNull()
     }.filterNotNull()
 
-    fun getSoundCount(category: Category) = categoryDao.flowGetSoundCount(category.id)
-
-    suspend fun toggleCollapsed(category: Category) = categoryDao.toggleCollapsed(category.id)
+    fun get(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
+    fun getSoundCount(categoryId: Int) = categoryDao.flowGetSoundCount(categoryId)
+    suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
 
     suspend fun create(name: CharSequence, backgroundColor: Int, soundSorting: SoundSorting) =
         categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder(), soundSorting)

@@ -105,7 +105,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/margin_normal"
-            android:labelFor="@+id/category"
             android:text="@string/category"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/volumeSection" />
@@ -115,7 +114,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:minHeight="48dp"
-            android:selectedItemPosition="@{viewModel.selectedCategoryPosition}"
+            android:selectedItemPosition="@{viewModel.categoryPosition}"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
