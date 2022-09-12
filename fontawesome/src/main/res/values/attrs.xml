@@ -18,4 +18,7 @@
         <attr name="android:textSize" />
         <attr name="android:textAppearance" />
     </declare-styleable>
+    <declare-styleable name="FontAwesomeButton">
+        <attr name="android:enabled" />
+    </declare-styleable>
 </resources>
