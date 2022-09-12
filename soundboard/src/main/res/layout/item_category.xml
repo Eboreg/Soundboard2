@@ -88,20 +88,23 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <us.huseli.fontawesome.FontAwesomeButton
-                    android:id="@+id/categoryMoveUp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="@dimen/margin_normal"
-                    android:text="@string/fas_chevron_down"
-                    android:textColor="@{viewModel.textColor}" />
-
-                <us.huseli.fontawesome.FontAwesomeButton
                     android:id="@+id/categoryMoveDown"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/margin_normal"
-                    android:text="@string/fas_chevron_up"
+                    android:text="@string/fas_chevron_down"
+                    android:enabled="@{viewModel.moveDownEnabled}"
                     android:textColor="@{viewModel.textColor}" />
+
+                <us.huseli.fontawesome.FontAwesomeButton
+                    android:id="@+id/categoryMoveUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_chevron_up"
+                    android:enabled="@{viewModel.moveUpEnabled}"
+                    android:textColor="@{viewModel.textColor}" />
+
             </LinearLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -3,10 +3,7 @@ package us.huseli.soundboard2.data.repositories
 import android.content.Context
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
@@ -34,9 +31,10 @@ class CategoryRepository @Inject constructor(
     }.filterNotNull()
 
     fun get(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
-    fun getSoundCount(categoryId: Int) = categoryDao.flowGetSoundCount(categoryId)
+    fun getSoundCount(categoryId: Int): Flow<Int> = categoryDao.flowGetSoundCount(categoryId)
+    fun isFirstCategory(categoryId: Int): Flow<Boolean> = categoryIds.map { it.firstOrNull() == categoryId }
+    fun isLastCategory(categoryId: Int) = categoryIds.map { it.lastOrNull() == categoryId }
     suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
-
     suspend fun create(name: CharSequence, backgroundColor: Int, soundSorting: SoundSorting) =
         categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder(), soundSorting)
 
@@ -66,6 +64,8 @@ class CategoryRepository @Inject constructor(
     }
 
     suspend fun update(category: Category) = categoryDao.update(category)
+
+    suspend fun update(categories: List<Category>) = categoryDao.update(categories)
 
     suspend fun createDefault() = create(
         "Dëfäult",

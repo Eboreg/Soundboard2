@@ -58,6 +58,7 @@ class SettingsRepository @Inject constructor(
     private val _watchFolderTrashMissing =
         MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
     private val _soundFilterTerm = MutableStateFlow("")
+    private val _reorderEnabled = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val spanCount: Flow<Int> = _orientation.flatMapLatest {
@@ -76,6 +77,7 @@ class SettingsRepository @Inject constructor(
     }
     val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
     val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
+    val reorderEnabled: StateFlow<Boolean> = _reorderEnabled.asStateFlow()
 
     fun initialize() {
         log("initialize()")
@@ -87,6 +89,10 @@ class SettingsRepository @Inject constructor(
                 else -> Enums.Orientation.PORTRAIT
             }
         _screenRatio.value = getScreenRatio()
+    }
+
+    fun toggleReorderEnabled() {
+        _reorderEnabled.value = !_reorderEnabled.value
     }
 
     /** ZOOMING **************************************************************/

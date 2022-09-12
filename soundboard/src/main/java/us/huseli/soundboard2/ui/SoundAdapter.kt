@@ -6,11 +6,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.viewModels
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.recyclerview.widget.DiffUtil
 import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
@@ -21,7 +18,6 @@ import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LifecycleAdapter
 import us.huseli.soundboard2.helpers.LifecycleViewHolder
 import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.viewmodels.AppViewModel
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(

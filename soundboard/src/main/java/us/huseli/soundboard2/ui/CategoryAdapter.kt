@@ -60,9 +60,10 @@ class CategoryAdapter(
             binding.categoryCollapseButton.setOnClickListener { viewModel.toggleCollapsed() }
             binding.categoryDeleteButton.setOnClickListener { activity.showCategoryDeleteFragment(categoryId) }
             binding.categoryEditButton.setOnClickListener { activity.showCategoryEditFragment(categoryId) }
+            binding.categoryMoveDown.setOnClickListener { viewModel.moveDown() }
+            binding.categoryMoveUp.setOnClickListener { viewModel.moveUp() }
 
             viewModel.soundIds.observe(this) { soundAdapter.submitList(it) }
-
             viewModel.spanCount.observe(this) {
                 (binding.soundList.layoutManager as? GridLayoutManager)?.spanCount = it
             }

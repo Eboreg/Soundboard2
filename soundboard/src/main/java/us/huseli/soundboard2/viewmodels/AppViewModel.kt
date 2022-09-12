@@ -39,16 +39,18 @@ class AppViewModel @Inject constructor(
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
     val selectEnabled: LiveData<Boolean> = soundRepository.selectEnabled.asLiveData()
     val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
-    val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
     val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
     val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
+
     val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
+    val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
     fun setSoundFilterTerm(value: String) { settingsRepository.setSoundFilterTerm(value) }
     fun zoomIn() = settingsRepository.zoomIn()
     fun zoomOut() = settingsRepository.zoomOut()
+    fun toggleReorderEnabled() = settingsRepository.toggleReorderEnabled()
 
     fun selectAllSounds() = viewModelScope.launch {
         soundRepository.filteredSoundIdsOrdered.stateIn(viewModelScope).value.forEach { soundRepository.select(it) }
@@ -60,6 +62,7 @@ class AppViewModel @Inject constructor(
         }
     }
 
+    @Suppress("unused")
     fun setSnackbarText(text: CharSequence) { _snackbarText.trySend(text) }
 
     fun syncWatchFolder() = viewModelScope.launch {

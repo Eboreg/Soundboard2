@@ -203,6 +203,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 startActivity(Intent(this, SettingsActivity::class.java))
                 overridePendingTransition(0, 0)
             }
+            R.id.actionToggleReorder -> appViewModel.toggleReorderEnabled()
             else -> return super.onOptionsItemSelected(item)
         }
         return true

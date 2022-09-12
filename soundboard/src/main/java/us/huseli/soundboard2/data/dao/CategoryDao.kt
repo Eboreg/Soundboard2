@@ -44,4 +44,7 @@ interface CategoryDao {
 
     @Update
     suspend fun update(category: Category)
+
+    @Update
+    suspend fun update(categories: List<Category>)
 }
