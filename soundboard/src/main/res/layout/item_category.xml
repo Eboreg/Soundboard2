@@ -45,46 +45,21 @@
                 android:paddingStart="0dp"
                 android:paddingEnd="@dimen/margin_large"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
+                app:layout_constraintEnd_toStartOf="@+id/categoryButtons"
                 app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
                 app:layout_constraintTop_toTopOf="parent"
                 android:textColor="@{viewModel.textColor}"
                 android:text="@{viewModel.name}"
                 tools:text="Category name" />
 
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryEditButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/margin_normal"
-                android:text="@string/fas_pen_to_square"
-                android:textColor="@{viewModel.textColor}"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
-                app:layout_constraintStart_toEndOf="@+id/categoryName"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryDeleteButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="@dimen/margin_normal"
-                android:text="@string/fas_trash"
-                android:textColor="@{viewModel.textColor}"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryMoveButtons"
-                app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
-                app:layout_constraintTop_toTopOf="parent" />
-
             <LinearLayout
-                android:id="@+id/categoryMoveButtons"
+                android:id="@+id/categoryButtons"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:visible="@{viewModel.moveButtonsVisible}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/categoryDeleteButton"
+                app:layout_constraintStart_toEndOf="@+id/categoryName"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <us.huseli.fontawesome.FontAwesomeButton
@@ -93,7 +68,7 @@
                     android:layout_height="wrap_content"
                     android:padding="@dimen/margin_normal"
                     android:text="@string/fas_chevron_down"
-                    android:enabled="@{viewModel.moveDownEnabled}"
+                    visible="@{viewModel.isMoveDownPossible}"
                     android:textColor="@{viewModel.textColor}" />
 
                 <us.huseli.fontawesome.FontAwesomeButton
@@ -102,10 +77,27 @@
                     android:layout_height="wrap_content"
                     android:padding="@dimen/margin_normal"
                     android:text="@string/fas_chevron_up"
-                    android:enabled="@{viewModel.moveUpEnabled}"
+                    visible="@{viewModel.isMoveUpPossible}"
+                    android:textColor="@{viewModel.textColor}" />
+
+                <us.huseli.fontawesome.FontAwesomeButton
+                    android:id="@+id/categoryEditButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_pen_to_square"
+                    android:textColor="@{viewModel.textColor}" />
+
+                <us.huseli.fontawesome.FontAwesomeButton
+                    android:id="@+id/categoryDeleteButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="@dimen/margin_normal"
+                    android:text="@string/fas_trash"
                     android:textColor="@{viewModel.textColor}" />
 
             </LinearLayout>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.recyclerview.widget.RecyclerView

@@ -49,6 +49,7 @@ class SoundAdapter(
         return super.onFailedToRecycleView(holder)
     }
 
+
     class ViewHolder(private val binding: ItemSoundBinding) :
         LoggingObject,
         View.OnTouchListener,
@@ -57,13 +58,15 @@ class SoundAdapter(
         LifecycleViewHolder(binding.root)
     {
         override val lifecycleRegistry = LifecycleRegistry(this)
+        private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
+
         internal lateinit var viewModel: SoundViewModel
         private var playState: PlayState? = null
         private var repressMode: RepressMode? = null
         private var selectEnabled = false
         private var selected = false
         private var animationsEnabled = false
-        private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
+        private var soundId: Int? = null
 
         internal fun bind(
             soundId: Int,
@@ -72,6 +75,8 @@ class SoundAdapter(
             settingsRepository: SettingsRepository,
             colorHelper: ColorHelper
         ) {
+            this.soundId = soundId
+
             val viewModel = ViewModelProvider(
                 activity.viewModelStore,
                 SoundViewModel.Factory(repository, settingsRepository, colorHelper, soundId)
@@ -94,8 +99,10 @@ class SoundAdapter(
             viewModel.animationsEnabled.observe(this) { animationsEnabled = it }
             viewModel.selectEnabled.observe(this) { selectEnabled = it }
             viewModel.playState.observe(this) {
-                log("playState.observe: new playState=$it, was=$playState")
-                playState = it
+                if (it != playState) {
+                    log("playState.observe: new playState=$it, was=$playState")
+                    playState = it
+                }
             }
             viewModel.selected.observe(this) { selected = it }
             viewModel.playerError.observe(this) { playerError ->
@@ -106,13 +113,11 @@ class SoundAdapter(
         }
 
         @SuppressLint("ClickableViewAccessibility")
-        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        override fun onTouch(v: View, event: MotionEvent): Boolean {
             /** This seems to work, but I don't know exactly why. */
-            if (animationsEnabled) {
-                when (event?.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> binding.soundCardBorder.alpha = 1f
-                    MotionEvent.ACTION_UP -> animator.start()
-                }
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> if (animationsEnabled) binding.soundCardBorder.alpha = 1f
+                MotionEvent.ACTION_UP -> if (animationsEnabled) animator.start()
             }
             return false
         }
@@ -172,7 +177,6 @@ class SoundAdapter(
             super.markDestroyed()
             log("markDestroyed: viewModel.sound=${viewModel.soundId}")
         }
-
     }
 
     class Comparator : DiffUtil.ItemCallback<Int>() {

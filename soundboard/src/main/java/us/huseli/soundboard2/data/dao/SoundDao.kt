@@ -1,10 +1,7 @@
 package us.huseli.soundboard2.data.dao
 
 import android.net.Uri
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
@@ -19,24 +16,24 @@ interface SoundDao {
     fun flowList(): Flow<List<SoundExtended>>
 
     @Query("SELECT * FROM Sound WHERE id IN (:soundIds)")
-    fun flowListByIds(soundIds: List<Int>): Flow<List<Sound>>
+    fun flowListByIds(soundIds: Collection<Int>): Flow<List<Sound>>
 
     @Query("SELECT id FROM Sound")
     fun flowListIds(): Flow<List<Int>>
 
+    @Query("SELECT * FROM Sound")
+    suspend fun list(): List<Sound>
+
     @Query("SELECT * FROM Sound WHERE checksum IN (:checksums) GROUP BY `checksum`")
-    suspend fun listByChecksums(checksums: List<String>): List<Sound>
+    suspend fun listByChecksums(checksums: Collection<String>): List<Sound>
 
     @Query("SELECT * FROM Sound WHERE categoryId = :categoryId")
     suspend fun listByCategoryId(categoryId: Int): List<Sound>
 
-    @Query("SELECT COALESCE(MAX(`order`), -1) + 1 FROM Sound WHERE categoryId = :categoryId")
-    suspend fun getNextOrder(categoryId: Int): Int
-
     @Query(
         """
-        INSERT INTO Sound (name, uri, duration, checksum, volume, added, categoryId, `order`)
-        VALUES (:name, :uri, :duration, :checksum, :volume, :added, :categoryId, :order)
+        INSERT INTO Sound (name, uri, duration, checksum, volume, added, categoryId)
+        VALUES (:name, :uri, :duration, :checksum, :volume, :added, :categoryId)
     """
     )
     suspend fun create(
@@ -47,15 +44,28 @@ interface SoundDao {
         volume: Int,
         added: Date,
         categoryId: Int,
-        order: Int,
     )
 
     @Delete
-    suspend fun delete(sounds: List<Sound>)
+    suspend fun delete(sounds: Collection<Sound>)
 
     @Query("DELETE FROM Sound WHERE categoryId = :categoryId")
     suspend fun deleteByCategoryId(categoryId: Int)
 
     @Update
-    suspend fun update(sounds: List<Sound>)
+    suspend fun update(sounds: Collection<Sound>)
+
+    @Insert
+    suspend fun insert(sounds: Collection<Sound>)
+
+    @Transaction
+    suspend fun applyState(sounds: Collection<Sound>) {
+        val dbSounds = list().toSet()
+        // Insert those that are in `categories` but not in DB:
+        insert(sounds.subtract(dbSounds))
+        // Delete those that are in DB but not in `categories`:
+        delete(dbSounds.subtract(sounds.toSet()))
+        // Update those that are in both:
+        update(sounds.intersect(dbSounds))
+    }
 }

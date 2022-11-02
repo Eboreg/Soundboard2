@@ -2,9 +2,8 @@ package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
@@ -19,17 +18,19 @@ class CategoryViewModel(
     private val categoryId: Int
 ) : ViewModel() {
     private val _category = repository.get(categoryId).filterNotNull()
+    private val _isMoveUpPossible = repository.isFirstCategory(categoryId).map { !it }
+    private val _isMoveDownPossible = repository.isLastCategory(categoryId).map { !it }
+    private val _backgroundColor = _category.map { it.backgroundColor }
 
     val soundIds: LiveData<List<Int>> = soundRepository.listIdsByCategoryIdFiltered(categoryId).asLiveData()
-    val backgroundColor: LiveData<Int> = _category.map { it.backgroundColor }.asLiveData()
-    val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
+    val backgroundColor: LiveData<Int> = _backgroundColor.asLiveData()
+    val textColor: LiveData<Int> = _backgroundColor.map { colorHelper.getColorOnBackground(it) }.asLiveData()
     val name: LiveData<String?> = _category.map { it.name }.asLiveData()
     val collapseIconRotation: LiveData<Float> = _category.map { if (it.collapsed) -90f else 0f }.asLiveData()
     val soundListVisible: LiveData<Boolean> = _category.map { !it.collapsed }.asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
-    val moveButtonsVisible: LiveData<Boolean> = settingsRepository.reorderEnabled.asLiveData()
-    val moveUpEnabled: LiveData<Boolean> = repository.isFirstCategory(categoryId).map { !it }.asLiveData()
-    val moveDownEnabled: LiveData<Boolean> = repository.isLastCategory(categoryId).map { !it }.asLiveData()
+    val isMoveUpPossible: LiveData<Boolean> = _isMoveUpPossible.asLiveData()
+    val isMoveDownPossible: LiveData<Boolean> = _isMoveDownPossible.asLiveData()
 
     fun toggleCollapsed() = viewModelScope.launch { repository.toggleCollapsed(categoryId) }
 
@@ -39,10 +40,10 @@ class CategoryViewModel(
         val idx = categories.indexOfFirst { it.id == categoryId }
         // Double check so it's not already the last category:
         if (idx < categories.size - 1) {
-            repository.update(listOf(
-                categories[idx].clone(order = categories[idx].order + 1),
-                categories[idx + 1].clone(order = categories[idx + 1].order - 1),
-            ))
+            repository.update(
+                categories[idx].clone(position = categories[idx].position + 1),
+                categories[idx + 1].clone(position = categories[idx + 1].position - 1),
+            )
         }
     }
 
@@ -52,10 +53,10 @@ class CategoryViewModel(
         val idx = categories.indexOfFirst { it.id == categoryId }
         // Double check so it's not already the first category:
         if (idx > 0) {
-            repository.update(listOf(
-                categories[idx].clone(order = categories[idx].order - 1),
-                categories[idx - 1].clone(order = categories[idx - 1].order + 1),
-            ))
+            repository.update(
+                categories[idx].clone(position = categories[idx].position - 1),
+                categories[idx - 1].clone(position = categories[idx - 1].position + 1),
+            )
         }
     }
 

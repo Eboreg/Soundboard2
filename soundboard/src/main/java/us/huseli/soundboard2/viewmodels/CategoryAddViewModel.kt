@@ -8,13 +8,16 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.CategoryRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
 import javax.inject.Inject
 
 @HiltViewModel
-class CategoryAddViewModel @Inject constructor(private val categoryRepository: CategoryRepository) :
-    BaseCategoryEditViewModel, LoggingObject, ViewModel() {
+class CategoryAddViewModel @Inject constructor(
+    private val categoryRepository: CategoryRepository,
+    private val stateRepository: StateRepository
+) : BaseCategoryEditViewModel, LoggingObject, ViewModel() {
 
     private var _name: CharSequence = ""
     private val _selectedBackgroundColor = MutableStateFlow<Int?>(null)
@@ -50,7 +53,9 @@ class CategoryAddViewModel @Inject constructor(private val categoryRepository: C
 
     fun save() = viewModelScope.launch {
         val backgroundColor = _backgroundColor.stateIn(viewModelScope).value
-        if (name != "") categoryRepository.create(name, backgroundColor, soundSorting)
+        if (name != "") {
+            categoryRepository.create(name, backgroundColor, soundSorting)
+            stateRepository.push()
+        }
     }
-
 }

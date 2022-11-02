@@ -10,13 +10,16 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
 import javax.inject.Inject
 
 @HiltViewModel
-class CategoryEditViewModel @Inject constructor(private val repository: CategoryRepository) :
-    LoggingObject, BaseCategoryEditViewModel, ViewModel() {
+class CategoryEditViewModel @Inject constructor(
+    private val repository: CategoryRepository,
+    private val stateRepository: StateRepository,
+) : LoggingObject, BaseCategoryEditViewModel, ViewModel() {
 
     private val _categoryId = MutableStateFlow<Int?>(null)
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -95,13 +98,17 @@ class CategoryEditViewModel @Inject constructor(private val repository: Category
     }
 
     fun save(name: CharSequence) = viewModelScope.launch {
-        val soundSorting = _soundSorting.stateIn(viewModelScope).value
-        val category = _category.stateIn(viewModelScope).value?.clone(
-            name = name,
-            backgroundColor = _newBackgroundColor.value,
-            soundSorting = soundSorting
-        )
-        log("save(): category=$category, soundSorting=$soundSorting, category.soundSorting=${category?.soundSorting}")
-        if (category != null) repository.update(category)
+        val oldCategory = _category.stateIn(viewModelScope).value
+        if (oldCategory != null) {
+            val newCategory = oldCategory.clone(
+                name = name,
+                backgroundColor = _newBackgroundColor.value,
+                soundSorting = _soundSorting.stateIn(viewModelScope).value
+            )
+            if (!oldCategory.isIdenticalTo(newCategory)) {
+                repository.update(newCategory)
+                stateRepository.push()
+            }
+        }
     }
 }

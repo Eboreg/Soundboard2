@@ -36,7 +36,7 @@ class SoundViewModel(
     val name: LiveData<String> = _sound.map { it.name }.asLiveData()
     val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
     val volume: LiveData<Int> = _sound.map { it.volume }.asLiveData()
-    val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it, 0.3f, 0.5f) }
+    val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it) }
     val playerError: LiveData<String?> = _player.error.asLiveData()
     val playState: LiveData<PlayState> = _player.state.asLiveData()
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
@@ -80,8 +80,8 @@ class SoundViewModel(
     fun select() = repository.select(soundId)
     fun unselect() = repository.unselect(soundId)
 
-    /** Select all sounds between this viewmodel's sound and the last selected one. */
     fun selectAllFromLastSelected() = viewModelScope.launch {
+        /** Select all sounds between this viewmodel's sound and the last selected one. */
         val lastSelectedId = repository.lastSelectedId.stateIn(viewModelScope).value
         log("selectAllFromLastSelected: lastSelected=$lastSelectedId")
         if (lastSelectedId != null) {

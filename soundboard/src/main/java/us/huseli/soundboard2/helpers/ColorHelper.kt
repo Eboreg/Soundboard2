@@ -40,7 +40,7 @@ class ColorHelper(private val context: Context) {
         context.getColor(if (Color.luminance(backgroundColor) >= 0.4) R.color.black else R.color.white)
 
     @ColorInt
-    fun getRandomColor(@ColorInt exclude: List<Int> = emptyList()): Int {
+    fun getRandomColor(@ColorInt exclude: Collection<Int> = emptyList()): Int {
         val included = colors.filter { it !in exclude }
         return if (included.isNotEmpty()) included.random() else colors.random()
     }

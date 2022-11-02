@@ -36,7 +36,7 @@ class CategoryRepository @Inject constructor(
     fun isLastCategory(categoryId: Int) = categoryIds.map { it.lastOrNull() == categoryId }
     suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
     suspend fun create(name: CharSequence, backgroundColor: Int, soundSorting: SoundSorting) =
-        categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextOrder(), soundSorting)
+        categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextPosition(), soundSorting)
 
     suspend fun delete(category: Category, moveSoundsTo: Int?) {
         val sounds = soundDao.listByCategoryId(category.id)
@@ -54,22 +54,21 @@ class CategoryRepository @Inject constructor(
             soundDao.deleteByCategoryId(category.id)
         }
         else {
-            val nextOrder = soundDao.getNextOrder(moveSoundsTo)
-            val newSounds = sounds.mapIndexed { index, sound ->
-                sound.clone(categoryId = moveSoundsTo, order = nextOrder + index)
+            val newSounds = sounds.map { sound ->
+                sound.clone(categoryId = moveSoundsTo)
             }
             soundDao.update(newSounds)
         }
         categoryDao.delete(category)
     }
 
-    suspend fun update(category: Category) = categoryDao.update(category)
+    // suspend fun update(category: Category) = categoryDao.update(category)
 
-    suspend fun update(categories: List<Category>) = categoryDao.update(categories)
+    suspend fun update(vararg categories: Category) = categoryDao.update(categories.asList())
 
     suspend fun createDefault() = create(
         "Dëfäult",
         randomColor.first(),
-        SoundSorting(SoundSorting.Parameter.CUSTOM, SoundSorting.Order.ASCENDING)
+        SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
     )
 }

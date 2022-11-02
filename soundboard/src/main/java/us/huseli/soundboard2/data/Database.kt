@@ -1,7 +1,6 @@
 package us.huseli.soundboard2.data
 
 import android.content.Context
-import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -13,13 +12,13 @@ import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
 
-@Database(
+@androidx.room.Database(
     entities = [Sound::class, Category::class],
     exportSchema = false,
-    version = 4,
+    version = 5,
 )
 @TypeConverters(Converters::class)
-abstract class SoundboardDatabase : RoomDatabase() {
+abstract class Database : RoomDatabase() {
     abstract fun soundDao(): SoundDao
     abstract fun categoryDao(): CategoryDao
 
@@ -77,12 +76,47 @@ abstract class SoundboardDatabase : RoomDatabase() {
             }
         }
 
-        fun build(context: Context): SoundboardDatabase {
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Removed SoundSorting.Parameter.CUSTOM and subtracted 1 from the values of the others:
+                database.execSQL("""
+                    UPDATE Category SET soundSorting = CASE 
+                        WHEN soundSorting < 0 THEN soundSorting + 1 
+                        ELSE soundSorting - 1 
+                        END
+                """.trimIndent())
+                // Renamed Category.order to position:
+                database.execSQL("ALTER TABLE Category RENAME COLUMN 'order' TO position")
+                // Removed Sound.order:
+                database.execSQL("""
+                    CREATE TABLE Sound_new (
+                        id INTEGER PRIMARY KEY NOT NULL,
+                        categoryId INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        uri TEXT NOT NULL,
+                        duration INTEGER NOT NULL,
+                        checksum TEXT NOT NULL,
+                        volume INTEGER NOT NULL,
+                        added INTEGER NOT NULL,
+                        FOREIGN KEY (categoryId) REFERENCES Category(id) ON UPDATE CASCADE ON DELETE SET NULL
+                )""".trimIndent())
+                database.execSQL("""
+                    INSERT INTO Sound_new (id, categoryId, name, uri, duration, checksum, volume, added)
+                    SELECT id, categoryId, name, uri, duration, checksum, volume, added FROM Sound
+                """.trimIndent())
+                database.execSQL("DROP TABLE Sound")
+                database.execSQL("ALTER TABLE Sound_new RENAME TO Sound")
+                database.execSQL("CREATE INDEX index_Sound_categoryId ON Sound(categoryId)")
+            }
+        }
+
+        fun build(context: Context): Database {
             return Room
-                .databaseBuilder(context.applicationContext, SoundboardDatabase::class.java, Constants.DATABASE_NAME)
+                .databaseBuilder(context.applicationContext, Database::class.java, Constants.DATABASE_NAME)
                 .addMigrations(MIGRATION_1_2)
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
+                .addMigrations(MIGRATION_4_5)
                 .build()
         }
     }

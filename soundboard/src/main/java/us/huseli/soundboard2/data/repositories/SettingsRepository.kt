@@ -37,11 +37,14 @@ class SettingsRepository @Inject constructor(
     }
 
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    private val _screenRatio = MutableStateFlow(getScreenRatio())
+    // private val _screenRatio = MutableStateFlow(getScreenRatio())
     private val _spanCountPortrait =
         MutableStateFlow(_preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT))
-    private val _spanCountLandscape =
-        MutableStateFlow(portraitSpanCountToLandscape(Constants.DEFAULT_SPANCOUNT_PORTRAIT))
+    private val _spanCountLandscape = MutableStateFlow(
+        portraitSpanCountToLandscape(
+            _preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT)
+        )
+    )
     private val _orientation = MutableStateFlow(Enums.Orientation.PORTRAIT)
     private val _repressMode = MutableStateFlow(
         _preferences.getString("repressMode", null)
@@ -58,11 +61,10 @@ class SettingsRepository @Inject constructor(
     private val _watchFolderTrashMissing =
         MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
     private val _soundFilterTerm = MutableStateFlow("")
-    private val _reorderEnabled = MutableStateFlow(false)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val spanCount: Flow<Int> = _orientation.flatMapLatest {
-        if (it == Enums.Orientation.LANDSCAPE) _spanCountLandscape else _spanCountPortrait
+    val spanCount: Flow<Int> = combine(_orientation, _spanCountPortrait) { orientation, spanCountPortrait ->
+        if (orientation == Enums.Orientation.PORTRAIT) spanCountPortrait
+        else portraitSpanCountToLandscape(spanCountPortrait)
     }
 
     val repressMode: StateFlow<RepressMode> = _repressMode.asStateFlow()
@@ -70,14 +72,12 @@ class SettingsRepository @Inject constructor(
     val animationsEnabled: StateFlow<Boolean> = _animationsEnabled.asStateFlow()
     val watchFolderEnabled: StateFlow<Boolean> = _watchFolderEnabled.asStateFlow()
     val watchFolderUri: StateFlow<Uri?> = _watchFolderUri.asStateFlow()
-    val watchFolderCategoryId: StateFlow<Int?> = _watchFolderCategoryId.asStateFlow()
     @OptIn(ExperimentalCoroutinesApi::class)
     val watchFolderCategory: Flow<Category?> = _watchFolderCategoryId.flatMapLatest { categoryId ->
         categoryId?.let { categoryDao.flowGet(it) } ?: emptyFlow()
     }
     val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
     val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
-    val reorderEnabled: StateFlow<Boolean> = _reorderEnabled.asStateFlow()
 
     fun initialize() {
         log("initialize()")
@@ -88,18 +88,13 @@ class SettingsRepository @Inject constructor(
                 Configuration.ORIENTATION_LANDSCAPE -> Enums.Orientation.LANDSCAPE
                 else -> Enums.Orientation.PORTRAIT
             }
-        _screenRatio.value = getScreenRatio()
-    }
-
-    fun toggleReorderEnabled() {
-        _reorderEnabled.value = !_reorderEnabled.value
     }
 
     /** ZOOMING **************************************************************/
 
-    private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * _screenRatio.value).roundToInt(), 1)
+    private fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * getScreenRatio()).roundToInt(), 1)
 
-    private fun portraitSpanCountToLandscape(spanCount: Int) = max((spanCount / _screenRatio.value).roundToInt(), 1)
+    private fun portraitSpanCountToLandscape(spanCount: Int) = max((spanCount / getScreenRatio()).roundToInt(), 1)
 
     private fun getScreenRatio(): Double {
         val width = context.resources.configuration.screenWidthDp.toDouble()

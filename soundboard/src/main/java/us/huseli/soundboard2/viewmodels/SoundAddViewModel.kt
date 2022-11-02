@@ -16,6 +16,7 @@ import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 
@@ -23,7 +24,8 @@ import javax.inject.Inject
 class SoundAddViewModel @Inject constructor(
     @ApplicationContext context: Context,
     categoryRepository: CategoryRepository,
-    private val soundRepository: SoundRepository
+    private val soundRepository: SoundRepository,
+    private val stateRepository: StateRepository
 ) : ViewModel(), LoggingObject {
     data class SoundCounts(val add: Int, val skip: Int)
     data class DuplicateData(val count: Int, val name: String)
@@ -102,12 +104,15 @@ class SoundAddViewModel @Inject constructor(
     }
 
     fun save(name: String, volume: Int, category: Category) = viewModelScope.launch {
+        var created = false
         _soundFiles.value.forEach { soundFile ->
             val duplicate = _duplicates.stateIn(viewModelScope).value.firstOrNull { it.checksum == soundFile.checksum }
             if (_duplicateAdd.value || duplicate == null) {
                 log("save(): soundFile=$soundFile, duplicate=$duplicate, volume=$volume, category=$category")
                 soundRepository.create(soundFile, if (!_multiple.stateIn(viewModelScope).value) name else null, volume, category, duplicate)
+                created = true
             }
         }
+        if (created) stateRepository.push()
     }
 }

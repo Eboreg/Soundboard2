@@ -3,7 +3,10 @@ package us.huseli.soundboard2.ui.fragments
 import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -30,6 +33,22 @@ class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEdi
             android.R.layout.simple_spinner_item,
             SoundSorting.listSortParameterItems(requireContext())
         )
+
+        binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                (parent as? Spinner)?.let {
+                    viewModel.setSortParameter((it.selectedItem as SoundSorting.SortParameterItem).value)
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        binding.sortOrder.setOnCheckedChangeListener { _, checkedId ->
+            viewModel.setSortOrder(
+                if (checkedId == binding.sortOrderAscending.id) SoundSorting.Order.ASCENDING
+                else SoundSorting.Order.DESCENDING
+            )
+        }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.edit_category)

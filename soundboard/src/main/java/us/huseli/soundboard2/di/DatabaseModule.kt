@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import us.huseli.soundboard2.data.SoundboardDatabase
+import us.huseli.soundboard2.data.Database
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
@@ -14,13 +14,13 @@ import javax.inject.Singleton
 object DatabaseModule {
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context) = SoundboardDatabase.build(context)
+    fun provideDatabase(@ApplicationContext context: Context) = Database.build(context)
 
     @Provides
     @Singleton
-    fun provideSoundDao(database: SoundboardDatabase) = database.soundDao()
+    fun provideSoundDao(database: Database) = database.soundDao()
 
     @Provides
     @Singleton
-    fun provideCategoryDao(database: SoundboardDatabase) = database.categoryDao()
+    fun provideCategoryDao(database: Database) = database.categoryDao()
 }

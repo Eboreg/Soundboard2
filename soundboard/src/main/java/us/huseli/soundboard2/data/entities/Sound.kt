@@ -24,7 +24,6 @@ open class Sound(
     open val categoryId: Int,
     open val name: String,
     open val uri: Uri,
-    open val order: Int,
     open val duration: Long,
     open val checksum: String,
     open val volume: Int,
@@ -39,11 +38,6 @@ open class Sound(
             else if (s1 == null) -1
             else if (s2 == null) 1
             else when(sorting.parameter) {
-                SoundSorting.Parameter.CUSTOM -> when {
-                    s1.order > s2.order -> 1
-                    s1.order == s2.order -> 0
-                    else -> -1
-                }
                 SoundSorting.Parameter.NAME -> when {
                     s1.name.lowercase(Locale.getDefault()) > s2.name.lowercase(Locale.getDefault()) -> 1
                     s1.name.equals(s2.name, ignoreCase = true) -> 0
@@ -63,28 +57,35 @@ open class Sound(
         }
     }
 
-    override fun equals(other: Any?) = other is Sound && other.id == id
-
-    override fun hashCode() = id
-
     fun clone(
         categoryId: Int? = null,
         name: String? = null,
         uri: Uri? = null,
-        order: Int? = null,
         duration: Long? = null,
         checksum: String? = null,
         volume: Int? = null,
         added: Date? = null,
     ) = Sound(
-        this.id,
+        id,
         categoryId ?: this.categoryId,
         name ?: this.name,
         uri ?: this.uri,
-        order ?: this.order,
         duration ?: this.duration,
         checksum ?: this.checksum,
         volume ?: this.volume,
         added ?: this.added,
     )
+
+    fun isIdentical(other: Sound) =
+        other.id == id &&
+        other.categoryId == categoryId &&
+        other.name == name &&
+        other.uri == uri &&
+        other.duration == duration &&
+        other.checksum == checksum &&
+        other.volume == volume &&
+        other.added == added
+
+    override fun equals(other: Any?) = other is Sound && other.id == id
+    override fun hashCode() = id
 }

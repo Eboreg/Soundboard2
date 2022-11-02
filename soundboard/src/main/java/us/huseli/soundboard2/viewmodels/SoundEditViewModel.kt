@@ -15,13 +15,15 @@ import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class SoundEditViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val repository: SoundRepository,
-    categoryRepository: CategoryRepository
+    private val stateRepository: StateRepository,
+    categoryRepository: CategoryRepository,
 ) : ViewModel() {
     private val _emptyCategory = Category(-1, context.getString(R.string.not_changed), Color.DKGRAY, -1)
     private var _keepVolume = true
@@ -60,13 +62,19 @@ class SoundEditViewModel @Inject constructor(
     fun setCategory(value: Category) { _category.value = value }
 
     fun save(name: String?, keepVolume: Boolean, volume: Int, category: Category) = viewModelScope.launch {
-        val sounds = repository.selectedSounds.stateIn(viewModelScope).value
-        repository.update(
-            sounds,
-            name,
-            if (!keepVolume) volume else null,
-            if (category.id != -1) category else null
-        )
+        val oldSounds = repository.selectedSounds.stateIn(viewModelScope).value
+        val newSounds = oldSounds.map { sound ->
+            sound.clone(
+                name = name,
+                volume = if (!keepVolume) volume else null,
+                categoryId = if (category.id != -1) category.id else null,
+            )
+        }
+        if (newSounds.filterIndexed { idx, sound -> !sound.isIdentical(oldSounds[idx]) }.isNotEmpty()) {
+            // At least one sound is changed
+            repository.update(newSounds)
+            stateRepository.push()
+        }
         repository.disableSelect()
     }
 

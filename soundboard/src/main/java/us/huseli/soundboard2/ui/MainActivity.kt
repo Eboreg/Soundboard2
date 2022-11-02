@@ -67,10 +67,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             return true
         }
 
-        override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-            return false
-        }
-
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
             when(item.itemId) {
                 R.id.selectAll -> appViewModel.selectAllSounds()
@@ -80,9 +76,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             return true
         }
 
-        override fun onDestroyActionMode(mode: ActionMode) {
-            appViewModel.unselectAllSounds()
-        }
+        override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = false
+        override fun onDestroyActionMode(mode: ActionMode) { appViewModel.unselectAllSounds() }
     }
 
     /** OVERRIDDEN METHODS ***************************************************/
@@ -95,8 +90,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        // Using Flow instead of LiveData, because the latter does not seem to
-        // enable us to display a message only _once_.
+        /*
+        lifecycleScope.launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
+                appViewModel.snackbarText.collect { showSnackbar(it) }
+            }
+        }
+         */
+        /*
         lifecycleScope.launchWhenCreated {
             appViewModel.watchFolderSyncResult.collect {
                 var snackbarString = getString(R.string.watched_folder_sync) + ": "
@@ -109,9 +110,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 log("appViewModel.watchFolderSyncResult.collect: snackbarString=$snackbarString")
                 showSnackbar(snackbarString)
             }
-
-            appViewModel.snackbarText.collect { showSnackbar(it) }
         }
+         */
+
+        appViewModel.snackbarText.observe(this) { showSnackbar(it) }
+        appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
+        appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
 
         // If we are supposed to watch a folder, now is the time to sync it.
         appViewModel.watchFolderEnabled.observe(this) {
@@ -120,10 +124,9 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             if (it) appViewModel.syncWatchFolder()
         }
 
-        appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
-
         appViewModel.selectEnabled.observe(this) {
-            if (it) actionMode = startSupportActionMode(soundActionModeCallback) else actionMode?.finish()
+            if (it) actionMode = startSupportActionMode(soundActionModeCallback)
+            else actionMode?.finish()
         }
 
         initCategoryList()
@@ -159,16 +162,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             if (view is SearchView) initSearchAction(item, view)
         }
 
-        // These ViewModel observers have to be done here, because the
-        // callbacks make no sense unless the menu already exists:
+        // The below ViewModel observers have to be done here, because the
+        // callbacks make no sense unless the menu already exists.
+
         appViewModel.isZoomInPossible.observe(this) {
-            binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionZoomIn).apply {
-                isEnabled = it
-                icon?.alpha = if (it) 255 else 128
-            }
+            setMenuItemEnabled(menu.findItem(R.id.actionZoomIn), it)
+        }
+
+        appViewModel.isRedoPossible.observe(this) {
+            setMenuItemEnabled(menu.findItem(R.id.actionRedo), it)
+        }
+
+        appViewModel.isUndoPossible.observe(this) {
+            setMenuItemEnabled(menu.findItem(R.id.actionUndo), it)
         }
 
         appViewModel.repressMode.observe(this) {
+            // Change to the appropriate icon when repress mode changes:
             val icon = menu.findItem(R.id.actionRepressMode).icon as RepressModeIconDrawable
             icon.setRepressMode(it)
             when (it) {
@@ -180,16 +190,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             }
         }
 
-        appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
-
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.actionAddSound -> {
-                if (watchFolderEnabled && watchFolderTrashMissing)
-                    showFragment(InfoDialogFragment::class.java, bundleOf(Pair("message", getText(R.string.cannot_add_sounds))))
+                if (watchFolderEnabled && watchFolderTrashMissing) {
+                    showFragment(
+                        InfoDialogFragment::class.java,
+                        bundleOf(Pair("message", getText(R.string.cannot_add_sounds)))
+                    )
+                }
                 else addSoundLauncher.launch("audio/*")
             }
             R.id.actionAddCategory -> showFragment(CategoryAddFragment::class.java)
@@ -203,7 +215,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 startActivity(Intent(this, SettingsActivity::class.java))
                 overridePendingTransition(0, 0)
             }
-            R.id.actionToggleReorder -> appViewModel.toggleReorderEnabled()
+            R.id.actionUndo -> appViewModel.undo()
+            R.id.actionRedo -> appViewModel.redo()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
@@ -262,7 +275,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     /** PRIVATE METHODS ******************************************************/
 
-    private fun addSoundsFromUris(uris: List<Uri>) {
+    private fun addSoundsFromUris(uris: Collection<Uri>) {
         /** Used when adding sounds from within app and sharing sounds from other apps */
         lifecycleScope.launch {
             val soundFiles = Functions.extractMetadata(applicationContext, uris)
@@ -279,7 +292,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             adapter.submitList(it)
             if (it.isEmpty()) appViewModel.createDefaultCategory()
         }
-        appViewModel.spanCount.observe(this) {  }
     }
 
     private fun initSearchAction(item: MenuItem, view: SearchView) {
@@ -313,10 +325,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
     }
 
-    fun showSnackbar(text: CharSequence) = Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
+    private fun setMenuItemEnabled(item: MenuItem, value: Boolean) {
+        item.isEnabled = value
+        item.icon?.alpha = if (value) 255 else 128
+    }
 
-    @Suppress("unused")
-    fun showSnackbar(textResource: Int) = showSnackbar(getText(textResource))
+    fun showSnackbar(text: CharSequence) {
+        if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
+    }
 
 
     private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {

@@ -84,7 +84,7 @@ object Functions {
     suspend fun extractMetadata(context: Context, uri: Uri): SoundFile =
         extractMetadata(context, uri, extractChecksum(context, uri))
 
-    suspend fun extractMetadata(context: Context, uris: List<Uri>): List<SoundFile> =
+    suspend fun extractMetadata(context: Context, uris: Collection<Uri>): List<SoundFile> =
         uris.map { extractMetadata(context, it) }
 
     @Suppress("MemberVisibilityCanBePrivate")

@@ -7,16 +7,16 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Functions
+import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import java.util.*
 import javax.inject.Inject
@@ -26,31 +26,50 @@ class AppViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val soundRepository: SoundRepository,
+    private val stateRepository: StateRepository,
     application: Application
 ) : LoggingObject, AndroidViewModel(application) {
-    data class WatchFolderSyncResult(val added: Int, val deleted: Int)
+    init {
+        viewModelScope.launch { stateRepository.push() }
+    }
 
-    private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
-    private val _snackbarText = Channel<CharSequence>()
+    // data class WatchFolderSyncResult(val added: Int, val deleted: Int)
+
+    // private val _watchFolderSyncResult = Channel<WatchFolderSyncResult>()
+    // private val _snackbarText = Channel<CharSequence>()
+    private val _snackbarText = MutableStateFlow<CharSequence>("")
 
     val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
-    val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
     val selectEnabled: LiveData<Boolean> = soundRepository.selectEnabled.asLiveData()
     val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
     val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
     val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
+    val isUndoPossible: LiveData<Boolean> = stateRepository.isUndoPossible.asLiveData()
+    val isRedoPossible: LiveData<Boolean> = stateRepository.isRedoPossible.asLiveData()
 
-    val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
-    val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
+    // Using Flow instead of LiveData, because the latter does not seem to
+    // enable us to display a message only _once_.
+    // val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
+    val snackbarText = _snackbarText.asLiveData()
+    // val watchFolderSyncResult: Flow<WatchFolderSyncResult> = _watchFolderSyncResult.receiveAsFlow()
+
+    private fun setSnackbarText(text: CharSequence) {
+        // _snackbarText.trySend(text)
+        _snackbarText.value = text
+    }
+
+    private fun setSnackbarText(resId: Int) {
+        val context = getApplication<Application>().applicationContext
+        setSnackbarText(context.getText(resId))
+    }
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
     fun setSoundFilterTerm(value: String) { settingsRepository.setSoundFilterTerm(value) }
     fun zoomIn() = settingsRepository.zoomIn()
     fun zoomOut() = settingsRepository.zoomOut()
-    fun toggleReorderEnabled() = settingsRepository.toggleReorderEnabled()
 
     fun selectAllSounds() = viewModelScope.launch {
         soundRepository.filteredSoundIdsOrdered.stateIn(viewModelScope).value.forEach { soundRepository.select(it) }
@@ -61,9 +80,6 @@ class AppViewModel @Inject constructor(
             soundRepository.unselect(soundId)
         }
     }
-
-    @Suppress("unused")
-    fun setSnackbarText(text: CharSequence) { _snackbarText.trySend(text) }
 
     fun syncWatchFolder() = viewModelScope.launch {
         val treeUri = settingsRepository.watchFolderUri.value
@@ -104,7 +120,24 @@ class AppViewModel @Inject constructor(
                 deleted = sounds.size
             }
 
-            if (added > 0 || deleted > 0) _watchFolderSyncResult.send(WatchFolderSyncResult(added, deleted))
+            if (added > 0 || deleted > 0) {
+                var snackbarString = context.getString(R.string.watched_folder_sync) + ": "
+                if (added > 0) snackbarString += context.resources.getQuantityString(R.plurals.watch_folder_sounds_added, added, added)
+                if (deleted > 0) {
+                    if (added > 0) snackbarString += ", "
+                    snackbarString += context.resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, deleted, deleted)
+                }
+                setSnackbarText(snackbarString)
+                // _watchFolderSyncResult.send(WatchFolderSyncResult(added, deleted))
+            }
         }
+    }
+
+    fun undo() = viewModelScope.launch {
+        if (stateRepository.undo()) setSnackbarText(R.string.undid)
+    }
+
+    fun redo() = viewModelScope.launch {
+        if (stateRepository.redo()) setSnackbarText(R.string.redid)
     }
 }

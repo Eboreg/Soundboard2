@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.SoundRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class SoundDeleteViewModel @Inject constructor(private val repository: SoundRepository) : ViewModel() {
+class SoundDeleteViewModel @Inject constructor(
+    private val repository: SoundRepository,
+    private val stateRepository: StateRepository
+) : ViewModel() {
     data class SoundDeleteData(val count: Int, val name: String)
 
     val soundData: LiveData<SoundDeleteData> = repository.selectedSounds.map {
@@ -22,5 +26,6 @@ class SoundDeleteViewModel @Inject constructor(private val repository: SoundRepo
     fun delete() = viewModelScope.launch {
         repository.delete(repository.selectedSounds.stateIn(viewModelScope).value)
         repository.disableSelect()
+        stateRepository.push()
     }
 }

@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
+import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 
 @HiltViewModel
 class CategoryDeleteViewModel @Inject constructor(
-    private val repository: CategoryRepository
+    private val repository: CategoryRepository,
+    private val stateRepository: StateRepository
 ) : LoggingObject, ViewModel() {
     private val _categoryId = MutableStateFlow<Int?>(null)
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -57,6 +59,7 @@ class CategoryDeleteViewModel @Inject constructor(
         _category.stateIn(viewModelScope).value?.let { category ->
             log("delete(): category=$category, moveSoundsTo=$moveSoundsTo")
             repository.delete(category, moveSoundsTo)
+            stateRepository.push()
         }
     }
 }

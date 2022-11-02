@@ -61,8 +61,7 @@ class SoundRepository @Inject constructor(
 
         log("""
             create(): name=$name, uri=$uri, soundFile.duration=${soundFile.duration}, 
-            soundFile.checksum=${soundFile.checksum}, volume=$volume, Date()=${Date()}, category=$category,
-            soundDao.getNextOrder(categoryId)=${soundDao.getNextOrder(category.id)}
+            soundFile.checksum=${soundFile.checksum}, volume=$volume, Date()=${Date()}, category=$category
         """.trimIndent())
 
         soundDao.create(
@@ -73,27 +72,15 @@ class SoundRepository @Inject constructor(
             volume,
             Date(),
             category.id,
-            soundDao.getNextOrder(category.id)
         )
     }
 
     suspend fun create(soundFile: SoundFile, category: Category) =
         create(soundFile, null, Constants.DEFAULT_VOLUME, category, null)
 
-    suspend fun delete(sounds: List<Sound>) = soundDao.delete(sounds)
+    suspend fun delete(sounds: Collection<Sound>) = soundDao.delete(sounds)
 
-    suspend fun update(sounds: List<Sound>, name: String?, volume: Int?, category: Category?) {
-        var nextOrder = category?.let { soundDao.getNextOrder(it.id) }
-        val newSounds = sounds.map {
-            it.clone(
-                name = name,
-                volume = volume,
-                categoryId = category?.id,
-                order = if (it.categoryId != category?.id && nextOrder != null) nextOrder++ else null
-            )
-        }
-        soundDao.update(newSounds)
-    }
+    suspend fun update(sounds: Collection<Sound>) = soundDao.update(sounds)
 
     /** SOUND SELECTION ******************************************************/
 

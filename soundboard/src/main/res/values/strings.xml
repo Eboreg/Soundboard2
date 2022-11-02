@@ -60,6 +60,8 @@
     <string name="no_change">No change</string>
     <string name="not_changed">(Not changed)</string>
     <string name="sort_sounds_by">Sort sounds by</string>
+    <string name="undid">Undid!</string>
+    <string name="redid">Redid!</string>
     <plurals name="add_duplicate">
         <item quantity="one">Add duplicate</item>
         <item quantity="other">Add duplicates</item>

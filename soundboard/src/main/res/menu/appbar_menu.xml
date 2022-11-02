@@ -81,11 +81,6 @@
             </group>
 
             <item
-                android:id="@+id/actionToggleReorder"
-                android:icon="@drawable/fas_up_down_left_right"
-                android:title="@string/reorder" />
-
-            <item
                 android:id="@+id/actionSettings"
                 android:icon="@drawable/fas_gear"
                 android:title="@string/settings" />
