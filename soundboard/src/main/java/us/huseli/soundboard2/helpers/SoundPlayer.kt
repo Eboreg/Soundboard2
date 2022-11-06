@@ -2,61 +2,47 @@ package us.huseli.soundboard2.helpers
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import us.huseli.soundboard2.Enums.PlayState
 
-class SoundPlayer(path: String? = null, volume: Int? = null) : LoggingObject {
+class SoundPlayer : LoggingObject {
+    enum class State { IDLE, STARTED, PAUSED, ERROR }
+
     private val _player = MediaPlayerWrapper()
     private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
     private var _path: String? = null
     private var _volume: Int? = null
-
-    // This SHOULD produce a flow of State arrays, with one array entry for
-    // each of the current _parallelPlayers. So a new array will be emitted
-    // whenever any of those players change state.
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _parallelPlayerStates: Flow<Array<MediaPlayerWrapper.State>> = _parallelPlayers.flatMapLatest { players ->
-        combine(players.map { it.state }) {
-            it
-        }.onStart {
-            emit(emptyArray())
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _parallelPlayerPositions: Flow<Array<Int?>> = _parallelPlayers.flatMapLatest { players ->
         combine(players.map { it.currentPosition }) { it }.onStart { emit(emptyArray()) }
     }
 
-    // This SHOULD, then, produce a flow of State arrays for the main _player
-    // and the current _parallelPlayers, combined.
-    private val _playerStates = combine(_player.state, _parallelPlayerStates) { a, b -> b + a }
+    private val _playerStates = combine(_player.state, _parallelPlayers) { a, b -> b.map { it.state.value } + a }
 
-    val state = _playerStates.map { states ->
+    val state: Flow<State> = combine(_playerStates, _player.hasPermanentError) { states, hasPermanentError ->
+        // If main player has permanent error, state is ERROR:
+        if (hasPermanentError) State.ERROR
         // If any player is STARTED, state is STARTED:
-        if (states.contains(MediaPlayerWrapper.State.STARTED)) PlayState.STARTED
+        else if (states.contains(MediaPlayerWrapper.State.STARTED)) State.STARTED
         // If any player is PAUSED, state is PAUSED:
-        else if (states.contains(MediaPlayerWrapper.State.PAUSED)) PlayState.PAUSED
+        else if (states.contains(MediaPlayerWrapper.State.PAUSED)) State.PAUSED
         // Otherwise, state is IDLE:
-        else PlayState.IDLE
+        else State.IDLE
     }
 
+    val hasPermanentError = _player.hasPermanentError
+    val permanentError = _player.permanentError
+
     @OptIn(ExperimentalCoroutinesApi::class)
-    val error = merge(
-        _player.error,
-        _parallelPlayers.flatMapLatest { list -> list.map { it.error }.merge() }
+    val temporaryError: Flow<String> = merge(
+        _player.temporaryError,
+        _parallelPlayers.flatMapLatest { list -> list.map { it.temporaryError }.merge() }
     )
 
     val currentPosition = combine(_player.currentPosition, _parallelPlayerPositions) { position, parallelPositions ->
-        (parallelPositions + position).filterNotNull().maxOrNull()
+        (parallelPositions + position).filterNotNull().minOrNull()
     }
 
-    init {
-        _player.setOnErrorListener { it.reset() }
-        if (path != null) setPath(path)
-        if (volume != null) setVolume(volume)
-    }
-
-    private fun _startParallel() {
+    private fun createParallelPlayer(): MediaPlayerWrapper {
         val player = MediaPlayerWrapper()
 
         player.setOnStateChangeListener { mp, state ->
@@ -68,30 +54,37 @@ class SoundPlayer(path: String? = null, volume: Int? = null) : LoggingObject {
                     MediaPlayerWrapper.State.PLAYBACK_COMPLETED
                 )
             ) {
-                mp.release()
+                mp.destroy()
                 _parallelPlayers.value -= mp
             }
         }
 
-        try {
-            _parallelPlayers.value += player
-            player.setPath(_path)
-            _volume?.let { player.setVolume(it.toFloat() / 100) }
-            player.play()
-        } catch (e: Exception) {
-            player.release()
-            _parallelPlayers.value -= player
-        }
+        _parallelPlayers.value += player
+        player.setPath(_path)
+        _volume?.let { player.setVolume(it) }
+        return player
     }
 
-    fun start(allowParallel: Boolean = false) {
-        if (_player.state.value == MediaPlayerWrapper.State.STARTED) {
-            if (allowParallel) _startParallel()
-        }
-        else _player.play()
+    fun destroyParallelPlayers() {
+        _parallelPlayers.value.forEach { it.destroy() }
+        _parallelPlayers.value = emptyList()
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
+    fun playParallel() {
+        val player = if (_player.state.value != MediaPlayerWrapper.State.STARTED) _player
+        else _parallelPlayers.value.firstOrNull {
+            it.state.value == MediaPlayerWrapper.State.PREPARED
+        } ?: createParallelPlayer()
+
+        player.play()
+
+        // Preemptively create a new parallel player for the sake of low latency; it should get destroyed by
+        // SoundViewHolder when repress mode changes to anything other than OVERLAP.
+        if (_parallelPlayers.value.none { it.state.value == MediaPlayerWrapper.State.PREPARED }) createParallelPlayer()
+    }
+
+    fun play() = _player.play()
+
     fun setPath(path: String?) {
         if (path != _path) {
             _path = path
@@ -99,40 +92,41 @@ class SoundPlayer(path: String? = null, volume: Int? = null) : LoggingObject {
         }
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
     fun setVolume(volume: Int) {
         if (volume != _volume) {
             _volume = volume
-            _player.setVolume(volume.toFloat() / 100)
+            _player.setVolume(volume)
+            _parallelPlayers.value.forEach { it.setVolume(volume) }
         }
     }
 
-    fun pause() {
-        _parallelPlayers.value.forEach { it.stop() }
+    suspend fun pause() {
         _player.pause()
+        // They should already have been destroyed, but anyway:
+        destroyParallelPlayers()
     }
 
     fun restart() {
         /** If playing, stop and start again from the beginning. Otherwise, just start. */
-        _parallelPlayers.value.forEach { it.stop() }
-        if (_player.isPlaying) _player.stop()
-        start()
+        _player.restart()
+        // They should already have been destroyed, but anyway:
+        destroyParallelPlayers()
     }
 
-    fun stop(onlyPaused: Boolean = false) {
-        log("stop: _path=$_path, onlyPaused=$onlyPaused, _player.isPaused=${_player.isPaused}, _player.isPlaying=${_player.isPlaying}")
-        _parallelPlayers.value.forEach { if (!onlyPaused || !it.isPlaying) it.stop() }
-        if (_player.isPaused || (!onlyPaused && _player.isPlaying)) _player.stop()
+    fun stop() {
+        log("stop: _path=$_path, _player.isPaused=${_player.isPaused}, _player.isPlaying=${_player.isPlaying}")
+        _player.stop()
+        destroyParallelPlayers()
     }
 
-    fun release() {
+    fun stopPaused() {
+        if (_player.isPaused) stop()
+        else destroyParallelPlayers()
+    }
+
+    fun destroy() {
         // This should already have been done, but just in case:
-        _parallelPlayers.value.forEach {
-            it.reset()
-            it.release()
-            _parallelPlayers.value -= it
-        }
-        _player.reset()
-        _player.release()
+        destroyParallelPlayers()
+        _player.destroy()
     }
 }

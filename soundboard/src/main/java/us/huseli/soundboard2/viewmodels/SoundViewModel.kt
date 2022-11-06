@@ -5,7 +5,6 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.SettingsRepository
@@ -22,7 +21,7 @@ class SoundViewModel(
     private val repository: SoundRepository,
     settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    val soundId: Int
+    private val soundId: Int
 ) : LoggingObject, ViewModel() {
     private val _sound: Flow<SoundExtended> = repository.get(soundId).filterNotNull()
     private val _player = SoundPlayer()
@@ -37,8 +36,9 @@ class SoundViewModel(
     val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
     val volume: LiveData<Int> = _sound.map { it.volume }.asLiveData()
     val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it) }
-    val playerError: LiveData<String?> = _player.error.asLiveData()
-    val playState: LiveData<PlayState> = _player.state.asLiveData()
+    val playerPermanentError: LiveData<String> = _player.permanentError.asLiveData()
+    val playerTemporaryError: LiveData<String> = _player.temporaryError.asLiveData()
+    val playerState: LiveData<SoundPlayer.State> = _player.state.asLiveData()
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
     val path: LiveData<String> = _sound.map { it.uri.path }.filterNotNull().asLiveData()
     val animationsEnabled: LiveData<Boolean> = settingsRepository.animationsEnabled.asLiveData()
@@ -63,18 +63,19 @@ class SoundViewModel(
     /** State booleans etc. */
     val selectEnabled: LiveData<Boolean> = repository.selectEnabled.asLiveData()
     val selected: LiveData<Boolean> = repository.selectedSoundIds.map { it.contains(soundId) }.asLiveData()
-    val playStateStarted: LiveData<Boolean> = _player.state.map { it == PlayState.STARTED }.asLiveData()
-    val playStatePaused: LiveData<Boolean> = _player.state.map { it == PlayState.PAUSED }.asLiveData()
-    val playStateError: LiveData<Boolean> = _player.state.map { it == PlayState.ERROR }.asLiveData()
+    val playerStateStarted: LiveData<Boolean> = _player.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
+    val playerStatePaused: LiveData<Boolean> = _player.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
+    val playerStateError: LiveData<Boolean> = _player.hasPermanentError.asLiveData()
 
+    fun destroyParallelPlayers() = _player.destroyParallelPlayers()
+    fun pause() = viewModelScope.launch(Dispatchers.IO) { _player.pause() }
+    fun play() = viewModelScope.launch(Dispatchers.IO) { _player.play() }
+    fun playParallel() = viewModelScope.launch(Dispatchers.IO) { _player.playParallel() }
+    fun restart() = viewModelScope.launch(Dispatchers.IO) { _player.restart() }
     fun setPlayerPath(path: String) = _player.setPath(path)
     fun setPlayerVolume(volume: Int) = _player.setVolume(volume)
-
-    fun pause() = _player.pause()
-    fun play(allowParallel: Boolean = false) = viewModelScope.launch(Dispatchers.IO) { _player.start(allowParallel) }
-    fun restart() = viewModelScope.launch(Dispatchers.IO) { _player.restart() }
     fun stop() = _player.stop()
-    fun stopPaused() = _player.stop(onlyPaused = true)
+    fun stopPaused() = _player.stopPaused()
 
     fun enableSelect() = repository.enableSelect()
     fun select() = repository.select(soundId)
@@ -98,7 +99,7 @@ class SoundViewModel(
         }
     }
 
-    override fun onCleared() { _player.release() }
+    override fun onCleared() = _player.destroy()
 
 
     class Factory(

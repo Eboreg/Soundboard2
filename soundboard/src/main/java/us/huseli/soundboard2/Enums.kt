@@ -11,5 +11,4 @@ object Enums {
 
     enum class Orientation { PORTRAIT, LANDSCAPE }
 
-    enum class PlayState { IDLE, STARTED, PAUSED, ERROR }
 }

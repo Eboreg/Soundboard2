@@ -1,23 +1,17 @@
 package us.huseli.soundboard2.ui
 
 import android.animation.ObjectAnimator
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
-import us.huseli.soundboard2.Enums.PlayState
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
-import us.huseli.soundboard2.helpers.ColorHelper
-import us.huseli.soundboard2.helpers.LifecycleAdapter
-import us.huseli.soundboard2.helpers.LifecycleViewHolder
-import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.*
 import us.huseli.soundboard2.viewmodels.SoundViewModel
 
 class SoundAdapter(
@@ -36,23 +30,22 @@ class SoundAdapter(
 
     override fun onViewAttachedToWindow(holder: ViewHolder) {
         super.onViewAttachedToWindow(holder)
-        log("onViewAttachedToWindow: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+        log("onViewAttachedToWindow: holder=$holder, viewModel.sound=${holder.soundId}")
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
         super.onViewDetachedFromWindow(holder)
-        log("onViewDetachedFromWindow: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+        log("onViewDetachedFromWindow: holder=$holder, viewModel.sound=${holder.soundId}")
     }
 
     override fun onFailedToRecycleView(holder: ViewHolder): Boolean {
-        log("onFailedToRecycleView: holder=$holder, viewModel.sound=${holder.viewModel.soundId}")
+        log("onFailedToRecycleView: holder=$holder, viewModel.sound=${holder.soundId}")
         return super.onFailedToRecycleView(holder)
     }
 
 
     class ViewHolder(private val binding: ItemSoundBinding) :
         LoggingObject,
-        View.OnTouchListener,
         View.OnLongClickListener,
         View.OnClickListener,
         LifecycleViewHolder(binding.root)
@@ -60,13 +53,15 @@ class SoundAdapter(
         override val lifecycleRegistry = LifecycleRegistry(this)
         private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
 
-        internal lateinit var viewModel: SoundViewModel
-        private var playState: PlayState? = null
+        private lateinit var activity: MainActivity
+        private lateinit var viewModel: SoundViewModel
+        private var playerState: SoundPlayer.State? = null
         private var repressMode: RepressMode? = null
         private var selectEnabled = false
         private var selected = false
         private var animationsEnabled = false
-        private var soundId: Int? = null
+        private var playerPermanentError = ""
+        internal var soundId: Int? = null
 
         internal fun bind(
             soundId: Int,
@@ -76,6 +71,7 @@ class SoundAdapter(
             colorHelper: ColorHelper
         ) {
             this.soundId = soundId
+            this.activity = activity
 
             val viewModel = ViewModelProvider(
                 activity.viewModelStore,
@@ -86,44 +82,46 @@ class SoundAdapter(
             binding.lifecycleOwner = this
             binding.viewModel = viewModel
 
-            binding.root.setOnTouchListener(this)
             binding.root.setOnLongClickListener(this)
             binding.root.setOnClickListener(this)
 
             viewModel.repressMode.observe(this) {
                 repressMode = it
-                // If changing to anything but PAUSE, make sure any paused sounds are stopped.
+                // If changing to anything but PAUSE, make sure any paused sounds are stopped:
                 if (it != RepressMode.PAUSE) viewModel.stopPaused()
+                // If changing to anything but OVERLAP, destroy any existing parallel players:
+                if (it != RepressMode.OVERLAP) viewModel.destroyParallelPlayers()
             }
 
             viewModel.animationsEnabled.observe(this) { animationsEnabled = it }
             viewModel.selectEnabled.observe(this) { selectEnabled = it }
-            viewModel.playState.observe(this) {
-                if (it != playState) {
-                    log("playState.observe: new playState=$it, was=$playState")
-                    playState = it
+            viewModel.playerState.observe(this) {
+                if (it != playerState) {
+                    log("playerState.observe: new playState=$it, was=$playerState")
+                    playerState = it
                 }
             }
             viewModel.selected.observe(this) { selected = it }
-            viewModel.playerError.observe(this) { playerError ->
-                if (playerError != null) activity.showSnackbar(playerError)
+            viewModel.playerPermanentError.observe(this) { error ->
+                if (error != null) playerPermanentError = error
+            }
+            viewModel.playerTemporaryError.observe(this) { error ->
+                if (error != null) activity.showSnackbar(error)
             }
             viewModel.volume.observe(this) { viewModel.setPlayerVolume(it) }
             viewModel.path.observe(this) { viewModel.setPlayerPath(it) }
         }
 
-        @SuppressLint("ClickableViewAccessibility")
-        override fun onTouch(v: View, event: MotionEvent): Boolean {
-            /** This seems to work, but I don't know exactly why. */
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> if (animationsEnabled) binding.soundCardBorder.alpha = 1f
-                MotionEvent.ACTION_UP -> if (animationsEnabled) animator.start()
+        private fun animateClick() {
+            if (animationsEnabled) {
+                binding.soundCardBorder.alpha = 1f
+                animator.start()
             }
-            return false
         }
 
         override fun onLongClick(v: View?): Boolean {
             log("onLongClick: v=$v")
+            animateClick()
             if (!selectEnabled) {
                 // Select is not enabled; enable it and select sound.
                 viewModel.enableSelect()
@@ -137,22 +135,24 @@ class SoundAdapter(
         }
 
         override fun onClick(v: View?) {
-            log("onClick: v=$v, selectEnabled=$selectEnabled, playState=$playState")
+            log("onClick: v=$v, selectEnabled=$selectEnabled, playState=$playerState")
+            animateClick()
             if (selectEnabled) {
                 if (selected) viewModel.unselect()
                 else viewModel.select()
+            } else if (repressMode == RepressMode.OVERLAP) {
+                viewModel.playParallel()
             } else {
-                when (playState) {
-                    PlayState.IDLE -> viewModel.play()
-                    PlayState.STARTED -> when (repressMode) {
+                when (playerState) {
+                    SoundPlayer.State.IDLE -> viewModel.play()
+                    SoundPlayer.State.STARTED -> when (repressMode) {
                         RepressMode.STOP -> viewModel.stop()
                         RepressMode.RESTART -> viewModel.restart()
-                        RepressMode.OVERLAP -> viewModel.play(true)
                         RepressMode.PAUSE -> viewModel.pause()
-                        null -> {}
+                        else -> {}
                     }
-                    PlayState.PAUSED -> viewModel.play()
-                    PlayState.ERROR -> viewModel.play()
+                    SoundPlayer.State.PAUSED -> viewModel.play()
+                    SoundPlayer.State.ERROR -> activity
                     null -> {}
                 }
             }
@@ -160,22 +160,22 @@ class SoundAdapter(
 
         override fun markCreated() {
             super.markCreated()
-            log("markCreated: viewModel.sound=${viewModel.soundId}")
+            log("markCreated: soundId=${soundId}")
         }
 
         override fun markAttach() {
             super.markAttach()
-            log("markAttach: viewModel.sound=${viewModel.soundId}")
+            log("markAttach: soundId=${soundId}")
         }
 
         override fun markDetach() {
             super.markDetach()
-            log("markDetach: viewModel.sound=${viewModel.soundId}")
+            log("markDetach: soundId=${soundId}")
         }
 
         override fun markDestroyed() {
             super.markDestroyed()
-            log("markDestroyed: viewModel.sound=${viewModel.soundId}")
+            log("markDestroyed: soundId=${soundId}")
         }
     }
 
