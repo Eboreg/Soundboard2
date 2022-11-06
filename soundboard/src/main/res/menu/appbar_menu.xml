@@ -81,6 +81,11 @@
             </group>
 
             <item
+                android:id="@+id/actionDeleteOrphans"
+                android:icon="@drawable/fas_baby"
+                android:title="@string/delete_orphans" />
+
+            <item
                 android:id="@+id/actionSettings"
                 android:icon="@drawable/fas_gear"
                 android:title="@string/settings" />

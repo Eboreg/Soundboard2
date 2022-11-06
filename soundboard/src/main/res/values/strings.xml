@@ -1,7 +1,7 @@
 <resources>
     <string name="add_category">Add category</string>
     <string name="add_sound">Add sound(s)</string>
-    <string name="app_name" translatable="false">Soundboard2</string>
+    <string name="app_name" translatable="false">Söun̈dböard 2</string>
     <string name="ascending">Ascending</string>
     <string name="auto_delete_missing">Auto delete missing</string>
     <string name="background_colour">Background colour</string>
@@ -62,6 +62,11 @@
     <string name="sort_sounds_by">Sort sounds by</string>
     <string name="undid">Undid!</string>
     <string name="redid">Redid!</string>
+    <string name="delete_orphans">Delete orphans</string>
+    <plurals name="deleted_orphans">
+        <item quantity="one">Deleted one orphan sound.</item>
+        <item quantity="other">Deleted %1$d orphan sounds.</item>
+    </plurals>
     <plurals name="add_duplicate">
         <item quantity="one">Add duplicate</item>
         <item quantity="other">Add duplicates</item>

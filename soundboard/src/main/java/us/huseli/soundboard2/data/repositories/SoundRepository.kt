@@ -80,6 +80,8 @@ class SoundRepository @Inject constructor(
 
     suspend fun delete(sounds: Collection<Sound>) = soundDao.delete(sounds)
 
+    suspend fun delete(vararg sounds: Sound) = soundDao.delete(sounds.asList())
+
     suspend fun update(sounds: Collection<Sound>) = soundDao.update(sounds)
 
     /** SOUND SELECTION ******************************************************/
