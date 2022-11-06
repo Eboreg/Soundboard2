@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import android.widget.ArrayAdapter
 import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -12,7 +13,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.snackbar.Snackbar
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
@@ -27,6 +30,7 @@ import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.MediaPlayerTests
 import us.huseli.soundboard2.ui.drawables.RepressModeIconDrawable
 import us.huseli.soundboard2.ui.fragments.*
 import us.huseli.soundboard2.viewmodels.AppViewModel
@@ -85,35 +89,18 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
+        binding.debug = false
         setContentView(binding.root)
 
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        /*
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
                 appViewModel.snackbarText.collect { showSnackbar(it) }
             }
         }
-         */
-        /*
-        lifecycleScope.launchWhenCreated {
-            appViewModel.watchFolderSyncResult.collect {
-                var snackbarString = getString(R.string.watched_folder_sync) + ": "
-                if (it.added > 0) snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_added, it.added, it.added)
-                if (it.deleted > 0) {
-                    if (it.added > 0) snackbarString += ", "
-                    snackbarString += resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, it.deleted, it.deleted)
-                }
-                snackbarString += "."
-                log("appViewModel.watchFolderSyncResult.collect: snackbarString=$snackbarString")
-                showSnackbar(snackbarString)
-            }
-        }
-         */
 
-        appViewModel.snackbarText.observe(this) { showSnackbar(it) }
         appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
         appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
 
@@ -130,6 +117,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
 
         initCategoryList()
+
+        mptInit()
     }
 
     override fun onStart() {
@@ -217,6 +206,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             }
             R.id.actionUndo -> appViewModel.undo()
             R.id.actionRedo -> appViewModel.redo()
+            R.id.actionDeleteOrphans -> appViewModel.deleteOrphans()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
@@ -332,6 +322,38 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     fun showSnackbar(text: CharSequence) {
         if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
+    }
+
+
+    /** MEDIA PLAYER TEST SHIT ***********************************************/
+
+    private lateinit var mpt: MediaPlayerTests
+
+    private fun mptInit() {
+        mpt = MediaPlayerTests(applicationContext)
+
+        binding.mediaPlayerTestSpinner.adapter = ArrayAdapter(
+            applicationContext,
+            android.R.layout.simple_spinner_item,
+            MediaPlayerTests.Func.values()
+        )
+        binding.mediaPlayerTestRun.setOnClickListener {
+            mpt.runFunc(binding.mediaPlayerTestSpinner.selectedItem as MediaPlayerTests.Func)
+        }
+        binding.mediaPlayerTestReset.setOnClickListener {
+            mpt.release()
+            mpt = MediaPlayerTests(applicationContext)
+        }
+        binding.mediaPlayerTestRunAll.setOnClickListener {
+            mpt.release()
+            mpt = MediaPlayerTests(applicationContext)
+            mpt.runTests()
+        }
+        binding.mediaPlayerTestRunChain.setOnClickListener {
+            mpt.release()
+            mpt = MediaPlayerTests(applicationContext)
+            mpt.runChainTests()
+        }
     }
 
 
