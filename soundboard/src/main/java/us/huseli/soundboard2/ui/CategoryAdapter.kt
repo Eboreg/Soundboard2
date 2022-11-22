@@ -2,17 +2,17 @@ package us.huseli.soundboard2.ui
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemCategoryBinding
 import us.huseli.soundboard2.helpers.ColorHelper
-import us.huseli.soundboard2.helpers.LifecycleAdapter
-import us.huseli.soundboard2.helpers.LifecycleViewHolder
+import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.viewmodels.CategoryViewModel
 
 class CategoryAdapter(
@@ -21,18 +21,16 @@ class CategoryAdapter(
     private val soundRepository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     private val colorHelper: ColorHelper
-) : LifecycleAdapter<Int, CategoryAdapter.ViewHolder>(Comparator()) {
+) : ListAdapter<Int, CategoryAdapter.ViewHolder>(Comparator()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         ViewHolder(ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        super.onBindViewHolder(holder, position)
         holder.bind(getItem(position), activity, categoryRepository, soundRepository, settingsRepository, colorHelper)
     }
 
-    class ViewHolder(val binding: ItemCategoryBinding) : LifecycleViewHolder(binding.root) {
-        override val lifecycleRegistry = LifecycleRegistry(this)
 
+    class ViewHolder(private val binding: ItemCategoryBinding) : LoggingObject, RecyclerView.ViewHolder(binding.root) {
         internal fun bind(
             categoryId: Int,
             activity: MainActivity,
@@ -50,10 +48,10 @@ class CategoryAdapter(
                     colorHelper,
                     categoryId
                 )
-            )[categoryId.toString(), CategoryViewModel::class.java]
+            )["category-$categoryId", CategoryViewModel::class.java]
             val soundAdapter = SoundAdapter(activity, soundRepository, settingsRepository, colorHelper)
 
-            binding.lifecycleOwner = this
+            binding.lifecycleOwner = activity
             binding.viewModel = viewModel
             binding.soundList.adapter = soundAdapter
 
@@ -63,8 +61,8 @@ class CategoryAdapter(
             binding.categoryMoveDown.setOnClickListener { viewModel.moveDown() }
             binding.categoryMoveUp.setOnClickListener { viewModel.moveUp() }
 
-            viewModel.soundIds.observe(this) { soundAdapter.submitList(it) }
-            viewModel.spanCount.observe(this) {
+            viewModel.soundIds.observe(activity) { soundAdapter.submitList(it) }
+            viewModel.spanCount.observe(activity) {
                 (binding.soundList.layoutManager as? GridLayoutManager)?.spanCount = it
             }
         }

@@ -26,13 +26,13 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     categoryRepository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val _animationsEnabled = MutableStateFlow(settingsRepository.animationsEnabled.value)
-    private val _watchFolderEnabled = MutableStateFlow(settingsRepository.watchFolderEnabled.value)
+    private val _isAnimationEnabled = MutableStateFlow(settingsRepository.isAnimationEnabled.value)
+    private val _isWatchFolderEnabled = MutableStateFlow(settingsRepository.isWatchFolderEnabled.value)
     private val _watchFolderUri = MutableStateFlow(settingsRepository.watchFolderUri.value)
 
-    val animationsEnabled: LiveData<Boolean> = _animationsEnabled.asLiveData()
     val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
-    val watchFolderEnabled: LiveData<Boolean> = _watchFolderEnabled.asLiveData()
+    val isAnimationEnabled: LiveData<Boolean> = _isAnimationEnabled.asLiveData()
+    val isWatchFolderEnabled: LiveData<Boolean> = _isWatchFolderEnabled.asLiveData()
     val watchFolderString: LiveData<String> =
         _watchFolderUri.map { it?.path?.split(":")?.last() ?: context.getString(R.string.not_set) }.asLiveData()
     val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
@@ -45,9 +45,17 @@ class SettingsViewModel @Inject constructor(
         categoryIds.indexOfFirst { it == categoryId }
     }.filter { it != -1 }.asLiveData()
 
-    fun setAnimationsEnabled(value: Boolean) { _animationsEnabled.value = value }
-    fun setWatchFolderEnabled(value: Boolean) { _watchFolderEnabled.value = value }
-    fun setWatchFolderUri(value: Uri?) { _watchFolderUri.value = value }
+    fun setAnimationEnabled(value: Boolean) {
+        _isAnimationEnabled.value = value
+    }
+
+    fun setWatchFolderEnabled(value: Boolean) {
+        _isWatchFolderEnabled.value = value
+    }
+
+    fun setWatchFolderUri(value: Uri?) {
+        _watchFolderUri.value = value
+    }
 
     fun save(
         animationsEnabled: Boolean,

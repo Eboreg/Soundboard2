@@ -107,7 +107,7 @@
             android:layout_marginBottom="@dimen/margin_small"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="4"
-            app:visible="@{viewModel.soundListVisible}"
+            app:visible="@{viewModel.isSoundListVisible}"
             tools:itemCount="4"
             tools:listitem="@layout/item_sound" />
 

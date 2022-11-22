@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <dimen name="margin_normal">8dp</dimen>
     <dimen name="margin_xsmall">2dp</dimen>
     <dimen name="margin_small">4dp</dimen>
@@ -13,7 +13,7 @@
     <dimen name="action_button_height">32dp</dimen>
     <dimen name="elevation_normal">2dp</dimen>
     <dimen name="text_small">10sp</dimen>
-    <dimen name="text_h1">20sp</dimen>
+    <dimen name="text_h1" tools:keep="@dimen/text_h1">20sp</dimen>
     <dimen name="text_h2">18sp</dimen>
     <dimen name="text_h3">16sp</dimen>
 </resources>

@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="add_category">Add category</string>
     <string name="add_sound">Add sound(s)</string>
     <string name="app_name" translatable="false">Söun̈dböard 2</string>
@@ -10,40 +10,45 @@
     <string name="cannot_delete_last_category">You cannot delete the last category.</string>
     <string name="category">Category</string>
     <string name="category_for_new_sounds">Category for new sounds</string>
+    <string name="clear">Clear</string>
     <string name="creation_time">Creation time</string>
     <string name="delete">Delete</string>
     <string name="delete_category">Delete category?</string>
     <string name="delete_category_name">Delete category %1$s?</string>
+    <string name="delete_orphans">Delete orphans</string>
     <string name="descending">Descending</string>
     <string name="duration">Duration</string>
+    <string name="edit">Edit</string>
     <string name="edit_category">Edit category</string>
     <string name="enable_animations">Enable animations</string>
-    <string name="help">Hëlp!!</string>
     <string name="move_to_another_category">Move to another category</string>
     <string name="move_to_category">Move to category</string>
-    <string name="multiple_sounds_selected">(%1$d sounds selected)</string>
+    <string name="multiple_sounds_selected" tools:ignore="PluralsCandidate">(%1$d sounds selected)</string>
     <string name="name">Name</string>
     <string name="name_cannot_be_empty">Name cannot be empty.</string>
     <string name="no">No</string>
+    <string name="no_change">No change</string>
+    <string name="not_changed">(Not changed)</string>
     <string name="not_set">(Not set)</string>
     <string name="ok">OK</string>
     <string name="overlap">Overlap</string>
+    <string name="override_category_background_colour">Override background colour</string>
     <string name="pause">Pause</string>
+    <string name="redid">Redid!</string>
     <string name="redo">Redo</string>
-    <string name="remove_watch">Remove watch</string>
-    <string name="reorder">Reorder</string>
     <string name="repress_mode">Re-press mode</string>
     <string name="restart">Restart</string>
     <string name="save">Save</string>
     <string name="search">Search</string>
+    <string name="select">Select</string>
+    <string name="select_all">Select all</string>
     <string name="select_background_colour">Select background colour</string>
     <string name="select_colour">Select colour</string>
     <string name="select_folder">Select folder</string>
     <string name="settings">Sëttings</string>
-    <string name="sound_selection_disabled">Sound selection is disabled.</string>
-    <string name="sound_selection_enabled">Sound selection is enabled.</string>
+    <string name="sort_sounds_by">Sort sounds by</string>
     <string name="stop">Stop</string>
-    <string name="custom">Custom</string>
+    <string name="undid">Undid!</string>
     <string name="undo">Undo</string>
     <string name="volume">Volume</string>
     <string name="watch_folder">Watch folder</string>
@@ -55,15 +60,13 @@
     <string name="zoom_in">Zoom in</string>
     <string name="zoom_level_percent">Zoom level: %1$d%%</string>
     <string name="zoom_out">Zoom out</string>
-    <string name="select_all">Select all</string>
-    <string name="edit">Edit</string>
-    <string name="no_change">No change</string>
-    <string name="not_changed">(Not changed)</string>
-    <string name="sort_sounds_by">Sort sounds by</string>
-    <string name="undid">Undid!</string>
-    <string name="redid">Redid!</string>
-    <string name="delete_orphans">Delete orphans</string>
-    <plurals name="deleted_orphans">
+    <string name="edit_sound">Edit sound</string>
+    <string name="random">Random</string>
+    <plurals name="deleted_orphan_files">
+        <item quantity="one">Deleted one orphan file from internal storage.</item>
+        <item quantity="other">Deleted %1$d orphan files from internal storage.</item>
+    </plurals>
+    <plurals name="deleted_orphan_sounds">
         <item quantity="one">Deleted one orphan sound.</item>
         <item quantity="other">Deleted %1$d orphan sounds.</item>
     </plurals>
@@ -71,7 +74,7 @@
         <item quantity="one">Add duplicate</item>
         <item quantity="other">Add duplicates</item>
     </plurals>
-    <plurals name="add_sound">
+    <plurals name="add_sounds">
         <item quantity="one">Add sound</item>
         <item quantity="other">Add sounds</item>
     </plurals>

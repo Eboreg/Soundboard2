@@ -13,6 +13,7 @@ import androidx.core.content.res.getResourceIdOrThrow
 import org.xmlpull.v1.XmlPullParser
 import kotlin.math.roundToInt
 
+@Suppress("BooleanMethodIsAlwaysInverted", "BooleanMethodIsAlwaysInverted")
 open class FontAwesomeDrawable(
     defaultTextAlignment: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL
 ) : Drawable() {
@@ -87,7 +88,8 @@ open class FontAwesomeDrawable(
             }
         }
 
-    @ColorInt private val defaultColor = Color.BLACK
+    @ColorInt
+    private val defaultColor = Color.BLACK
     private var textColors: ColorStateList = ColorStateList.valueOf(defaultColor)
 
     private val rootAttributeMap by lazy { rootAttributes.associateBy { it.value }.toSortedMap() }
@@ -153,11 +155,12 @@ open class FontAwesomeDrawable(
                             resName.startsWith("fab") -> FontAwesomeCache.FA_FONT_BRANDS
                             else -> FontAwesomeCache.FA_FONT_REGULAR
                         }
-                    } catch (e: Exception) {}
+                    } catch (_: Exception) {
+                    }
                     text = a.getText(idx)
                 }
                 Attribute.TYPEFACE -> {
-                    explicitTypeface = when(a.getInt(idx, -1)) {
+                    explicitTypeface = when (a.getInt(idx, -1)) {
                         0 -> FontAwesomeCache.FA_FONT_REGULAR
                         1 -> FontAwesomeCache.FA_FONT_SOLID
                         2 -> FontAwesomeCache.FA_FONT_BRANDS
@@ -251,10 +254,9 @@ open class FontAwesomeDrawable(
      * textPaint needs updating in a bunch of places; always do it via this
      * method, so we make sure measureContent() is also run.
      */
-    private fun updateTextPaint(func: (TextPaint) -> Unit): Boolean {
+    private fun updateTextPaint(func: (TextPaint) -> Unit) {
         func(textPaint)
         measureContent()
-        return true
     }
 
     /** Set the text size, in raw pixels. */
@@ -284,7 +286,10 @@ open class FontAwesomeDrawable(
     /** Internal method to apply the correct text colour based on the drawable's state. */
     private fun updateTextColors(): Boolean {
         val newColor = textColors.getColorForState(state, defaultColor)
-        return if (textPaint.color != newColor) updateTextPaint { it.color = newColor } else false
+        return if (textPaint.color != newColor) {
+            updateTextPaint { it.color = newColor }
+            true
+        } else false
     }
 
     /** Update the internal bounds in response to any external requests. */

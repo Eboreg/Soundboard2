@@ -1,14 +1,18 @@
 package us.huseli.soundboard2.helpers
 
 import android.media.MediaPlayer
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import android.media.SyncParams
+import android.util.Log
+import androidx.annotation.IntRange
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import us.huseli.soundboard2.BuildConfig
+import us.huseli.soundboard2.Constants
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.lang.Integer.min
-import kotlin.math.roundToInt
 
 /**
  * Tests indicate that this table basically seems to be correct:
@@ -43,14 +47,24 @@ import kotlin.math.roundToInt
  * This means it should be in any of the states: Prepared, Paused, PlaybackCompleted. It also means that:
  * - On manual stop (state = Stopped), we should immediately call prepare().
  * - When onError has been called (state = Error), we should call reset() > setDataSource() > prepare().
+ *
+ * Mapping for the MediaPlayer state integers I've been able to find out:
+ * 0 = Error
+ * 1 = Idle
+ * 2 = Initialized
+ * 4 = Preparing??
+ * 8 = Prepared
+ * 16 = Started
+ * 32 = Paused
+ * 64 = Stopped
  */
 
-class MediaPlayerWrapper :
+@Suppress("BooleanMethodIsAlwaysInverted")
+class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     LoggingObject,
     MediaPlayer.OnCompletionListener,
-    MediaPlayer.OnErrorListener
-{
-    enum class State { IDLE, INITIALIZED, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, END }
+    MediaPlayer.OnErrorListener {
+    enum class State { IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, END }
 
     fun interface OnStateChangeListener {
         fun onStateChange(mp: MediaPlayerWrapper, state: State)
@@ -66,36 +80,33 @@ class MediaPlayerWrapper :
     private val _permanentError = Channel<String>()
     private var _onStateChangeListener: OnStateChangeListener? = null
     private var _path: String? = null
-    private val _currentPosition: Int?
-        get() {
-            return if (_state.value in listOf(State.STARTED, State.PAUSED))
-                if (_mp.duration > 0)
-                    min(((_mp.currentPosition.toDouble() / _mp.duration) * 100).roundToInt(), 100)
-                else 0
-            else null
-        }
+    @IntRange(from = 0, to = 100)
+    private var _volume = Constants.DEFAULT_VOLUME
 
     val state: StateFlow<State> = _state
     val hasPermanentError: Flow<Boolean> = _hasPermanentError
     val permanentError: Flow<String> = _permanentError.receiveAsFlow()
     val temporaryError: Flow<String> = _temporaryError.receiveAsFlow()
-    val isPlaying: Boolean
-        get() = _state.value == State.STARTED
-    val isPaused: Boolean
-        get() = _state.value == State.PAUSED
+    val currentPosition: Int
+        get() = if (_state.value !in listOf(State.IDLE, State.PREPARING, State.ERROR)) _mp.currentPosition else 0
     val duration: Int?
-        get() = if (_state.value in listOf(State.IDLE, State.INITIALIZED, State.ERROR)) null else _mp.duration
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val currentPosition: Flow<Int?> = _state.flatMapLatest { state ->
-        flow {
-            emit(_currentPosition)
-            while (state == State.STARTED) {
-                delay(200)
-                emit(_currentPosition)
-            }
+        get() = if (_state.value in listOf(
+                State.IDLE,
+                State.INITIALIZED,
+                State.PREPARING,
+                State.ERROR
+            )
+        ) null else _mp.duration
+    val durationFlow: Flow<Int> =  // In milliseconds
+        _state.mapNotNull {
+            if (it in listOf(
+                    State.IDLE,
+                    State.PREPARING,
+                    State.INITIALIZED,
+                    State.ERROR
+                )
+            ) null else _mp.duration
         }
-    }
 
     /**
      * Public wrapper methods, that will try to achieve the following:
@@ -112,7 +123,7 @@ class MediaPlayerWrapper :
         _onStateChangeListener = null
     }
 
-    suspend fun pause() {
+    fun pause() {
         if (_state.value == State.STARTED) wrapPause()
         renderStartable()
     }
@@ -140,8 +151,7 @@ class MediaPlayerWrapper :
     }
 
     fun stop() {
-        if (_state.value == State.STARTED) wrapStop()
-        else if (_state.value == State.PAUSED) _mp.seekTo(0)
+        if (_state.value in listOf(State.STARTED, State.PAUSED)) wrapStop()
         renderStartable()
     }
 
@@ -158,9 +168,8 @@ class MediaPlayerWrapper :
         }
     }
 
-    fun setVolume(value: Int) {
-        log("setVolume(): value=$value, _state=${_state.value}, _path=$_path")
-        _mp.setVolume(value.toFloat() / 100, value.toFloat() / 100)
+    fun setVolume(@IntRange(from = 0, to = 100) value: Int) {
+        _volume = value
     }
 
     /** PRIVATE METHODS *****************************************************/
@@ -182,11 +191,17 @@ class MediaPlayerWrapper :
         if (_state.value == State.ERROR) wrapReset()
         if (_state.value == State.IDLE) wrapSetDataSource(_path)
         if (_state.value in listOf(State.STOPPED, State.INITIALIZED)) wrapPrepare()
+        _mp.setVolume(_volume.toFloat() / 100, _volume.toFloat() / 100)
     }
 
     private fun setPermanentError(error: String) {
         _permanentError.trySend(error)
         _hasPermanentError.value = true
+    }
+
+    private fun setTemporaryError(error: String) {
+        if (BuildConfig.DEBUG) _temporaryError.trySend(error)
+        log("Temporary error: $error", Log.ERROR)
     }
 
     /**
@@ -200,13 +215,15 @@ class MediaPlayerWrapper :
      * player engine. It may take some time before the state is updated in calls to isPlaying(), and it can be a number
      * of seconds in the case of streamed content.
      */
-    private suspend fun wrapPause() {
+    private fun wrapPause() {
         try {
             _mp.pause()
-            while (_mp.isPlaying) delay(10)
-            changeState(State.PAUSED)
+            coroutineScope.launch {
+                while (_mp.isPlaying) delay(10)
+                changeState(State.PAUSED)
+            }
         } catch (e: Exception) {
-            _temporaryError.trySend("Error on pause(): $e")
+            setTemporaryError("Error on pause(): $e")
         }
     }
 
@@ -228,14 +245,16 @@ class MediaPlayerWrapper :
     private fun wrapPrepare() {
         log("wrapPrepare(): _state=${_state.value}, _path=$_path")
         try {
-            _mp.syncParams.tolerance = 0.1f
+            _mp.syncParams.tolerance = 1f / 24
+            _mp.syncParams.syncSource = SyncParams.SYNC_SOURCE_AUDIO
+            changeState(State.PREPARING)
             _mp.prepare()
-            changeState(State.PREPARED)
         } catch (e: IllegalStateException) {
-            _temporaryError.trySend("Error on prepare(): $e")
+            setTemporaryError("Error on prepare(): $e")
         } catch (e: Exception) {
             setPermanentError("Error on prepare(): $e")
         }
+        changeState(State.PREPARED)
     }
 
     private fun wrapReset() {
@@ -256,17 +275,14 @@ class MediaPlayerWrapper :
         try {
             _mp.setDataSource(path)
             changeState(State.INITIALIZED)
-        }
-        catch (e: FileNotFoundException) {
-            log("FileNotFoundException in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}")
+        } catch (e: FileNotFoundException) {
+            log("FileNotFoundException in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}", Log.ERROR)
             setPermanentError("File not found: ${path?.split("/")?.last()}")
-        }
-        catch (e: IllegalStateException) {
-            log("IllegalStateException in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}")
-            _temporaryError.trySend("Error on setDataSource(): $e")
-        }
-        catch (e: Exception) {
-            log("Exception in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}")
+        } catch (e: IllegalStateException) {
+            log("IllegalStateException in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}", Log.ERROR)
+            setTemporaryError("Error on setDataSource(): $e")
+        } catch (e: Exception) {
+            log("Exception in wrapSetDataSource(): e=$e, path=$path, _state=${_state.value}", Log.ERROR)
             setPermanentError("Error on setDataSource(): $e")
         }
     }
@@ -282,11 +298,13 @@ class MediaPlayerWrapper :
         log("wrapStart(): _state=${_state.value}, _path=$_path")
         try {
             _mp.start()
-            changeState(State.STARTED)
+            coroutineScope.launch {
+                while (!_mp.isPlaying) delay(10)
+                changeState(State.STARTED)
+            }
         } catch (e: Exception) {
             changeState(State.ERROR)
-            log("error on wrapStart(): $e, _state=${_state.value}, _path=$_path")
-            _temporaryError.trySend("Error on start(): $e")
+            setTemporaryError("Error on start(): $e")
         }
     }
 
@@ -303,7 +321,7 @@ class MediaPlayerWrapper :
             _mp.stop()
             changeState(State.STOPPED)
         } catch (e: Exception) {
-            _temporaryError.trySend("Error on stop(): $e")
+            setTemporaryError("Error on stop(): $e")
         }
     }
 
@@ -327,8 +345,8 @@ class MediaPlayerWrapper :
             MediaPlayer.MEDIA_ERROR_TIMED_OUT -> "Timeout"
             else -> "Other ($extra)"
         }
-        log("onError(): what=$what, extra=$extra, _state=${_state.value}, _path=$_path")
-        if (_state.value != State.ERROR) _temporaryError.trySend("$whatStr: $extraStr")
+        log("onError(): what=$what, extra=$extra, _state=${_state.value}, _path=$_path", Log.ERROR)
+        if (_state.value != State.ERROR) setTemporaryError("$whatStr: $extraStr")
         changeState(State.ERROR)
         renderStartable()
         return true

@@ -1,33 +1,69 @@
 package us.huseli.soundboard2.ui.fragments
 
-import androidx.databinding.ViewDataBinding
-import com.jaredrummler.android.colorpicker.ColorPickerDialog
-import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
-import us.huseli.soundboard2.Constants
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.widget.ArrayAdapter
+import androidx.annotation.ColorInt
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.snackbar.Snackbar
 import us.huseli.soundboard2.R
-import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.databinding.FragmentEditCategoryBinding
+import us.huseli.soundboard2.helpers.SoundSorting
+import us.huseli.soundboard2.helpers.ValidationError
 import us.huseli.soundboard2.viewmodels.BaseCategoryEditViewModel
-import javax.inject.Inject
 
-abstract class BaseCategoryEditFragment<T: ViewDataBinding> : BaseDialogFragment<T>(), ColorPickerDialogListener {
+abstract class BaseCategoryEditFragment : BaseColorPickerDialogFragment<FragmentEditCategoryBinding>() {
     protected abstract val viewModel: BaseCategoryEditViewModel
-    @Inject lateinit var colorHelper: ColorHelper
+    @StringRes
+    override val colorPickerDialogTitle = R.string.select_background_colour
+    @StringRes
+    override val positiveButtonText = R.string.save
+    @StringRes
+    override val negativeButtonText = R.string.cancel
+
+    @ColorInt
+    override fun getInitialColor() = viewModel.backgroundColor.value
+
+    override fun getSelectColorButton(binding: FragmentEditCategoryBinding) = binding.column1.selectColorButton
+
+    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
+        FragmentEditCategoryBinding.inflate(layoutInflater)
 
     override fun onColorSelected(dialogId: Int, color: Int) {
-        viewModel.setBackgroundColor(color)
+        viewModel.backgroundColor.value = color
     }
 
-    override fun onDialogDismissed(dialogId: Int) {}
+    override fun onBindingCreated(binding: FragmentEditCategoryBinding) {
+        super.onBindingCreated(binding)
 
-    protected fun onSelectColorClick() {
-        val className = javaClass.simpleName
+        binding.viewModel = viewModel
 
-        ColorPickerDialog.newBuilder().apply {
-            setPresets(colorHelper.colors.toIntArray())
-            setDialogTitle(R.string.select_background_colour)
-            viewModel.backgroundColor.value?.let { setColor(it) }
-            setDialogId(Constants.FRAGMENT_TAGS.indexOf(className))
-            show(requireActivity())
+        binding.column2.sortBy.adapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_item,
+            SoundSorting.listSortParameterItems(requireContext())
+        )
+
+        binding.column1.randomColorButton.setOnClickListener { viewModel.setRandomBackgroundColor() }
+    }
+
+    override fun onDialogCreated(dialog: AlertDialog) {
+        super.onDialogCreated(dialog)
+
+        viewModel.isSaveEnabled.observe(this) {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = it
+        }
+    }
+
+    override fun onPositiveButtonClick(): Boolean {
+        return try {
+            viewModel.validate()
+            viewModel.save()
+            true
+        } catch (e: ValidationError) {
+            Snackbar.make(binding.root, e.messageResId, Snackbar.LENGTH_SHORT).show()
+            false
         }
     }
 }

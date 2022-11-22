@@ -1,8 +1,11 @@
 package us.huseli.soundboard2.viewmodels
 
+import android.graphics.Color
+import android.os.Handler
+import androidx.annotation.ColorInt
+import androidx.annotation.IntRange
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.RepressMode
@@ -21,97 +24,112 @@ class SoundViewModel(
     private val repository: SoundRepository,
     settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    private val soundId: Int
+    private val soundIdInternal: Int,
+    audioThreadHandler: Handler
 ) : LoggingObject, ViewModel() {
-    private val _sound: Flow<SoundExtended> = repository.get(soundId).filterNotNull()
-    private val _player = SoundPlayer()
-    private val _decimalFormat = DecimalFormat(".#").also {
+    private val soundInternal: Flow<SoundExtended> = repository.get(soundIdInternal).filterNotNull()
+    private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
+    private val decimalFormatInternal = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
         symbols.decimalSeparator = '.'
         it.decimalFormatSymbols = symbols
     }
 
-    val backgroundColor: LiveData<Int> = _sound.map { it.backgroundColor }.asLiveData()
-    val name: LiveData<String> = _sound.map { it.name }.asLiveData()
-    val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
-    val volume: LiveData<Int> = _sound.map { it.volume }.asLiveData()
-    val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it) }
-    val playerPermanentError: LiveData<String> = _player.permanentError.asLiveData()
-    val playerTemporaryError: LiveData<String> = _player.temporaryError.asLiveData()
-    val playerState: LiveData<SoundPlayer.State> = _player.state.asLiveData()
-    val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
-    val path: LiveData<String> = _sound.map { it.uri.path }.filterNotNull().asLiveData()
-    val animationsEnabled: LiveData<Boolean> = settingsRepository.animationsEnabled.asLiveData()
-
-    val soundProgress = combine(
-        settingsRepository.animationsEnabled,
-        _sound.map { it.volume },
-        _player.currentPosition
-    ) { animationsEnabled, volume, position ->
-        if (animationsEnabled && position != null) position
-        else volume
+    @ColorInt
+    val backgroundColor: LiveData<Int> = soundInternal.map {
+        if (it.backgroundColor == Color.TRANSPARENT) it.categoryColor else it.backgroundColor
     }.asLiveData()
-
-    val durationString = _sound.map { sound ->
+    val durationString = soundInternal.map { sound ->
         when {
-            sound.duration > -1 && sound.duration < 950 -> _decimalFormat.format(sound.duration.toDouble() / 1000) + "s"
+            sound.duration > -1 && sound.duration < 950 -> decimalFormatInternal.format(sound.duration.toDouble() / 1000) + "s"
             sound.duration > -1 -> (sound.duration.toDouble() / 1000).roundToInt().toString() + "s"
             else -> null
         }
     }.asLiveData()
+    val isAnimationEnabled: LiveData<Boolean> = settingsRepository.isAnimationEnabled.asLiveData()
+    val name: LiveData<String> = soundInternal.map { it.name }.asLiveData()
+    val path: LiveData<String> = soundInternal.map { it.uri.path }.filterNotNull().asLiveData()
+    val playerPermanentError: LiveData<String> = playerInternal.permanentError.asLiveData()
+    val playerState: LiveData<SoundPlayer.State> = playerInternal.state.asLiveData()
+    val playerTemporaryError: LiveData<String> = playerInternal.temporaryError.asLiveData()
+    val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
+    val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it) }
+    @ColorInt
+    val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
+    @IntRange(from = 0, to = 100)
+    val volume: LiveData<Int> = soundInternal.map { it.volume }.asLiveData()
+
+    val duration: Int?
+        get() = playerInternal.duration
+    val currentPosition: Int
+        get() = playerInternal.currentPosition
+
+    init {
+        viewModelScope.launch {
+            soundInternal.collect { sound ->
+                playerInternal.setPath(sound.uri.path)
+                playerInternal.setVolume(sound.volume)
+            }
+        }
+        viewModelScope.launch {
+            // If duration from player differs from duration in DB, update DB with
+            // the (hopefully) more correct player duration.
+            combineTransform(playerInternal.durationFlow, soundInternal) { duration, sound ->
+                if (duration.toLong() != sound.duration) emit(sound.clone(duration = duration.toLong()))
+            }.collect { sound -> repository.update(listOf(sound)) }
+        }
+    }
 
     /** State booleans etc. */
-    val selectEnabled: LiveData<Boolean> = repository.selectEnabled.asLiveData()
-    val selected: LiveData<Boolean> = repository.selectedSoundIds.map { it.contains(soundId) }.asLiveData()
-    val playerStateStarted: LiveData<Boolean> = _player.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
-    val playerStatePaused: LiveData<Boolean> = _player.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
-    val playerStateError: LiveData<Boolean> = _player.hasPermanentError.asLiveData()
+    val isPlayerError: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.ERROR }.asLiveData()
+    val isPlayerPaused: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
+    val isPlayerStarted: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
+    val isSelectEnabled: LiveData<Boolean> = repository.isSelectEnabled.asLiveData()
+    val isSelected: LiveData<Boolean> = repository.selectedSoundIds.map { it.contains(soundIdInternal) }.asLiveData()
 
-    fun destroyParallelPlayers() = _player.destroyParallelPlayers()
-    fun pause() = viewModelScope.launch(Dispatchers.IO) { _player.pause() }
-    fun play() = viewModelScope.launch(Dispatchers.IO) { _player.play() }
-    fun playParallel() = viewModelScope.launch(Dispatchers.IO) { _player.playParallel() }
-    fun restart() = viewModelScope.launch(Dispatchers.IO) { _player.restart() }
-    fun setPlayerPath(path: String) = _player.setPath(path)
-    fun setPlayerVolume(volume: Int) = _player.setVolume(volume)
-    fun stop() = _player.stop()
-    fun stopPaused() = _player.stopPaused()
+    fun destroyParallelPlayers() = playerInternal.destroyParallelPlayers()
+    fun pause() = playerInternal.pause()
+    fun play() = playerInternal.play()
+    fun playParallel() = playerInternal.playParallel()
+    fun restart() = playerInternal.restart()
+    fun stop() = playerInternal.stop()
+    fun stopPaused() = playerInternal.stopPaused()
 
     fun enableSelect() = repository.enableSelect()
-    fun select() = repository.select(soundId)
-    fun unselect() = repository.unselect(soundId)
+    fun select() = repository.select(soundIdInternal)
+    fun unselect() = repository.unselect(soundIdInternal)
 
     fun selectAllFromLastSelected() = viewModelScope.launch {
         /** Select all sounds between this viewmodel's sound and the last selected one. */
         val lastSelectedId = repository.lastSelectedId.stateIn(viewModelScope).value
-        log("selectAllFromLastSelected: lastSelected=$lastSelectedId")
+
         if (lastSelectedId != null) {
             val soundIds = repository.filteredSoundIdsOrdered.stateIn(viewModelScope).value
-            val thisPos = soundIds.indexOf(soundId)
+            val thisPos = soundIds.indexOf(soundIdInternal)
             val lastSelectedPos = soundIds.indexOf(lastSelectedId)
-            log("selectAllFromLastSelected: thisPos=$thisPos, lastSelectedPos=$lastSelectedPos")
+
             if (thisPos > -1 && lastSelectedPos > -1) {
                 soundIds.subList(min(thisPos, lastSelectedPos), max(thisPos, lastSelectedPos) + 1).forEach {
-                    log("selectAllFromLastSelected: it=$it")
                     repository.select(it)
                 }
             }
         }
     }
 
-    override fun onCleared() = _player.destroy()
+    override fun onCleared() = playerInternal.destroy()
 
 
     class Factory(
         private val repository: SoundRepository,
         private val settingsRepository: SettingsRepository,
         private val colorHelper: ColorHelper,
-        private val soundId: Int
+        private val soundId: Int,
+        private val audioThreadHandler: Handler
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             if (modelClass.isAssignableFrom(SoundViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return SoundViewModel(repository, settingsRepository, colorHelper, soundId) as T
+                return SoundViewModel(repository, settingsRepository, colorHelper, soundId, audioThreadHandler) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
         }

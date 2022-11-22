@@ -1,66 +1,61 @@
 package us.huseli.soundboard2.ui.fragments
 
-import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
-import android.view.View
+import android.view.LayoutInflater
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import dagger.hilt.android.AndroidEntryPoint
 import us.huseli.soundboard2.R
-import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.databinding.FragmentDeleteCategoryBinding
 import us.huseli.soundboard2.ui.CategorySpinnerAdapter
 import us.huseli.soundboard2.viewmodels.CategoryDeleteViewModel
 
-@AndroidEntryPoint
 class CategoryDeleteFragment : BaseDialogFragment<FragmentDeleteCategoryBinding>() {
     private val viewModel by activityViewModels<CategoryDeleteViewModel>()
+    @StringRes
+    override val positiveButtonText = R.string.delete
+    @StringRes
+    override val negativeButtonText = R.string.cancel
+    @StringRes
+    override val dialogTitle = R.string.delete_category
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        binding = FragmentDeleteCategoryBinding.inflate(layoutInflater).also { it.viewModel = viewModel }
+    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
+        FragmentDeleteCategoryBinding.inflate(layoutInflater)
 
-        return MaterialAlertDialogBuilder(requireContext())
-            .setPositiveButton(R.string.delete) { _, _ -> delete() }
-            .setNegativeButton(R.string.cancel) { _, _ -> dismiss() }
-            .setTitle(R.string.delete_category)
-            .setView(binding.root)
-            .create()
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentDeleteCategoryBinding) {
+        super.onBindingCreated(binding)
+        binding.viewModel = viewModel
 
         viewModel.otherCategories.observe(this) {
             binding.newCategory.adapter = CategorySpinnerAdapter(requireContext(), it)
         }
+    }
+
+    override fun onDialogCreated(dialog: AlertDialog) {
+        super.onDialogCreated(dialog)
+
+        viewModel.isSaveEnabled.observe(this) {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = it
+        }
 
         viewModel.name.observe(this) { name ->
-            dialog?.setTitle(
+            dialog.setTitle(
                 if (name != null) getString(R.string.delete_category_name, name)
                 else getString(R.string.delete_category)
             )
-            dialog?.show()
+            dialog.show()
         }
 
         viewModel.isLastCategory.observe(this) { isLastCategory ->
-            (dialog as AlertDialog?)?.let {
-                it.getButton(DialogInterface.BUTTON_POSITIVE).isVisible = !isLastCategory
-                it.show()
-            }
-        }
-
-        binding.soundAction.setOnCheckedChangeListener { _, checkedId ->
-            binding.newCategoryBlock.isVisible = checkedId == R.id.soundActionMove
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).isVisible = !isLastCategory
+            dialog.show()
         }
     }
 
-    private fun delete() {
-        val moveTo =
-            if (binding.soundActionMove.isChecked) binding.newCategory.selectedItem as Category
-            else null
-        viewModel.delete(moveTo?.id)
+    override fun onPositiveButtonClick(): Boolean {
+        viewModel.delete()
+        return true
     }
 }

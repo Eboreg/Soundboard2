@@ -9,6 +9,7 @@
     <declare-styleable name="FontAwesomeTextView">
         <attr name="fa_typeface" />
         <attr name="android:text" />
+        <!--<attr name="android:autoSizeMaxTextSize" />-->
     </declare-styleable>
     <declare-styleable name="FontAwesomeDrawable">
         <attr name="fa_typeface" />

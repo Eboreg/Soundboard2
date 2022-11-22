@@ -27,7 +27,7 @@ class SoundSorting(val parameter: Parameter, val order: Order) {
     }
 
     companion object {
-        val sortParameters = listOf(
+        private val sortParameters = listOf(
             Parameter.NAME,
             Parameter.DURATION,
             Parameter.TIME_ADDED,
@@ -39,11 +39,13 @@ class SoundSorting(val parameter: Parameter, val order: Order) {
         )
 
         fun listSortParameterItems(context: Context) = sortParameters.map {
-            SortParameterItem(it, when (it) {
-                Parameter.NAME -> context.getString(R.string.name)
-                Parameter.DURATION -> context.getString(R.string.duration)
-                Parameter.TIME_ADDED -> context.getString(R.string.creation_time)
-            })
+            SortParameterItem(
+                it, when (it) {
+                    Parameter.NAME -> context.getString(R.string.name)
+                    Parameter.DURATION -> context.getString(R.string.duration)
+                    Parameter.TIME_ADDED -> context.getString(R.string.creation_time)
+                }
+            )
         }
     }
 }

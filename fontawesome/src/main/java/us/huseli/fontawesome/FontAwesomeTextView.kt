@@ -9,6 +9,8 @@ import androidx.core.widget.TextViewCompat
 
 open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
     AppCompatTextView(context, attrs, defStyleAttr) {
+    // private var _autoSizeMaxTextSize: Int = 1000
+
     init {
         val arr = context.theme.obtainStyledAttributes(attrs, R.styleable.FontAwesomeTextView, 0, 0)
         var computedTypeface: String? = null
@@ -22,7 +24,8 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
                 resName.startsWith("fab") -> FontAwesomeCache.FA_FONT_BRANDS
                 else -> FontAwesomeCache.FA_FONT_REGULAR
             }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {
+        }
 
         val explicitTypeface: String? = when (arr.getInt(R.styleable.FontAwesomeTextView_fa_typeface, -1)) {
             0 -> FontAwesomeCache.FA_FONT_REGULAR
@@ -31,7 +34,16 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
             else -> null
         }
 
-        typeface = FontAwesomeCache.get(context.assets, explicitTypeface ?: computedTypeface ?: FontAwesomeCache.FA_FONT_REGULAR)
+        /*
+        arr.getDimensionPixelSize(R.styleable.FontAwesomeTextView_android_autoSizeMaxTextSize, -1).let {
+            if (it > 12) _autoSizeMaxTextSize = it
+        }
+         */
+
+        typeface = FontAwesomeCache.get(
+            context.assets,
+            explicitTypeface ?: computedTypeface ?: FontAwesomeCache.FA_FONT_REGULAR
+        )
     }
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.style.FontAwesomeTextView)
@@ -48,4 +60,5 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
         )
         super.onTextChanged(text, start, lengthBefore, lengthAfter)
     }
+
 }

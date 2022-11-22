@@ -79,15 +79,19 @@ class MediaPlayerTests(context: Context) : LoggingObject {
 
     private fun getLargestLoopLength(chain: List<Func>): Int? {
         var largestLoopLength: Int? = null
-        (1 .. chain.size / 2).forEach { loopLength ->
-            val last = chain.slice((chain.size - loopLength) .. chain.lastIndex)
-            val secondToLast = chain.slice((chain.size - (loopLength * 2)) .. chain.lastIndex - loopLength)
+        (1..chain.size / 2).forEach { loopLength ->
+            val last = chain.slice((chain.size - loopLength)..chain.lastIndex)
+            val secondToLast = chain.slice((chain.size - (loopLength * 2))..chain.lastIndex - loopLength)
             if (last == secondToLast) largestLoopLength = loopLength
         }
         return largestLoopLength
     }
 
-    private suspend fun buildResultChains(func: Func, maxDepth: Int, parentFuncChain: List<Func> = emptyList()): List<List<TestResult>> {
+    private suspend fun buildResultChains(
+        func: Func,
+        maxDepth: Int,
+        parentFuncChain: List<Func> = emptyList()
+    ): List<List<TestResult>> {
         val resultChains = mutableListOf<List<TestResult>>()
         val funcChain = parentFuncChain.plus(func)
         addLog("buildResultChains: " + funcChain.joinToString(" -> "))
@@ -123,8 +127,8 @@ class MediaPlayerTests(context: Context) : LoggingObject {
             addLog("****************************************************************************************")
             addLog("* " + chain.map { it.func }.joinToString(" -> "))
             addLog("****************************************************************************************")
-            chain.forEach { result ->
-                addLog("${result.func}: stateAfter=${result.stateAfter}, exception=${result.exception}")
+            chain.forEach { (func, stateAfter, exception) ->
+                addLog("${func}: stateAfter=${stateAfter}, exception=${exception}")
             }
         }
         logFile.writeText(logLines.joinToString("\n"))

@@ -7,7 +7,7 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
 - https://medium.com/androiddevelopers/android-styling-themes-vs-styles-ebe05f917578
 -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Style" />
 
@@ -49,7 +49,7 @@ Styles are a collection of view attributes; specific to a single type of widget"
 
     <style name="Style.Soundboard.TextView" parent="Widget.AppCompat.TextView" />
 
-    <style name="Style.Soundboard.TextView.H1">
+    <style name="Style.Soundboard.TextView.H1" tools:keep="@style/Style_Soundboard_TextView_H1">
         <item name="android:textSize">@dimen/text_h1</item>
         <item name="android:textColor">@color/primary_text</item>
     </style>

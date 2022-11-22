@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="us.huseli.soundboard2.viewmodels.BaseSoundEditViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/overrideBackgroundColor"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:checked="@={viewModel.overrideBackgroundColor}"
+            android:text="@string/override_category_background_colour"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/colorContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_normal"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:visible="@{viewModel.overrideBackgroundColor}"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/overrideBackgroundColor">
+
+            <ImageView
+                android:id="@+id/currentColor"
+                android:layout_width="@dimen/action_button_height"
+                android:layout_height="@dimen/action_button_height"
+                android:layout_marginEnd="@dimen/margin_normal"
+                android:background="@drawable/color_circle"
+                android:elevation="@dimen/elevation_normal"
+                android:src="@drawable/color_circle"
+                app:drawableColor="@{viewModel.backgroundColor}"
+                tools:ignore="ContentDescription,ImageContrastCheck" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/selectColorButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:enabled="@{viewModel.overrideBackgroundColor}"
+                android:text="@string/select" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/clearColorButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/margin_normal"
+                android:enabled="@{viewModel.overrideBackgroundColor}"
+                app:visible="@{viewModel.isUpdate}"
+                android:text="@string/clear" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/duplicateBlock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_normal"
+            android:orientation="vertical"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/colorContainer"
+            app:visible="@{viewModel.hasDuplicates ?? false}"
+            tools:visible="true">
+
+            <TextView
+                android:id="@+id/duplicateText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                tools:text="2 of the selected sounds already exist in the database. Do you want to add duplicates of them?" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/addDuplicates"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:checked="@={viewModel.addDuplicates}"
+                android:text="@{@plurals/add_duplicate(viewModel.duplicateCount ?? 0)}"
+                android:textOff="@string/no"
+                android:textOn="@string/yes"
+                app:switchMinWidth="50sp"
+                app:switchPadding="@dimen/margin_large"
+                tools:text="Add duplicates" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{@plurals/add_sound_counts(viewModel.addSoundCount ?? 0, viewModel.addSoundCount ?? 0, viewModel.skipSoundCount ?? 0)}"
+                tools:text="Will add 2 sounds and skip 2." />
+
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

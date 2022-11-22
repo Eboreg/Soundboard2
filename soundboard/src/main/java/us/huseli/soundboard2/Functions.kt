@@ -12,7 +12,6 @@ import java.io.File
 import java.io.FileOutputStream
 
 object Functions {
-    @Suppress("MemberVisibilityCanBePrivate")
     suspend fun extractChecksum(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
         return@withContext runCatching {
             (context.contentResolver.openInputStream(uri) ?: run {
@@ -26,8 +25,9 @@ object Functions {
         val filename = if (path != null) {
             val (basename, ext) = getFilenameAndExtension(path)
             val maxBasenameLength = 128 - (1 + soundFile.checksum.length + (ext?.let { 1 + ext.length } ?: 0))
-            if (basename.length > maxBasenameLength) basename.substring(0, maxBasenameLength) else basename +
-                    "-${soundFile.checksum}" + (ext?.let { ".$ext" } ?: "")
+            if (basename.length > maxBasenameLength)
+                basename.substring(0, maxBasenameLength)
+            else basename + "-${soundFile.checksum}" + (ext?.let { ".$ext" } ?: "")
         } else soundFile.checksum
 
         return withContext(Dispatchers.IO) {
@@ -52,8 +52,8 @@ object Functions {
         if (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)?.startsWith("audio") != true)
             throw Exception("extractMetadata: Mimetype is not audio/*")
         val duration =
-            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?:
-            run { throw Exception("extractMetadata: Could not get duration") }
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong()
+            ?: run { throw Exception("extractMetadata: Could not get duration") }
         val name = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
         return Pair(name ?: defaultName, duration)
     }

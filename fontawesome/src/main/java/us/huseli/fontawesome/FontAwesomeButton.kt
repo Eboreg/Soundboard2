@@ -4,7 +4,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 
-class FontAwesomeButton(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : FontAwesomeTextView(context, attrs, defStyleAttr) {
+class FontAwesomeButton(context: Context, attrs: AttributeSet?, defStyleAttr: Int) :
+    FontAwesomeTextView(context, attrs, defStyleAttr) {
     init {
         /** Set ripple effect on click. */
         val arr = intArrayOf(android.R.attr.selectableItemBackgroundBorderless)

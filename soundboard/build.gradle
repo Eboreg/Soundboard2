@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId "us.huseli.soundboard2"
         minSdk 24
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "0.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -77,8 +77,8 @@ dependencies {
     implementation 'androidx.fragment:fragment-ktx:1.5.4'
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.44'
-    kapt 'com.google.dagger:hilt-compiler:2.44'
+    implementation 'com.google.dagger:hilt-android:2.44.2'
+    kapt 'com.google.dagger:hilt-compiler:2.44.2'
 
     // Room
     implementation "androidx.room:room-runtime:2.4.3"
@@ -95,6 +95,6 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.0'
 }

@@ -45,7 +45,7 @@
                 <RadioButton
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="true"
+                    android:checked="@={viewModel.soundActionMove}"
                     android:id="@+id/soundActionMove"
                     android:text="@string/move_to_another_category" />
 
@@ -53,6 +53,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/soundActionDelete"
+                    android:checked="@={viewModel.soundActionDelete}"
                     android:text="@string/delete" />
             </RadioGroup>
 
@@ -61,6 +62,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/newCategoryBlock"
                 android:orientation="vertical"
+                visible="@{viewModel.soundActionMove}"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/soundAction">
 
@@ -76,6 +78,7 @@
                     android:id="@+id/newCategory"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:selectedItemPosition="@={viewModel.newCategoryPosition}"
                     android:minHeight="48dp"
                     android:spinnerMode="dropdown" />
 

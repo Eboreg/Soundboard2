@@ -1,5 +1,6 @@
 package us.huseli.soundboard2.viewmodels
 
+import androidx.annotation.ColorInt
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.filterNotNull
@@ -16,22 +17,24 @@ class CategoryViewModel(
     soundRepository: SoundRepository,
     settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    private val categoryId: Int
+    val categoryId: Int
 ) : ViewModel() {
-    private val _category = repository.get(categoryId).filterNotNull()
-    private val _isMoveUpPossible = repository.isFirstCategory(categoryId).map { !it }
-    private val _isMoveDownPossible = repository.isLastCategory(categoryId).map { !it }
+    private val _category = repository.flowGet(categoryId).filterNotNull()
+
+    @ColorInt
     private val _backgroundColor = _category.map { it.backgroundColor }
 
-    val soundIds: LiveData<List<Int>> = soundRepository.listIdsByCategoryIdFiltered(categoryId).asLiveData()
+    @ColorInt
     val backgroundColor: LiveData<Int> = _backgroundColor.asLiveData()
-    val textColor: LiveData<Int> = _backgroundColor.map { colorHelper.getColorOnBackground(it) }.asLiveData()
-    val name: LiveData<String?> = _category.map { it.name }.asLiveData()
     val collapseIconRotation: LiveData<Float> = _category.map { if (it.collapsed) -90f else 0f }.asLiveData()
-    val soundListVisible: LiveData<Boolean> = _category.map { !it.collapsed }.asLiveData()
+    val isMoveDownPossible: LiveData<Boolean> = repository.isLastCategory(categoryId).map { !it }.asLiveData()
+    val isMoveUpPossible: LiveData<Boolean> = repository.isFirstCategory(categoryId).map { !it }.asLiveData()
+    val isSoundListVisible: LiveData<Boolean> = _category.map { !it.collapsed }.asLiveData()
+    val name: LiveData<String> = _category.map { it.name }.asLiveData()
+    val soundIds: LiveData<List<Int>> = soundRepository.listIdsByCategoryIdFiltered(categoryId).asLiveData()
     val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
-    val isMoveUpPossible: LiveData<Boolean> = _isMoveUpPossible.asLiveData()
-    val isMoveDownPossible: LiveData<Boolean> = _isMoveDownPossible.asLiveData()
+    @ColorInt
+    val textColor: LiveData<Int> = _backgroundColor.map { colorHelper.getColorOnBackground(it) }.asLiveData()
 
     fun toggleCollapsed() = viewModelScope.launch { repository.toggleCollapsed(categoryId) }
 

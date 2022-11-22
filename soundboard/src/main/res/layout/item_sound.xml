@@ -90,7 +90,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.playerStateStarted}" />
+                app:visible="@{viewModel.isPlayerStarted}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundPausedIcon"
@@ -99,7 +99,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.playerStatePaused}" />
+                app:visible="@{viewModel.isPlayerPaused}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundErrorIcon"
@@ -108,7 +108,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.playerStateError}" />
+                app:visible="@{viewModel.isPlayerError}" />
 
             <us.huseli.fontawesome.FontAwesomeTextView
                 android:id="@+id/soundSelectedIcon"
@@ -118,7 +118,7 @@
                 android:textColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintStart_toStartOf="parent"
-                app:visible="@{viewModel.selected}" />
+                app:visible="@{viewModel.isSelected}" />
 
             <ProgressBar
                 android:id="@+id/soundProgressBar"
@@ -128,7 +128,6 @@
                 android:animateLayoutChanges="true"
                 android:max="100"
                 android:min="0"
-                android:progress="@{viewModel.soundProgress}"
                 android:progressDrawable="@drawable/sound_progress"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"

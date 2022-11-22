@@ -33,7 +33,7 @@ fun setVisible(view: View, value: Boolean?) {
 }
 
 @BindingAdapter("drawableColor")
-fun setDrawableColor(view: ImageView, color: Int?) {
+fun setDrawableColor(view: ImageView, @ColorInt color: Int?) {
     if (color != null) {
         when (view.drawable) {
             is GradientDrawable -> (view.drawable as GradientDrawable).setColor(color)

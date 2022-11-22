@@ -1,82 +1,14 @@
 package us.huseli.soundboard2.ui.fragments
 
-import android.app.AlertDialog
-import android.app.Dialog
-import android.os.Bundle
-import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import androidx.core.widget.addTextChangedListener
+import androidx.annotation.StringRes
 import androidx.fragment.app.activityViewModels
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import us.huseli.soundboard2.R
-import us.huseli.soundboard2.databinding.FragmentEditCategoryBinding
-import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.helpers.SoundSorting
 import us.huseli.soundboard2.viewmodels.CategoryEditViewModel
 
 @AndroidEntryPoint
-class CategoryEditFragment : LoggingObject, BaseCategoryEditFragment<FragmentEditCategoryBinding>() {
+class CategoryEditFragment : BaseCategoryEditFragment() {
     override val viewModel by activityViewModels<CategoryEditViewModel>()
-
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        binding = FragmentEditCategoryBinding.inflate(layoutInflater)
-        binding.viewModel = viewModel
-        binding.selectColorButton.setOnClickListener { onSelectColorClick() }
-        binding.categoryName.addTextChangedListener { if (it != null) viewModel.setName(it) }
-
-        binding.sortBy.adapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            SoundSorting.listSortParameterItems(requireContext())
-        )
-
-        binding.sortBy.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                (parent as? Spinner)?.let {
-                    viewModel.setSortParameter((it.selectedItem as SoundSorting.SortParameterItem).value)
-                }
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
-
-        binding.sortOrder.setOnCheckedChangeListener { _, checkedId ->
-            viewModel.setSortOrder(
-                if (checkedId == binding.sortOrderAscending.id) SoundSorting.Order.ASCENDING
-                else SoundSorting.Order.DESCENDING
-            )
-        }
-
-        val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.edit_category)
-            .setView(binding.root)
-            .setPositiveButton(R.string.save, null)
-            .setNegativeButton(R.string.cancel) { _, _ -> dismiss() }
-            .create()
-
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener { onPositiveButtonClick() }
-        }
-
-        return dialog
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        viewModel.setSortParameter((binding.sortBy.selectedItem as SoundSorting.SortParameterItem).value)
-        viewModel.setSortOrder(if (binding.sortOrderAscending.isChecked) SoundSorting.Order.ASCENDING else SoundSorting.Order.DESCENDING)
-    }
-
-    private fun onPositiveButtonClick() {
-        val catName = binding.categoryName.text
-        if (catName.trim().isEmpty())
-            Snackbar.make(binding.root, R.string.name_cannot_be_empty, Snackbar.LENGTH_SHORT).show()
-        else {
-            viewModel.save(catName)
-            dismiss()
-        }
-    }
+    @StringRes
+    override val dialogTitle = R.string.edit_category
 }

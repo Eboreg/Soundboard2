@@ -1,6 +1,8 @@
 package us.huseli.soundboard2.viewmodels
 
 import android.app.Application
+import android.content.Context
+import androidx.annotation.StringRes
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -12,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
@@ -39,31 +42,30 @@ class AppViewModel @Inject constructor(
     private val _snackbarText = Channel<CharSequence>()
 
     val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
+    val isRedoPossible: LiveData<Boolean> = stateRepository.isRedoPossible.asLiveData()
+    val isSelectEnabled: LiveData<Boolean> = soundRepository.isSelectEnabled.asLiveData()
+    val isUndoPossible: LiveData<Boolean> = stateRepository.isUndoPossible.asLiveData()
+    val isWatchFolderEnabled: LiveData<Boolean> = settingsRepository.isWatchFolderEnabled.asLiveData()
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
-    val selectEnabled: LiveData<Boolean> = soundRepository.selectEnabled.asLiveData()
-    val watchFolderEnabled: LiveData<Boolean> = settingsRepository.watchFolderEnabled.asLiveData()
-    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
     val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
-    val isUndoPossible: LiveData<Boolean> = stateRepository.isUndoPossible.asLiveData()
-    val isRedoPossible: LiveData<Boolean> = stateRepository.isRedoPossible.asLiveData()
+    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
 
     // Using Flow instead of LiveData, because the latter does not seem to
     // enable us to display a message only _once_.
     val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
 
-    private fun setSnackbarText(text: CharSequence) {
-        _snackbarText.trySend(text)
-    }
+    private fun setSnackbarText(text: CharSequence) = _snackbarText.trySend(text)
 
-    private fun setSnackbarText(resId: Int) {
+    private fun setSnackbarText(@StringRes resId: Int) {
         val context = getApplication<Application>().applicationContext
         setSnackbarText(context.getText(resId))
     }
 
     fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
-    fun setSoundFilterTerm(value: String) { settingsRepository.setSoundFilterTerm(value) }
+    fun setSoundFilterTerm(value: String) = settingsRepository.setSoundFilterTerm(value)
+
     fun zoomIn() = settingsRepository.zoomIn()
     fun zoomOut() = settingsRepository.zoomOut()
 
@@ -86,8 +88,9 @@ class AppViewModel @Inject constructor(
         if (treeUri != null) {
             // TODO: Does this work when there are no categories?
             val category =
-                settingsRepository.watchFolderCategory.stateIn(this).value ?:
-                categoryRepository.firstCategory.stateIn(this).value
+                settingsRepository.watchFolderCategory.stateIn(this).value ?: categoryRepository.firstCategory.stateIn(
+                    this
+                ).value
             val trashMissing = settingsRepository.watchFolderTrashMissing.value
             val fileUris = DocumentFile.fromTreeUri(context, treeUri)
                 ?.listFiles()
@@ -118,10 +121,18 @@ class AppViewModel @Inject constructor(
 
             if (added > 0 || deleted > 0) {
                 var snackbarString = context.getString(R.string.watched_folder_sync) + ": "
-                if (added > 0) snackbarString += context.resources.getQuantityString(R.plurals.watch_folder_sounds_added, added, added)
+                if (added > 0) snackbarString += context.resources.getQuantityString(
+                    R.plurals.watch_folder_sounds_added,
+                    added,
+                    added
+                )
                 if (deleted > 0) {
                     if (added > 0) snackbarString += ", "
-                    snackbarString += context.resources.getQuantityString(R.plurals.watch_folder_sounds_deleted, deleted, deleted)
+                    snackbarString += context.resources.getQuantityString(
+                        R.plurals.watch_folder_sounds_deleted,
+                        deleted,
+                        deleted
+                    )
                 }
                 setSnackbarText(snackbarString)
                 stateRepository.replaceCurrent()
@@ -137,21 +148,47 @@ class AppViewModel @Inject constructor(
         if (stateRepository.redo()) setSnackbarText(R.string.redid)
     }
 
-    fun deleteOrphans() = viewModelScope.launch {
+    fun deleteOrphanSoundObjects() = viewModelScope.launch {
+        /** Checks for Sound objects with missing files, deletes the objects. */
         var deleted = 0
         val sounds = soundRepository.allSounds.stateIn(this).value
         sounds.forEach { sound ->
             sound.uri.path?.let {
                 if (!File(it).isFile) {
-                    soundRepository.delete(sound)
+                    soundRepository.delete(listOf(sound))
                     deleted++
                 }
             }
         }
         if (deleted > 0) {
             val context = getApplication<Application>().applicationContext
-            setSnackbarText(context.resources.getQuantityString(R.plurals.deleted_orphans, deleted, deleted))
+            setSnackbarText(context.resources.getQuantityString(R.plurals.deleted_orphan_sounds, deleted, deleted))
             stateRepository.replaceCurrent()
         }
+    }
+
+    fun deleteOrphanSoundFiles() = viewModelScope.launch {
+        /** Checks for files with missing Sound objects (including any undo states), deletes the files. */
+        val context = getApplication<Application>().applicationContext
+        val directory = context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE)
+        val soundPaths = soundRepository.list().mapNotNull { it.uri.path }.toSet() + stateRepository.allPaths
+        var deleted = 0
+
+        log("deleteOrphanSoundFiles: soundPaths=$soundPaths")
+
+        directory.listFiles { file -> file.isFile }?.forEach { file ->
+            if (file.path !in soundPaths && file.delete()) {
+                log("deleteOrphanSoundFiles: deleted ${file.path}")
+                deleted++
+            }
+        }
+
+        if (deleted > 0) setSnackbarText(
+            context.resources.getQuantityString(
+                R.plurals.deleted_orphan_files,
+                deleted,
+                deleted
+            )
+        )
     }
 }

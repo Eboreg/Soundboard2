@@ -21,7 +21,8 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class SettingsActivity : LoggingObject, AppCompatActivity() {
-    @Inject lateinit var settingsRepository: SettingsRepository
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
     private lateinit var binding: ActivitySettingsBinding
     private val viewModel by viewModels<SettingsViewModel>()
     private var watchFolderUri: Uri? = null
@@ -64,18 +65,18 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
 
         binding.watchFolderSelectButton.setOnClickListener { watchFolderLauncher.launch(watchFolderUri) }
 
-        binding.watchFolderEnabled.setOnCheckedChangeListener { _, isChecked ->
+        binding.isWatchFolderEnabled.setOnCheckedChangeListener { _, isChecked ->
             viewModel.setWatchFolderEnabled(isChecked)
         }
 
-        binding.animationsEnabled.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setAnimationsEnabled(isChecked)
+        binding.isAnimationEnabled.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.setAnimationEnabled(isChecked)
         }
 
         binding.saveButton.setOnClickListener {
             viewModel.save(
-                binding.animationsEnabled.isChecked,
-                binding.watchFolderEnabled.isChecked,
+                binding.isAnimationEnabled.isChecked,
+                binding.isWatchFolderEnabled.isChecked,
                 watchFolderUri,
                 binding.watchFolderCategory.selectedItem as? Category,
                 binding.watchFolderTrashMissing.isChecked
@@ -85,13 +86,12 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
 
         binding.cancelButton.setOnClickListener { finish() }
 
-        viewModel.watchFolderEnabled.observe(this) { isChecked ->
+        viewModel.isWatchFolderEnabled.observe(this) { isChecked ->
             if (isChecked) {
                 // Expand; 0 to wrap_content
                 binding.watchFolderOptions.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
                 binding.watchFolderOptions.requestLayout()
-            }
-            else {
+            } else {
                 // Collapse; wrap_content to 0
                 binding.watchFolderOptions.layoutParams.height = 0
                 binding.watchFolderOptions.requestLayout()

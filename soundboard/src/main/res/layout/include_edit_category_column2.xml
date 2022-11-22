@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="viewModel"
+            type="us.huseli.soundboard2.viewmodels.BaseCategoryEditViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_height="0dp"
+        android:layout_width="wrap_content">
+
+        <LinearLayout
+            android:id="@+id/sortContainer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sort_sounds_by" />
+
+            <Spinner
+                android:id="@+id/sortBy"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:selectedItemPosition="@={viewModel.sortParameterPosition}"
+                android:minHeight="48dp" />
+
+            <RadioGroup
+                android:id="@+id/sortOrder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/sortOrderAscending"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/elevation_large"
+                    android:checked="@={viewModel.sortOrderAscending}"
+                    android:text="@string/ascending" />
+
+                <RadioButton
+                    android:id="@+id/sortOrderDescending"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="@={viewModel.sortOrderDescending}"
+                    android:text="@string/descending" />
+            </RadioGroup>
+
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

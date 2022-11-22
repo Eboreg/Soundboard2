@@ -25,6 +25,7 @@ class StateRepository @Inject constructor(
     private val _states = mutableListOf<State>()
     private val _currentPos = MutableStateFlow(-1)
 
+    val allPaths = _states.flatMap { (sounds, _) -> sounds.mapNotNull { it.uri.path } }.toSet()
     val isUndoPossible: Flow<Boolean> = _currentPos.map { it > 0 }
     val isRedoPossible: Flow<Boolean> = _currentPos.map { it + 1 < _states.size }
 
@@ -47,7 +48,7 @@ class StateRepository @Inject constructor(
     suspend fun push() {
         /** On push of new state, all states after _currentPos become unusable and are scrapped: */
         if (_currentPos.value + 1 < _states.size) {
-            _states.removeAll(_states.subList(_currentPos.value + 1, _states.size))
+            _states.removeAll(_states.subList(_currentPos.value + 1, _states.size).toSet())
             _currentPos.value = _states.size - 1
         }
         _states.add(State(soundDao.list(), categoryDao.list()))
@@ -61,7 +62,6 @@ class StateRepository @Inject constructor(
 
     suspend fun redo() = apply(_currentPos.value + 1)
 
-    @Suppress("unused")
     suspend fun replaceCurrent() {
         if (_currentPos.value < 0) push()
         else _states[_currentPos.value] = State(soundDao.list(), categoryDao.list())

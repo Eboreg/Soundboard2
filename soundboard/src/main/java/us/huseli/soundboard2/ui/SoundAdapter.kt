@@ -4,43 +4,32 @@ import android.animation.ObjectAnimator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemSoundBinding
-import us.huseli.soundboard2.helpers.*
+import us.huseli.soundboard2.helpers.ColorHelper
+import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.SoundPlayer
 import us.huseli.soundboard2.viewmodels.SoundViewModel
+import kotlin.math.roundToInt
 
 class SoundAdapter(
     private val activity: MainActivity,
     private val soundRepository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     private val colorHelper: ColorHelper
-) : LifecycleAdapter<Int, SoundAdapter.ViewHolder>(Comparator()), LoggingObject {
+) : ListAdapter<Int, SoundAdapter.ViewHolder>(Comparator()), LoggingObject {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
         ViewHolder(ItemSoundBinding.inflate(LayoutInflater.from(parent.context), parent, false))
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.bind(getItem(position), activity, soundRepository, settingsRepository, colorHelper)
-        super.onBindViewHolder(holder, position)
-    }
-
-    override fun onViewAttachedToWindow(holder: ViewHolder) {
-        super.onViewAttachedToWindow(holder)
-        log("onViewAttachedToWindow: holder=$holder, viewModel.sound=${holder.soundId}")
-    }
-
-    override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        super.onViewDetachedFromWindow(holder)
-        log("onViewDetachedFromWindow: holder=$holder, viewModel.sound=${holder.soundId}")
-    }
-
-    override fun onFailedToRecycleView(holder: ViewHolder): Boolean {
-        log("onFailedToRecycleView: holder=$holder, viewModel.sound=${holder.soundId}")
-        return super.onFailedToRecycleView(holder)
     }
 
 
@@ -48,20 +37,22 @@ class SoundAdapter(
         LoggingObject,
         View.OnLongClickListener,
         View.OnClickListener,
-        LifecycleViewHolder(binding.root)
-    {
-        override val lifecycleRegistry = LifecycleRegistry(this)
-        private val animator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
+        RecyclerView.ViewHolder(binding.root) {
+        private val clickAnimator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
+        private val progressAnimator = ObjectAnimator().apply {
+            target = binding.soundProgressBar
+            setPropertyName("progress")
+        }
 
         private lateinit var activity: MainActivity
         private lateinit var viewModel: SoundViewModel
         private var playerState: SoundPlayer.State? = null
         private var repressMode: RepressMode? = null
-        private var selectEnabled = false
-        private var selected = false
-        private var animationsEnabled = false
+        private var isSelectEnabled = false
+        private var isSelected = false
+        private var isAnimationEnabled = false
         private var playerPermanentError = ""
-        internal var soundId: Int? = null
+        private var volume = Constants.DEFAULT_VOLUME
 
         internal fun bind(
             soundId: Int,
@@ -70,22 +61,27 @@ class SoundAdapter(
             settingsRepository: SettingsRepository,
             colorHelper: ColorHelper
         ) {
-            this.soundId = soundId
-            this.activity = activity
-
             val viewModel = ViewModelProvider(
                 activity.viewModelStore,
-                SoundViewModel.Factory(repository, settingsRepository, colorHelper, soundId)
-            )[soundId.toString(), SoundViewModel::class.java]
+                SoundViewModel.Factory(
+                    repository,
+                    settingsRepository,
+                    colorHelper,
+                    soundId,
+                    activity.audioThreadHandler
+                )
+            )["sound-$soundId", SoundViewModel::class.java]
 
+            this.activity = activity
             this.viewModel = viewModel
-            binding.lifecycleOwner = this
+
+            binding.lifecycleOwner = activity
             binding.viewModel = viewModel
 
             binding.root.setOnLongClickListener(this)
             binding.root.setOnClickListener(this)
 
-            viewModel.repressMode.observe(this) {
+            viewModel.repressMode.observe(activity) {
                 repressMode = it
                 // If changing to anything but PAUSE, make sure any paused sounds are stopped:
                 if (it != RepressMode.PAUSE) viewModel.stopPaused()
@@ -93,36 +89,68 @@ class SoundAdapter(
                 if (it != RepressMode.OVERLAP) viewModel.destroyParallelPlayers()
             }
 
-            viewModel.animationsEnabled.observe(this) { animationsEnabled = it }
-            viewModel.selectEnabled.observe(this) { selectEnabled = it }
-            viewModel.playerState.observe(this) {
+            viewModel.isAnimationEnabled.observe(activity) { isAnimationEnabled = it }
+            viewModel.isSelectEnabled.observe(activity) { isSelectEnabled = it }
+            viewModel.playerState.observe(activity) {
                 if (it != playerState) {
                     log("playerState.observe: new playState=$it, was=$playerState")
                     playerState = it
+                    when (it) {
+                        SoundPlayer.State.STARTED -> startProgressAnimation()
+                        SoundPlayer.State.PAUSED -> pauseProgressAnimation()
+                        else -> stopProgressAnimation()
+                    }
                 }
             }
-            viewModel.selected.observe(this) { selected = it }
-            viewModel.playerPermanentError.observe(this) { error ->
+            viewModel.isSelected.observe(activity) { isSelected = it }
+            viewModel.playerPermanentError.observe(activity) { error ->
                 if (error != null) playerPermanentError = error
             }
-            viewModel.playerTemporaryError.observe(this) { error ->
+            viewModel.playerTemporaryError.observe(activity) { error ->
                 if (error != null) activity.showSnackbar(error)
             }
-            viewModel.volume.observe(this) { viewModel.setPlayerVolume(it) }
-            viewModel.path.observe(this) { viewModel.setPlayerPath(it) }
+            viewModel.volume.observe(activity) {
+                if (!progressAnimator.isPaused && !progressAnimator.isStarted) binding.soundProgressBar.progress = it
+                volume = it
+            }
         }
 
         private fun animateClick() {
-            if (animationsEnabled) {
+            if (isAnimationEnabled) {
                 binding.soundCardBorder.alpha = 1f
-                animator.start()
+                clickAnimator.start()
             }
         }
 
+        private fun startProgressAnimation() {
+            if (isAnimationEnabled) {
+                if (progressAnimator.isPaused) progressAnimator.resume()
+                else {
+                    val currentPosition = viewModel.currentPosition
+                    val duration = viewModel.duration
+                    if (duration != null) {
+                        val startPercent =
+                            if (duration > 0) ((currentPosition.toDouble() / duration) * 100).roundToInt() else 0
+                        progressAnimator.setIntValues(startPercent, 100)
+                        progressAnimator.duration = (duration - currentPosition).toLong()
+                        progressAnimator.start()
+                    }
+                }
+            }
+        }
+
+        private fun stopProgressAnimation() {
+            progressAnimator.cancel()
+            binding.soundProgressBar.progress = volume
+        }
+
+        private fun pauseProgressAnimation() {
+            progressAnimator.pause()
+        }
+
         override fun onLongClick(v: View?): Boolean {
-            log("onLongClick: v=$v")
             animateClick()
-            if (!selectEnabled) {
+            if (!isSelectEnabled) {
                 // Select is not enabled; enable it and select sound.
                 viewModel.enableSelect()
                 viewModel.select()
@@ -135,10 +163,8 @@ class SoundAdapter(
         }
 
         override fun onClick(v: View?) {
-            log("onClick: v=$v, selectEnabled=$selectEnabled, playState=$playerState")
-            animateClick()
-            if (selectEnabled) {
-                if (selected) viewModel.unselect()
+            if (isSelectEnabled) {
+                if (isSelected) viewModel.unselect()
                 else viewModel.select()
             } else if (repressMode == RepressMode.OVERLAP) {
                 viewModel.playParallel()
@@ -152,30 +178,11 @@ class SoundAdapter(
                         else -> {}
                     }
                     SoundPlayer.State.PAUSED -> viewModel.play()
-                    SoundPlayer.State.ERROR -> activity
+                    SoundPlayer.State.ERROR -> activity.showSnackbar(playerPermanentError)
                     null -> {}
                 }
             }
-        }
-
-        override fun markCreated() {
-            super.markCreated()
-            log("markCreated: soundId=${soundId}")
-        }
-
-        override fun markAttach() {
-            super.markAttach()
-            log("markAttach: soundId=${soundId}")
-        }
-
-        override fun markDetach() {
-            super.markDetach()
-            log("markDetach: soundId=${soundId}")
-        }
-
-        override fun markDestroyed() {
-            super.markDestroyed()
-            log("markDestroyed: soundId=${soundId}")
+            animateClick()
         }
     }
 

@@ -1,20 +1,21 @@
 package us.huseli.soundboard2.helpers
 
+import android.os.Handler
+import androidx.annotation.IntRange
+import androidx.annotation.MainThread
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlin.math.max
 
-class SoundPlayer : LoggingObject {
+class SoundPlayer(private val coroutineScope: CoroutineScope, private val audioThreadHandler: Handler) : LoggingObject {
     enum class State { IDLE, STARTED, PAUSED, ERROR }
 
-    private val _player = MediaPlayerWrapper()
+    private val _player = MediaPlayerWrapper(coroutineScope)
     private val _parallelPlayers = MutableStateFlow<List<MediaPlayerWrapper>>(emptyList())
     private var _path: String? = null
+    @IntRange(from = 0, to = 100)
     private var _volume: Int? = null
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _parallelPlayerPositions: Flow<Array<Int?>> = _parallelPlayers.flatMapLatest { players ->
-        combine(players.map { it.currentPosition }) { it }.onStart { emit(emptyArray()) }
-    }
 
     private val _playerStates = combine(_player.state, _parallelPlayers) { a, b -> b.map { it.state.value } + a }
 
@@ -29,8 +30,12 @@ class SoundPlayer : LoggingObject {
         else State.IDLE
     }
 
-    val hasPermanentError = _player.hasPermanentError
-    val permanentError = _player.permanentError
+    val permanentError: Flow<String> = _player.permanentError
+    val durationFlow: Flow<Int> = _player.durationFlow
+    val duration: Int?  // In milliseconds
+        get() = _player.duration
+    val currentPosition: Int
+        get() = max(_player.currentPosition, _parallelPlayers.value.maxOfOrNull { it.currentPosition } ?: 0)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val temporaryError: Flow<String> = merge(
@@ -38,12 +43,8 @@ class SoundPlayer : LoggingObject {
         _parallelPlayers.flatMapLatest { list -> list.map { it.temporaryError }.merge() }
     )
 
-    val currentPosition = combine(_player.currentPosition, _parallelPlayerPositions) { position, parallelPositions ->
-        (parallelPositions + position).filterNotNull().minOrNull()
-    }
-
     private fun createParallelPlayer(): MediaPlayerWrapper {
-        val player = MediaPlayerWrapper()
+        val player = MediaPlayerWrapper(coroutineScope)
 
         player.setOnStateChangeListener { mp, state ->
             if (
@@ -76,14 +77,16 @@ class SoundPlayer : LoggingObject {
             it.state.value == MediaPlayerWrapper.State.PREPARED
         } ?: createParallelPlayer()
 
-        player.play()
+        audioThreadHandler.post {
+            player.play()
+        }
 
         // Preemptively create a new parallel player for the sake of low latency; it should get destroyed by
         // SoundViewHolder when repress mode changes to anything other than OVERLAP.
         if (_parallelPlayers.value.none { it.state.value == MediaPlayerWrapper.State.PREPARED }) createParallelPlayer()
     }
 
-    fun play() = _player.play()
+    fun play() = audioThreadHandler.post { _player.play() }
 
     fun setPath(path: String?) {
         if (path != _path) {
@@ -92,7 +95,7 @@ class SoundPlayer : LoggingObject {
         }
     }
 
-    fun setVolume(volume: Int) {
+    fun setVolume(@IntRange(from = 0, to = 100) volume: Int) {
         if (volume != _volume) {
             _volume = volume
             _player.setVolume(volume)
@@ -100,30 +103,37 @@ class SoundPlayer : LoggingObject {
         }
     }
 
-    suspend fun pause() {
-        _player.pause()
+    fun pause() {
+        audioThreadHandler.post {
+            _player.pause()
+        }
         // They should already have been destroyed, but anyway:
         destroyParallelPlayers()
     }
 
     fun restart() {
         /** If playing, stop and start again from the beginning. Otherwise, just start. */
-        _player.restart()
+        audioThreadHandler.post {
+            _player.restart()
+        }
         // They should already have been destroyed, but anyway:
         destroyParallelPlayers()
     }
 
     fun stop() {
-        log("stop: _path=$_path, _player.isPaused=${_player.isPaused}, _player.isPlaying=${_player.isPlaying}")
-        _player.stop()
+        audioThreadHandler.post {
+            _player.stop()
+        }
         destroyParallelPlayers()
     }
 
+    @MainThread
     fun stopPaused() {
-        if (_player.isPaused) stop()
+        if (_player.state.value == MediaPlayerWrapper.State.PAUSED) audioThreadHandler.post { stop() }
         else destroyParallelPlayers()
     }
 
+    @MainThread
     fun destroy() {
         // This should already have been done, but just in case:
         destroyParallelPlayers()

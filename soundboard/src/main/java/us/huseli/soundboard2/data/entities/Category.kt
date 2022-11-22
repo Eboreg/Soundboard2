@@ -16,7 +16,7 @@ data class Category(
 ) {
     fun clone(
         name: CharSequence? = null,
-        backgroundColor: Int? = null,
+        @ColorInt backgroundColor: Int? = null,
         position: Int? = null,
         collapsed: Boolean? = null,
         soundSorting: SoundSorting? = null,

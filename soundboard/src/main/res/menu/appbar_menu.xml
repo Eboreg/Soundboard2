@@ -14,7 +14,7 @@
         android:icon="@drawable/repress_mode_icon"
         android:title="@string/repress_mode">
 
-        <menu android:id="@+id/actionRepressModeMenu">
+        <menu>
             <group android:checkableBehavior="single">
                 <item
                     android:enabled="false"
@@ -41,13 +41,12 @@
     </item>
 
     <item
-        android:id="@+id/appbarMenu"
         app:showAsAction="always"
         android:title=""
         android:icon="@drawable/fas_ellipsis_vertical">
 
         <menu>
-            <group android:id="@+id/actionAddGroup">
+            <group>
                 <item
                     android:icon="@drawable/fas_plus"
                     android:id="@+id/actionAddSound"
@@ -58,7 +57,7 @@
                     android:title="@string/add_category" />
             </group>
 
-            <group android:id="@+id/actionZoomGroup">
+            <group>
                 <item
                     android:id="@+id/actionZoomIn"
                     android:icon="@drawable/fas_magnifying_glass_plus"
@@ -69,7 +68,7 @@
                     android:title="@string/zoom_out" />
             </group>
 
-            <group android:id="@+id/actionUndoGroup">
+            <group>
                 <item
                     android:id="@+id/actionUndo"
                     android:icon="@drawable/fas_rotate_left"

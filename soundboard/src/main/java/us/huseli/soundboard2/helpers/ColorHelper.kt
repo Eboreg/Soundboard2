@@ -9,7 +9,8 @@ import java.lang.Float.min
 import kotlin.math.max
 
 class ColorHelper(private val context: Context) {
-    @ColorRes private val colorResources = arrayListOf(
+    @ColorRes
+    private val colorResources = arrayListOf(
         R.color.amber_500,
         R.color.black,
         R.color.blue_500,
@@ -33,7 +34,8 @@ class ColorHelper(private val context: Context) {
         R.color.yellow_500
     )
 
-    @ColorInt val colors = colorResources.map { context.getColor(it) }.sorted()
+    @ColorInt
+    val colors = colorResources.map { context.getColor(it) }.sorted()
 
     @ColorInt
     fun getColorOnBackground(@ColorInt backgroundColor: Int) =
@@ -41,7 +43,7 @@ class ColorHelper(private val context: Context) {
 
     @ColorInt
     fun getRandomColor(@ColorInt exclude: Collection<Int> = emptyList()): Int {
-        val included = colors.filter { it !in exclude }
+        val included = colors.filter { it !in exclude.toSet() }
         return if (included.isNotEmpty()) included.random() else colors.random()
     }
 
@@ -61,19 +63,22 @@ class ColorHelper(private val context: Context) {
         Color.colorToHSV(color, hsv)
         return if (Color.luminance(color) >= 0.4) {
             // High luminance: return darker shade (increase saturation/hsv[1], decrease value/hsv[2])
-            Color.HSVToColor(floatArrayOf(
-                hsv[0],
-                min(1f, hsv[1] + max(diff + max(diff - hsv[2], 0f), maxDiff)),
-                max(0f, hsv[2] - min(diff + max(hsv[1] - 1f + diff, 0f), maxDiff))
-            ))
-        }
-        else {
+            Color.HSVToColor(
+                floatArrayOf(
+                    hsv[0],
+                    min(1f, hsv[1] + max(diff + max(diff - hsv[2], 0f), maxDiff)),
+                    max(0f, hsv[2] - min(diff + max(hsv[1] - 1f + diff, 0f), maxDiff))
+                )
+            )
+        } else {
             // Low luminance: return lighter shade (decrease saturation/hsv[1], increase value/hsv[2])
-            Color.HSVToColor(floatArrayOf(
-                hsv[0],
-                max(0f, hsv[1] - min(diff + max(hsv[2] - 1f + diff, 0f), maxDiff)),
-                min(1f, hsv[2] + max(diff + max(diff - hsv[1], 0f), maxDiff)),
-            ))
+            Color.HSVToColor(
+                floatArrayOf(
+                    hsv[0],
+                    max(0f, hsv[1] - min(diff + max(hsv[2] - 1f + diff, 0f), maxDiff)),
+                    min(1f, hsv[2] + max(diff + max(diff - hsv[1], 0f), maxDiff)),
+                )
+            )
         }
     }
 }

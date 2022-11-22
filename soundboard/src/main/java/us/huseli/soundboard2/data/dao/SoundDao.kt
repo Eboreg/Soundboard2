@@ -1,6 +1,8 @@
 package us.huseli.soundboard2.data.dao
 
 import android.net.Uri
+import androidx.annotation.ColorInt
+import androidx.annotation.IntRange
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Sound
@@ -9,10 +11,10 @@ import java.util.*
 
 @Dao
 interface SoundDao {
-    @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
+    @Query("SELECT s.*, c.backgroundColor AS categoryColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
     fun flowGet(soundId: Int): Flow<SoundExtended>
 
-    @Query("SELECT s.*, c.backgroundColor FROM Sound s JOIN Category c ON s.categoryId = c.id")
+    @Query("SELECT s.*, c.backgroundColor AS categoryColor FROM Sound s JOIN Category c ON s.categoryId = c.id")
     fun flowList(): Flow<List<SoundExtended>>
 
     @Query("SELECT * FROM Sound WHERE id IN (:soundIds)")
@@ -24,16 +26,13 @@ interface SoundDao {
     @Query("SELECT * FROM Sound")
     suspend fun list(): List<Sound>
 
-    @Query("SELECT * FROM Sound WHERE checksum IN (:checksums) GROUP BY `checksum`")
-    suspend fun listByChecksums(checksums: Collection<String>): List<Sound>
-
     @Query("SELECT * FROM Sound WHERE categoryId = :categoryId")
     suspend fun listByCategoryId(categoryId: Int): List<Sound>
 
     @Query(
         """
-        INSERT INTO Sound (name, uri, duration, checksum, volume, added, categoryId)
-        VALUES (:name, :uri, :duration, :checksum, :volume, :added, :categoryId)
+        INSERT INTO Sound (name, uri, duration, checksum, volume, added, categoryId, backgroundColor)
+        VALUES (:name, :uri, :duration, :checksum, :volume, :added, :categoryId, :backgroundColor)
     """
     )
     suspend fun create(
@@ -41,9 +40,10 @@ interface SoundDao {
         uri: Uri,
         duration: Long,
         checksum: String,
-        volume: Int,
+        @IntRange(from = 0, to = 100) volume: Int,
         added: Date,
         categoryId: Int,
+        @ColorInt backgroundColor: Int,
     )
 
     @Delete

@@ -1,14 +1,12 @@
 package us.huseli.soundboard2.viewmodels
 
+import android.app.Application
 import android.content.Context
 import android.graphics.Color
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.R
@@ -16,6 +14,7 @@ import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.data.repositories.StateRepository
+import us.huseli.soundboard2.helpers.LoggingObject
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,65 +22,72 @@ class SoundEditViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val repository: SoundRepository,
     private val stateRepository: StateRepository,
-    categoryRepository: CategoryRepository,
-) : ViewModel() {
-    private val _emptyCategory = Category(-1, context.getString(R.string.not_changed), Color.DKGRAY, -1)
-    private var _keepVolume = true
-    private val _name = MutableStateFlow<CharSequence>("")
-    private val _volume = MutableStateFlow<Int?>(null)
-    private val _categories: Flow<List<Category>> = categoryRepository.categories.map { listOf(_emptyCategory) + it }
-    private val _category = MutableStateFlow(_emptyCategory)
+    private val categoryRepository: CategoryRepository,
+    application: Application
+) : LoggingObject, BaseSoundEditViewModel(application) {
+    override val isUpdate = true
 
-    private val _originalName: Flow<String> = repository.selectedSounds.map {
-        if (it.size == 1) it[0].name
-        else context.getString(R.string.multiple_sounds_selected, it.size)
-    }
-    
-    private val _originalVolume: Flow<Int> = repository.selectedSounds.map { sounds ->
-        val volumes = sounds.map { it.volume }.toSet()
-        if (volumes.size == 1) volumes.first()
-        else Constants.DEFAULT_VOLUME
-    }
+    private val emptyCategoryInternal = Category(-1, context.getString(R.string.not_changed), Color.DKGRAY, -1)
 
-    val categories: LiveData<List<Category>> = _categories.asLiveData()
-    val nameIsEditable: LiveData<Boolean> = repository.selectedSoundIds.map { it.size == 1 }.asLiveData()
-    val soundCount: LiveData<Int> = repository.selectedSoundIds.map { it.size }.asLiveData()
-    val name: LiveData<CharSequence> = merge(_originalName, _name.filter { it != "" } ).asLiveData()
-    val volume: LiveData<Int> = merge(_originalVolume, _volume.filterNotNull()).asLiveData()
+    override fun initialize() {
+        super.initialize()
 
-    val categoryPosition: LiveData<Int> = combine(_categories, _category) { categories, category ->
-        categories.indexOfFirst { it.id == category.id }
-    }.filter { it >= 0 }.asLiveData()
+        keepVolume.value = true
 
-    val keepVolume: Boolean
-        get() = _keepVolume
+        viewModelScope.launch {
+            val context = getApplication<Application>().applicationContext
+            categoriesInternal.value =
+                listOf(emptyCategoryInternal) + categoryRepository.categories.stateIn(viewModelScope).value
+            val sounds = repository.selectedSounds.stateIn(viewModelScope).value
 
-    fun setName(value: CharSequence) { _name.value = value }
-    fun setVolume(value: Int) { _volume.value = value }
-    fun setKeepVolume(value: Boolean) { _keepVolume = value }
-    fun setCategory(value: Category) { _category.value = value }
+            val colors = sounds.map { it.backgroundColor }.toSet()
+            if (colors.size == 1 && colors.first() != Color.TRANSPARENT) {
+                backgroundColor.value = colors.first()
+                overrideBackgroundColor.value = true
+            } else overrideBackgroundColor.value = false
 
-    fun save(name: String?, keepVolume: Boolean, volume: Int, category: Category) = viewModelScope.launch {
-        val oldSounds = repository.selectedSounds.stateIn(viewModelScope).value
-        val newSounds = oldSounds.map { sound ->
-            sound.clone(
-                name = name,
-                volume = if (!keepVolume) volume else null,
-                categoryId = if (category.id != -1) category.id else null,
-            )
+            val volumes = sounds.map { it.volume }.toSet()
+            volume.value = if (volumes.size == 1) volumes.first() else Constants.DEFAULT_VOLUME
+
+            val categoryIds = sounds.map { it.categoryId }.toSet()
+            categoryPosition.value =
+                if (categoryIds.size == 1) categoriesInternal.value.indexOfFirst { it.id == categoryIds.first() }
+                else 0
+
+            soundCountInternal.value = sounds.size
+            // multipleInternal.value = sounds.size > 1
+
+            name.value =
+                if (sounds.size == 1) sounds[0].name
+                else context.getString(R.string.multiple_sounds_selected, sounds.size)
+
+            isSaveEnabledInternal.value = true
         }
-        if (newSounds.filterIndexed { idx, sound -> !sound.isIdentical(oldSounds[idx]) }.isNotEmpty()) {
-            // At least one sound is changed
-            repository.update(newSounds)
-            stateRepository.push()
-        }
-        repository.disableSelect()
     }
 
-    fun reset() {
-        _name.value = ""
-        _volume.value = null
-        _keepVolume = true
-        _category.value = _emptyCategory
+    override fun save() {
+        validate()
+
+        viewModelScope.launch {
+            val category = categoriesInternal.value[categoryPosition.value]
+            val sounds = repository.selectedSounds.stateIn(viewModelScope).value
+
+            val changedSounds = sounds.map { sound ->
+                sound.clone(
+                    name = if (soundCountInternal.value == 1) name.value else null,
+                    volume = if (!keepVolume.value) volume.value else null,
+                    categoryId = if (category.id != -1) category.id else null,
+                    backgroundColor = if (overrideBackgroundColor.value) backgroundColor.value else Color.TRANSPARENT,
+                )
+            }.filterIndexed { idx, sound -> !sound.isIdentical(sounds[idx]) }
+
+            if (changedSounds.isNotEmpty()) {
+                // At least one sound is changed.
+                repository.update(changedSounds)
+                stateRepository.push()
+            }
+
+            repository.disableSelect()
+        }
     }
 }

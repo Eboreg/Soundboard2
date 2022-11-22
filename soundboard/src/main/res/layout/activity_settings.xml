@@ -53,11 +53,11 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/animationsEnabled"
+                        android:id="@+id/isAnimationEnabled"
                         style="@style/Style.Soundboard.TextView.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.animationsEnabled}"
+                        android:checked="@{viewModel.isAnimationEnabled}"
                         android:text="@string/enable_animations"
                         android:textColor="?attr/colorOnPrimary"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -86,16 +86,16 @@
                         android:text="@string/fas_folder"
                         android:textColor="?attr/menuIconColor"
                         android:textSize="@dimen/text_h2"
-                        app:layout_constraintBottom_toBottomOf="@+id/watchFolderEnabled"
+                        app:layout_constraintBottom_toBottomOf="@+id/isWatchFolderEnabled"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <androidx.appcompat.widget.SwitchCompat
-                        android:id="@+id/watchFolderEnabled"
+                        android:id="@+id/isWatchFolderEnabled"
                         style="@style/Style.Soundboard.TextView.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.watchFolderEnabled}"
+                        android:checked="@{viewModel.isWatchFolderEnabled}"
                         android:text="@string/watch_folder"
                         android:textColor="?attr/colorOnPrimary"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -110,18 +110,18 @@
                         android:layout_marginVertical="@dimen/margin_normal"
                         android:text="@string/watch_folder_text"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="@+id/watchFolderEnabled"
-                        app:layout_constraintTop_toBottomOf="@+id/watchFolderEnabled" />
+                        app:layout_constraintStart_toStartOf="@+id/isWatchFolderEnabled"
+                        app:layout_constraintTop_toBottomOf="@+id/isWatchFolderEnabled" />
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/watchFolderOptions"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:animateLayoutChanges="@{viewModel.animationsEnabled}"
+                        android:animateLayoutChanges="@{viewModel.isAnimationEnabled}"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintHorizontal_bias="1.0"
-                        app:layout_constraintStart_toStartOf="@+id/watchFolderEnabled"
+                        app:layout_constraintStart_toStartOf="@+id/isWatchFolderEnabled"
                         app:layout_constraintTop_toBottomOf="@+id/watchFolderText">
 
                         <EditText

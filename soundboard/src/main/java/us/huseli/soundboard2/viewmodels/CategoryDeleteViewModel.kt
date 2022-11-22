@@ -5,8 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.CategoryRepository
@@ -19,47 +18,58 @@ class CategoryDeleteViewModel @Inject constructor(
     private val repository: CategoryRepository,
     private val stateRepository: StateRepository
 ) : LoggingObject, ViewModel() {
-    private val _categoryId = MutableStateFlow<Int?>(null)
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _category: Flow<Category?> = _categoryId.filterNotNull().flatMapLatest { repository.get(it) }
+    private var categoryIdInternal: Int? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _otherCategories: Flow<List<Category>> = _categoryId.flatMapLatest { categoryId ->
-        if (categoryId != null)
-            repository.categories.map { list -> list.filter { it.id != categoryId } }
-        else emptyFlow()
+    private val isSaveEnabledInternal = MutableStateFlow(false)
+    private val nameInternal = MutableStateFlow("")
+    private val otherCategoriesInternal = MutableStateFlow<List<Category>>(emptyList())
+    private val soundCountInternal = MutableStateFlow(0)
+    private val isLastCategoryInternal = MutableStateFlow(false)
+    private val showSoundActionInternal = MutableStateFlow(false)
+
+    val newCategoryPosition = MutableStateFlow(0)
+    val soundActionMove = MutableStateFlow(true)
+    val soundActionDelete = MutableStateFlow(false)
+
+    val name: LiveData<String> = nameInternal.asLiveData()
+    val otherCategories: LiveData<List<Category>> = otherCategoriesInternal.asLiveData()
+    val soundCount: LiveData<Int> = soundCountInternal.asLiveData()
+    val isLastCategory: LiveData<Boolean> = isLastCategoryInternal.asLiveData()
+    val showSoundAction: LiveData<Boolean> = showSoundActionInternal.asLiveData()
+    val isSaveEnabled: LiveData<Boolean> = isSaveEnabledInternal.asLiveData()
+
+    private suspend fun getCategories(categoryId: Int): Pair<Category, List<Category>> =
+        Pair(repository.get(categoryId), repository.list().filter { it.id != categoryId })
+
+    fun initialize(categoryId: Int) {
+        categoryIdInternal = categoryId
+        isSaveEnabledInternal.value = false
+        newCategoryPosition.value = 0
+        soundActionMove.value = true
+        soundActionDelete.value = false
+
+        viewModelScope.launch {
+            val (category, otherCategories) = getCategories(categoryId)
+            val soundCount = repository.getSoundCount(categoryId)
+            val isLastCategory = otherCategories.isEmpty()
+
+            nameInternal.value = category.name
+            otherCategoriesInternal.value = otherCategories
+            soundCountInternal.value = soundCount
+            isLastCategoryInternal.value = isLastCategory
+            showSoundActionInternal.value = soundCount > 0 && !isLastCategory
+            isSaveEnabledInternal.value = true
+        }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val _soundCount: Flow<Int> = _categoryId.flatMapLatest { categoryId ->
-        if (categoryId != null) repository.getSoundCount(categoryId) else emptyFlow()
-    }
-
-    private val _isLastCategory = merge(
-        flowOf(false),
-        _otherCategories.map { it.isEmpty() },
-    )
-
-    private val _showSoundAction = merge(
-        flowOf(false),
-        combine(_soundCount, _isLastCategory) { sc, ilc -> sc > 0 && !ilc }
-    )
-
-    val name: LiveData<String> = _category.map { it?.name ?: "" }.asLiveData()
-    val otherCategories: LiveData<List<Category>> = _otherCategories.asLiveData()
-    val soundCount: LiveData<Int> = _soundCount.asLiveData()
-    val isLastCategory: LiveData<Boolean> = _isLastCategory.asLiveData()
-    val showSoundAction: LiveData<Boolean> = _showSoundAction.asLiveData()
-
-    fun setCategoryId(value: Int) {
-        _categoryId.value = value
-    }
-
-    fun delete(moveSoundsTo: Int?) = viewModelScope.launch {
-        _category.stateIn(viewModelScope).value?.let { category ->
-            log("delete(): category=$category, moveSoundsTo=$moveSoundsTo")
-            repository.delete(category, moveSoundsTo)
-            stateRepository.push()
+    fun delete() {
+        categoryIdInternal?.let { categoryId ->
+            viewModelScope.launch {
+                val (category, otherCategories) = getCategories(categoryId)
+                val newCategoryId = if (soundActionMove.value) otherCategories[newCategoryPosition.value].id else null
+                repository.delete(category, newCategoryId)
+                stateRepository.push()
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package us.huseli.soundboard2.data
 
 import android.content.Context
+import android.graphics.Color
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -15,7 +16,7 @@ import us.huseli.soundboard2.data.entities.Sound
 @androidx.room.Database(
     entities = [Sound::class, Category::class],
     exportSchema = false,
-    version = 5,
+    version = 6,
 )
 @TypeConverters(Converters::class)
 abstract class Database : RoomDatabase() {
@@ -31,7 +32,8 @@ abstract class Database : RoomDatabase() {
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
+                database.execSQL(
+                    """
                     CREATE TABLE Sound_new (
                         id INTEGER PRIMARY KEY NOT NULL,
                         categoryId INTEGER NOT NULL,
@@ -43,27 +45,33 @@ abstract class Database : RoomDatabase() {
                         volume INTEGER NOT NULL,
                         added INTEGER NOT NULL,
                         FOREIGN KEY (categoryId) REFERENCES Category(id) ON UPDATE CASCADE ON DELETE SET NULL
-                    )""".trimIndent())
-                database.execSQL("""
+                    )""".trimIndent()
+                )
+                database.execSQL(
+                    """
                     INSERT INTO Sound_new (id, categoryId, name, uri, 'order', duration, checksum, volume, added)
                     SELECT id, categoryId, name, uri, 'order', duration, checksum, volume, added FROM Sound
-                """.trimIndent())
+                    """.trimIndent()
+                )
                 database.execSQL("DROP TABLE Sound")
                 database.execSQL("ALTER TABLE Sound_new RENAME TO Sound")
 
-                database.execSQL("""
+                database.execSQL(
+                    """
                     CREATE TABLE Category_new (
                         id INTEGER PRIMARY KEY NOT NULL,
                         name TEXT NOT NULL,
                         backgroundColor INTEGER NOT NULL,
                         'order' INTEGER NOT NULL,
                         collapsed INTEGER NOT NULL DEFAULT 0
-                    )
-                """.trimIndent())
-                database.execSQL("""
+                    )""".trimIndent()
+                )
+                database.execSQL(
+                    """
                     INSERT INTO Category_new (id, name, backgroundColor, 'order', collapsed)
                     SELECT id, name, backgroundColor, 'order', collapsed FROM Category
-                """.trimIndent())
+                """.trimIndent()
+                )
                 database.execSQL("DROP TABLE Category")
                 database.execSQL("ALTER TABLE Category_new RENAME TO Category")
                 database.execSQL("CREATE INDEX index_Sound_categoryId ON Sound(categoryId)")
@@ -79,16 +87,19 @@ abstract class Database : RoomDatabase() {
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 // Removed SoundSorting.Parameter.CUSTOM and subtracted 1 from the values of the others:
-                database.execSQL("""
+                database.execSQL(
+                    """
                     UPDATE Category SET soundSorting = CASE 
                         WHEN soundSorting < 0 THEN soundSorting + 1 
                         ELSE soundSorting - 1 
                         END
-                """.trimIndent())
+                    """.trimIndent()
+                )
                 // Renamed Category.order to position:
                 database.execSQL("ALTER TABLE Category RENAME COLUMN 'order' TO position")
                 // Removed Sound.order:
-                database.execSQL("""
+                database.execSQL(
+                    """
                     CREATE TABLE Sound_new (
                         id INTEGER PRIMARY KEY NOT NULL,
                         categoryId INTEGER NOT NULL,
@@ -99,14 +110,23 @@ abstract class Database : RoomDatabase() {
                         volume INTEGER NOT NULL,
                         added INTEGER NOT NULL,
                         FOREIGN KEY (categoryId) REFERENCES Category(id) ON UPDATE CASCADE ON DELETE SET NULL
-                )""".trimIndent())
-                database.execSQL("""
+                    )""".trimIndent()
+                )
+                database.execSQL(
+                    """
                     INSERT INTO Sound_new (id, categoryId, name, uri, duration, checksum, volume, added)
                     SELECT id, categoryId, name, uri, duration, checksum, volume, added FROM Sound
-                """.trimIndent())
+                    """.trimIndent()
+                )
                 database.execSQL("DROP TABLE Sound")
                 database.execSQL("ALTER TABLE Sound_new RENAME TO Sound")
                 database.execSQL("CREATE INDEX index_Sound_categoryId ON Sound(categoryId)")
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE Sound ADD COLUMN backgroundColor INTEGER NOT NULL DEFAULT ${Color.TRANSPARENT}")
             }
         }
 
@@ -117,6 +137,7 @@ abstract class Database : RoomDatabase() {
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
                 .addMigrations(MIGRATION_4_5)
+                .addMigrations(MIGRATION_5_6)
                 .build()
         }
     }

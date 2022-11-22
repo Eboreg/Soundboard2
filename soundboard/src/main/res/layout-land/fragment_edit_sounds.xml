@@ -1,137 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
         <variable
             name="viewModel"
-            type="us.huseli.soundboard2.viewmodels.SoundEditViewModel" />
+            type="us.huseli.soundboard2.viewmodels.BaseSoundEditViewModel" />
     </data>
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:baselineAligned="false">
+        android:padding="@dimen/margin_xlarge">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:padding="@dimen/margin_xlarge"
-            android:layout_weight="1"
+        <include
+            android:id="@+id/column1"
+            layout="@layout/include_edit_sound_column1"
             android:layout_width="0dp"
-            android:layout_height="match_parent">
-
-            <TextView
-                android:id="@+id/soundNameLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/name"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <EditText
-                android:id="@+id/soundName"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:enabled="@{viewModel.nameIsEditable}"
-                android:focusedByDefault="true"
-                android:hint="@string/name"
-                android:importantForAutofill="no"
-                android:inputType="text"
-                android:minHeight="48dp"
-                android:singleLine="true"
-                android:text="@{viewModel.name}"
-                android:textColor="@android:color/primary_text_dark"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/soundNameLabel"
-                tools:ignore="UnusedAttribute,DuplicateSpeakableTextCheck" />
-
-            <TextView
-                android:id="@+id/volumeLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_normal"
-                android:text="@string/volume"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/soundName" />
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/volumeSection"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/volumeLabel">
-
-                <SeekBar
-                    android:id="@+id/volume"
-                    style="@style/Widget.AppCompat.SeekBar"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:layout_marginTop="@dimen/margin_normal"
-                    android:foregroundGravity="center"
-                    android:max="100"
-                    android:min="0"
-                    android:progress="@{viewModel.volume}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/keepVolume"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    android:enabled="@{!viewModel.keepVolume}"
-                    tools:ignore="UnusedAttribute" />
-
-                <CheckBox
-                    android:id="@+id/keepVolume"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:checked="@{viewModel.keepVolume}"
-                    android:gravity="center"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/keepVolumeLabel"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/keepVolumeLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="0dp"
-                    android:gravity="center"
-                    android:text="@string/no_change"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:padding="@dimen/margin_xlarge"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginEnd="@dimen/margin_xlarge"
+            app:layout_constraintEnd_toStartOf="@+id/column2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:viewModel="@{viewModel}" />
+
+        <include
+            layout="@layout/include_edit_sound_column2"
+            android:id="@+id/column2"
+            app:viewModel="@{viewModel}"
             android:layout_width="0dp"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/column1"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/categoryLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/margin_normal"
-                android:text="@string/category"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Spinner
-                android:id="@+id/category"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:selectedItemPosition="@{viewModel.categoryPosition}"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/categoryLabel"
-                tools:ignore="DuplicateSpeakableTextCheck" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

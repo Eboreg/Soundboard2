@@ -1,6 +1,8 @@
 package us.huseli.soundboard2.data.entities
 
 import android.net.Uri
+import androidx.annotation.ColorInt
+import androidx.annotation.IntRange
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -26,8 +28,9 @@ open class Sound(
     open val uri: Uri,
     open val duration: Long,
     open val checksum: String,
-    open val volume: Int,
+    @IntRange(from = 0, to = 100) open val volume: Int,
     open val added: Date,
+    @ColorInt open val backgroundColor: Int,
 ) {
     class Comparator(private val sorting: SoundSorting) : java.util.Comparator<Sound> {
         override fun compare(o1: Sound?, o2: Sound?): Int {
@@ -37,7 +40,7 @@ open class Sound(
             return if (s1 == null && s2 == null) 0
             else if (s1 == null) -1
             else if (s2 == null) 1
-            else when(sorting.parameter) {
+            else when (sorting.parameter) {
                 SoundSorting.Parameter.NAME -> when {
                     s1.name.lowercase(Locale.getDefault()) > s2.name.lowercase(Locale.getDefault()) -> 1
                     s1.name.equals(s2.name, ignoreCase = true) -> 0
@@ -63,8 +66,9 @@ open class Sound(
         uri: Uri? = null,
         duration: Long? = null,
         checksum: String? = null,
-        volume: Int? = null,
+        @IntRange(from = 0, to = 100) volume: Int? = null,
         added: Date? = null,
+        @ColorInt backgroundColor: Int? = null,
     ) = Sound(
         id,
         categoryId ?: this.categoryId,
@@ -74,6 +78,7 @@ open class Sound(
         checksum ?: this.checksum,
         volume ?: this.volume,
         added ?: this.added,
+        backgroundColor ?: this.backgroundColor,
     )
 
     fun isIdentical(other: Sound) =
@@ -84,7 +89,8 @@ open class Sound(
         other.duration == duration &&
         other.checksum == checksum &&
         other.volume == volume &&
-        other.added == added
+        other.added == added &&
+        other.backgroundColor == backgroundColor
 
     override fun equals(other: Any?) = other is Sound && other.id == id
     override fun hashCode() = id
