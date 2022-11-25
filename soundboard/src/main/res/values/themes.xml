@@ -18,7 +18,7 @@ concrete values for these named resources."
         <item name="android:actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
         <item name="android:dropDownSpinnerStyle">@style/Style.Soundboard.Spinner</item>
         <item name="android:fontFamily">@font/lato</item>
-        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:spinnerItemStyle">@style/Style.Soundboard.Spinner.Item</item>
         <item name="android:spinnerStyle">@style/Style.Soundboard.Spinner</item>
         <item name="android:statusBarColor">?attr/colorPrimary</item>
@@ -31,7 +31,7 @@ concrete values for these named resources."
     <style name="Theme.Soundboard" parent="Base.Theme.Soundboard">
         <item name="android:textColorHint">@color/secondary_text</item>
         <item name="android:textColorTertiary">@color/secondary_text</item>
-        <item name="android:windowBackground">@color/grey_100</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
 
         <!-- a secondary color for controls like checkboxes and text fields -->
         <item name="colorAccent">@color/blue_grey_500</item>
