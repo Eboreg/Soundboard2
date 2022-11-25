@@ -5,6 +5,7 @@ import android.media.SyncParams
 import android.util.Log
 import androidx.annotation.IntRange
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -79,9 +80,11 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     private val _temporaryError = Channel<String>()
     private val _permanentError = Channel<String>()
     private var _onStateChangeListener: OnStateChangeListener? = null
-    private var _path: String? = null
+    private val _path = MutableStateFlow<String?>(null)
     @IntRange(from = 0, to = 100)
     private var _volume = Constants.DEFAULT_VOLUME
+    private var _initJob: Job? = null
+    private var _resetJob: Job? = null
 
     val state: StateFlow<State> = _state
     val hasPermanentError: Flow<Boolean> = _hasPermanentError
@@ -134,7 +137,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
          * If sound is already playing, just do nothing (if we want it to start over from the beginning, we should
          * call restart()).
          */
-        log("play(): _state=${_state.value}, _path=$_path")
+        log("play(): _state=${_state.value}, _path=${_path.value}")
         if (_state.value != State.STARTED) {
             renderStartable()
             wrapStart()
@@ -150,6 +153,38 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
         }
     }
 
+    fun scheduleInit() {
+        /**
+         * If we're already initialized, do nothing.
+         * If we don't have a path yet, wait until we do, then initialize.
+         * Otherwise, initialize immediately.
+         */
+        _resetJob?.also {
+            it.cancel()
+            _resetJob = null
+        }
+        log("scheduleInit: starting, _state=${_state.value}, _path=${_path.value}")
+        if (_state.value == State.IDLE) coroutineScope.launch {
+            // This _should_ suspend until path is not null:
+            _path.filterNotNull().take(1).collect {
+                log("scheduleInit: initializing, _state=${_state.value}, _path=$it")
+                renderStartable()
+            }
+        }
+    }
+
+    fun scheduleReset() {
+        _initJob?.also {
+            it.cancel()
+            _initJob = null
+        }
+        if (_state.value != State.IDLE) coroutineScope.launch {
+            while (_mp.isPlaying) delay(10)
+            log("scheduleReset: resetting, _state=${_state.value}, _path=${_path.value}")
+            wrapReset()
+        }
+    }
+
     fun stop() {
         if (_state.value in listOf(State.STARTED, State.PAUSED)) wrapStop()
         renderStartable()
@@ -161,10 +196,10 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     }
 
     fun setPath(value: String?) {
-        if (value != _path) {
-            _path = value
-            wrapReset()
-            renderStartable()
+        log("setPath(): value=$value, old value=${_path.value}, has changed=${value != _path.value}, _state=${_state.value}")
+        if (value != _path.value) {
+            _path.value = value
+            if (_state.value != State.IDLE) wrapReset()
         }
     }
 
@@ -175,7 +210,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     /** PRIVATE METHODS *****************************************************/
 
     private fun changeState(state: State) {
-        log("changeState(): old=${_state.value}, new=$state, _path=$_path")
+        log("changeState(): old=${_state.value}, new=$state, _path=${_path.value}")
         if (state != _state.value) {
             _state.value = state
             _onStateChangeListener?.onStateChange(this, state)
@@ -187,9 +222,9 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
          * Prep the sound so it's in a state where we can just call start() on it next
          * (i.e. Prepared, Paused, or PlaybackCompleted).
          */
-        log("renderStartable(): _state=${_state.value}, _path=$_path")
+        log("renderStartable(): _state=${_state.value}, _path=${_path.value}")
         if (_state.value == State.ERROR) wrapReset()
-        if (_state.value == State.IDLE) wrapSetDataSource(_path)
+        if (_state.value == State.IDLE) wrapSetDataSource(_path.value)
         if (_state.value in listOf(State.STOPPED, State.INITIALIZED)) wrapPrepare()
         _mp.setVolume(_volume.toFloat() / 100, _volume.toFloat() / 100)
     }
@@ -243,7 +278,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
      * @throws IOException
      */
     private fun wrapPrepare() {
-        log("wrapPrepare(): _state=${_state.value}, _path=$_path")
+        log("wrapPrepare(): _state=${_state.value}, _path=${_path.value}")
         try {
             _mp.syncParams.tolerance = 1f / 24
             _mp.syncParams.syncSource = SyncParams.SYNC_SOURCE_AUDIO
@@ -258,7 +293,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     }
 
     private fun wrapReset() {
-        log("wrapReset(): _state=${_state.value}, _path=$_path")
+        log("wrapReset(): _state=${_state.value}, _path=${_path.value}")
         _mp.reset()
         changeState(State.IDLE)
     }
@@ -295,7 +330,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
      * in an invalid state transfers the object to the Error state.
      */
     private fun wrapStart() {
-        log("wrapStart(): _state=${_state.value}, _path=$_path")
+        log("wrapStart(): _state=${_state.value}, _path=${_path.value}")
         try {
             _mp.start()
             coroutineScope.launch {
@@ -316,7 +351,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
      * method in an invalid state transfers the object to the Error state.
      */
     private fun wrapStop() {
-        log("wrapStop(): _state=${_state.value}, _path=$_path")
+        log("wrapStop(): _state=${_state.value}, _path=${_path.value}")
         try {
             _mp.stop()
             changeState(State.STOPPED)
@@ -345,7 +380,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
             MediaPlayer.MEDIA_ERROR_TIMED_OUT -> "Timeout"
             else -> "Other ($extra)"
         }
-        log("onError(): what=$what, extra=$extra, _state=${_state.value}, _path=$_path", Log.ERROR)
+        log("onError(): what=$what, extra=$extra, _state=${_state.value}, _path=${_path.value}", Log.ERROR)
         if (_state.value != State.ERROR) setTemporaryError("$whatStr: $extraStr")
         changeState(State.ERROR)
         renderStartable()

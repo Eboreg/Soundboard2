@@ -160,11 +160,14 @@ class AppViewModel @Inject constructor(
                 }
             }
         }
-        if (deleted > 0) {
-            val context = getApplication<Application>().applicationContext
-            setSnackbarText(context.resources.getQuantityString(R.plurals.deleted_orphan_sounds, deleted, deleted))
-            stateRepository.replaceCurrent()
-        }
+        setSnackbarText(
+            getApplication<Application>().applicationContext.resources.getQuantityString(
+                R.plurals.deleted_orphan_sounds,
+                deleted,
+                deleted
+            )
+        )
+        stateRepository.replaceCurrent()
     }
 
     fun deleteOrphanSoundFiles() = viewModelScope.launch {
@@ -191,4 +194,8 @@ class AppViewModel @Inject constructor(
             )
         )
     }
+
+    fun registerScrollEvent() = settingsRepository.registerScrollEvent()
+
+    fun setScreenSizePx(width: Int, height: Int) = settingsRepository.setScreenSizePx(width, height)
 }

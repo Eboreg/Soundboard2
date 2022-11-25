@@ -22,7 +22,7 @@ import kotlin.math.roundToInt
 
 class SoundViewModel(
     private val repository: SoundRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
     private val soundIdInternal: Int,
     audioThreadHandler: Handler
@@ -53,6 +53,9 @@ class SoundViewModel(
     val playerState: LiveData<SoundPlayer.State> = playerInternal.state.asLiveData()
     val playerTemporaryError: LiveData<String> = playerInternal.temporaryError.asLiveData()
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
+    val screenHeightPx: Int
+        get() = settingsRepository.screenHeightPx
+    val scrollEndSignal = settingsRepository.scrollEndSignal.asLiveData()
     val secondaryBackgroundColor: LiveData<Int> = backgroundColor.map { colorHelper.darkenOrBrighten(it) }
     @ColorInt
     val textColor: LiveData<Int> = backgroundColor.map { colorHelper.getColorOnBackground(it) }
@@ -92,6 +95,8 @@ class SoundViewModel(
     fun play() = playerInternal.play()
     fun playParallel() = playerInternal.playParallel()
     fun restart() = playerInternal.restart()
+    fun schedulePlayerInit() = playerInternal.scheduleInit()
+    fun schedulePlayerReset() = playerInternal.scheduleReset()
     fun stop() = playerInternal.stop()
     fun stopPaused() = playerInternal.stopPaused()
 

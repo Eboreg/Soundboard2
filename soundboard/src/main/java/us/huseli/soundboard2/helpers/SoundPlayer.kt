@@ -2,7 +2,6 @@ package us.huseli.soundboard2.helpers
 
 import android.os.Handler
 import androidx.annotation.IntRange
-import androidx.annotation.MainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -66,9 +65,23 @@ class SoundPlayer(private val coroutineScope: CoroutineScope, private val audioT
         return player
     }
 
+    fun destroy() {
+        // This should already have been done, but just in case:
+        destroyParallelPlayers()
+        _player.destroy()
+    }
+
     fun destroyParallelPlayers() {
         _parallelPlayers.value.forEach { it.destroy() }
         _parallelPlayers.value = emptyList()
+    }
+
+    fun pause() {
+        audioThreadHandler.post {
+            _player.pause()
+        }
+        // They should already have been destroyed, but anyway:
+        destroyParallelPlayers()
     }
 
     fun playParallel() {
@@ -88,6 +101,19 @@ class SoundPlayer(private val coroutineScope: CoroutineScope, private val audioT
 
     fun play() = audioThreadHandler.post { _player.play() }
 
+    fun restart() {
+        /** If playing, stop and start again from the beginning. Otherwise, just start. */
+        audioThreadHandler.post {
+            _player.restart()
+        }
+        // They should already have been destroyed, but anyway:
+        destroyParallelPlayers()
+    }
+
+    fun scheduleInit() = _player.scheduleInit()
+
+    fun scheduleReset() = _player.scheduleReset()
+
     fun setPath(path: String?) {
         if (path != _path) {
             _path = path
@@ -103,23 +129,6 @@ class SoundPlayer(private val coroutineScope: CoroutineScope, private val audioT
         }
     }
 
-    fun pause() {
-        audioThreadHandler.post {
-            _player.pause()
-        }
-        // They should already have been destroyed, but anyway:
-        destroyParallelPlayers()
-    }
-
-    fun restart() {
-        /** If playing, stop and start again from the beginning. Otherwise, just start. */
-        audioThreadHandler.post {
-            _player.restart()
-        }
-        // They should already have been destroyed, but anyway:
-        destroyParallelPlayers()
-    }
-
     fun stop() {
         audioThreadHandler.post {
             _player.stop()
@@ -127,16 +136,8 @@ class SoundPlayer(private val coroutineScope: CoroutineScope, private val audioT
         destroyParallelPlayers()
     }
 
-    @MainThread
     fun stopPaused() {
         if (_player.state.value == MediaPlayerWrapper.State.PAUSED) audioThreadHandler.post { stop() }
         else destroyParallelPlayers()
-    }
-
-    @MainThread
-    fun destroy() {
-        // This should already have been done, but just in case:
-        destroyParallelPlayers()
-        _player.destroy()
     }
 }

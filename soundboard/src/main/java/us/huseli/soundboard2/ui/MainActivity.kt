@@ -1,10 +1,13 @@
 package us.huseli.soundboard2.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.util.DisplayMetrics
 import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.SearchView
@@ -18,6 +21,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
@@ -56,6 +60,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     internal val appViewModel by viewModels<AppViewModel>()
     internal val soundEditViewModel by viewModels<SoundEditViewModel>()
 
+    private val actionbarLogoTouchTimes = mutableListOf<Long>()
     private val categoryAddViewModel by viewModels<CategoryAddViewModel>()
     private val categoryDeleteViewModel by viewModels<CategoryDeleteViewModel>()
     private val categoryEditViewModel by viewModels<CategoryEditViewModel>()
@@ -106,11 +111,29 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val (screenWidth, screenHeight) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Pair(
+                windowManager.currentWindowMetrics.bounds.right,
+                windowManager.currentWindowMetrics.bounds.bottom
+            )
+        } else {
+            val metrics = DisplayMetrics()
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getMetrics(metrics)
+            Pair(
+                metrics.widthPixels,
+                metrics.heightPixels
+            )
+        }
+        appViewModel.setScreenSizePx(screenWidth, screenHeight)
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         binding.debug = false
         setContentView(binding.root)
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        initCategoryList()
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
@@ -134,7 +157,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.deleteOrphanSoundFiles()
 
-        initCategoryList()
+        binding.categoryList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                appViewModel.registerScrollEvent()
+            }
+        })
+
+        setupEasterEggClickListener()
         if (BuildConfig.DEBUG) mptInit()
     }
 
@@ -336,6 +365,21 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private fun setMenuItemEnabled(item: MenuItem, value: Boolean) {
         item.isEnabled = value
         item.icon?.alpha = if (value) 255 else 128
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupEasterEggClickListener() {
+        binding.actionBar.actionbarLogo.isClickable = true
+        binding.actionBar.actionbarLogo.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_DOWN) actionbarLogoTouchTimes.add(event.eventTime)
+            if (actionbarLogoTouchTimes.size == 3) {
+                if (actionbarLogoTouchTimes.first() + 1000 >= event.eventTime)
+                    showFragment(EasterEggFragment::class.java)
+                actionbarLogoTouchTimes.clear()
+            } else if (actionbarLogoTouchTimes.size > 3)
+                actionbarLogoTouchTimes.clear()
+            true
+        }
     }
 
     internal fun showFragment(fragmentClass: Class<out Fragment>, args: Bundle? = null) {

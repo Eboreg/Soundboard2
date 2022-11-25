@@ -4,6 +4,8 @@ import androidx.annotation.ColorInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
@@ -19,6 +21,8 @@ class CategoryRepository @Inject constructor(
     private val soundDao: SoundDao,
     private val colorHelper: ColorHelper
 ) : LoggingObject {
+    private val _defaultCategoryCreationMutex = Mutex()
+
     val categories: Flow<List<Category>> = categoryDao.flowList()
     val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
     val firstCategory: Flow<Category> = categories.map {
@@ -50,9 +54,11 @@ class CategoryRepository @Inject constructor(
 
     suspend fun update(vararg categories: Category) = categoryDao.update(categories.asList())
 
-    suspend fun createDefault() = create(
-        "Dëfäult",
-        getRandomColor(),
-        SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
-    )
+    suspend fun createDefault() = _defaultCategoryCreationMutex.withLock {
+        create(
+            "Dëfäult",
+            getRandomColor(),
+            SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
+        )
+    }
 }

@@ -6,7 +6,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
@@ -14,6 +14,7 @@ import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.helpers.LoggingObject
+import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -89,11 +90,53 @@ class SettingsRepository @Inject constructor(
             }
     }
 
-    /** ZOOMING **************************************************************/
+
+    /** SCROLLING ************************************************************/
+
+    // Not really a "settings" thing, but can't think of a better place.
+    private var _hasScrolled = false
+    private val _scrollNotifierScope = CoroutineScope(Job() + Dispatchers.Default)
+    private val _scrollEndSignal = MutableSharedFlow<Boolean>()
+    private var _lastScrollEvent = 0L
+
+    @Suppress("unused")
+    private val _scrollEndNotifier = _scrollNotifierScope.launch {
+        while (true) {
+            while (!_hasScrolled) delay(500)
+            if (System.currentTimeMillis() - _lastScrollEvent > 200) {
+                log("emitting scrollEndSignal")
+                _scrollEndSignal.emit(true)
+                _hasScrolled = false
+            } else delay(200)
+        }
+    }
+
+    val scrollEndSignal: SharedFlow<Boolean> = _scrollEndSignal.asSharedFlow()
+
+    fun registerScrollEvent() {
+        _hasScrolled = true
+        _lastScrollEvent = System.currentTimeMillis()
+    }
+
+
+    /** ZOOMING & DIMENSIONS *************************************************/
+
+    private var _screenWidthPx: Int = 0
+    private var _screenHeightPx: Int = 0
+    @Suppress("unused")
+    val screenWidthPx: Int
+        get() = _screenWidthPx
+    val screenHeightPx: Int
+        get() = _screenHeightPx
 
     internal fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * getScreenRatio()).roundToInt(), 1)
 
     internal fun portraitSpanCountToLandscape(spanCount: Int) = max((spanCount / getScreenRatio()).roundToInt(), 1)
+
+    fun setScreenSizePx(width: Int, height: Int) {
+        _screenWidthPx = width
+        _screenHeightPx = height
+    }
 
     private fun getScreenRatio(): Double {
         val width = context.resources.configuration.screenWidthDp.toDouble()
@@ -126,6 +169,7 @@ class SettingsRepository @Inject constructor(
 
     fun zoomOut() = zoom(1)
 
+
     /** VARIOUS **************************************************************/
 
     fun setRepressMode(value: RepressMode) = _preferences.edit().putString("repressMode", value.name).apply()
@@ -149,6 +193,7 @@ class SettingsRepository @Inject constructor(
     fun setSoundFilterTerm(value: String) {
         _soundFilterTerm.value = value
     }
+
 
     /** OVERRIDDEN METHODS ***************************************************/
 

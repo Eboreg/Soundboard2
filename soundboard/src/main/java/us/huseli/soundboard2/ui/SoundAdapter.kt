@@ -4,6 +4,8 @@ import android.animation.ObjectAnimator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.LinearInterpolator
+import androidx.core.view.doOnLayout
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
@@ -40,12 +42,15 @@ class SoundAdapter(
         RecyclerView.ViewHolder(binding.root) {
         private val clickAnimator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
         private val progressAnimator = ObjectAnimator().apply {
+            this.interpolator = LinearInterpolator()
             target = binding.soundProgressBar
             setPropertyName("progress")
         }
 
+        lateinit var viewModel: SoundViewModel
+        var name = ""
+
         private lateinit var activity: MainActivity
-        private lateinit var viewModel: SoundViewModel
         private var playerState: SoundPlayer.State? = null
         private var repressMode: RepressMode? = null
         private var isSelectEnabled = false
@@ -102,7 +107,9 @@ class SoundAdapter(
                     }
                 }
             }
-            viewModel.isSelected.observe(activity) { isSelected = it }
+            viewModel.isSelected.observe(activity) {
+                isSelected = it
+            }
             viewModel.playerPermanentError.observe(activity) { error ->
                 if (error != null) playerPermanentError = error
             }
@@ -112,6 +119,28 @@ class SoundAdapter(
             viewModel.volume.observe(activity) {
                 if (!progressAnimator.isPaused && !progressAnimator.isStarted) binding.soundProgressBar.progress = it
                 volume = it
+            }
+            viewModel.name.observe(activity) {
+                name = it
+            }
+
+            binding.root.doOnLayout {
+                viewModel.scrollEndSignal.observe(activity) {
+                    val screenLocation = IntArray(2)
+                    binding.root.getLocationOnScreen(screenLocation)
+                    val (locationX, locationY) = screenLocation
+
+                    if (viewModel.screenHeightPx > 0) {
+                        if (locationY + binding.root.height < 0 || locationY > viewModel.screenHeightPx) {
+                            // View is offscreen; reset player if needed.
+                            viewModel.schedulePlayerReset()
+                        } else {
+                            // View is onscreen; init player if needed.
+                            viewModel.schedulePlayerInit()
+                        }
+                    }
+                    log("name=$name received scrollEndSignal; screenLocation=($locationX, $locationY), height=${binding.root.height}, bottom=${locationY + binding.root.height}, screenHeightPx=${viewModel.screenHeightPx}, isLaidOut=${binding.root.isLaidOut}")
+                }
             }
         }
 
