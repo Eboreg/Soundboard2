@@ -1,7 +1,5 @@
 <resources>
     <style name="Theme.Soundboard" parent="Base.Theme.Soundboard">
-        <item name="android:navigationBarColor">@color/black</item>
-        <item name="android:windowBackground">@color/grey_900</item>
         <item name="colorAccent">@color/teal_300</item>
         <item name="colorBackgroundFloating">@color/grey_800</item>
         <item name="colorControlNormal">@color/grey_500</item>
