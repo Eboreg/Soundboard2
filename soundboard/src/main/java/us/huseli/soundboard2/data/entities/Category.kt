@@ -6,13 +6,13 @@ import androidx.room.PrimaryKey
 import us.huseli.soundboard2.helpers.SoundSorting
 
 @Entity(tableName = "Category")
-data class Category(
-    @PrimaryKey(autoGenerate = true) val id: Int,
-    val name: String,
-    @ColorInt val backgroundColor: Int,
-    val position: Int,
-    val collapsed: Boolean = false,
-    val soundSorting: SoundSorting = SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
+open class Category(
+    @PrimaryKey(autoGenerate = true) open val id: Int,
+    open val name: String,
+    @ColorInt open val backgroundColor: Int,
+    open val position: Int,
+    open val collapsed: Boolean = false,
+    open val soundSorting: SoundSorting = SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
 ) {
     fun clone(
         name: CharSequence? = null,

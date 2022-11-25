@@ -5,7 +5,8 @@ import android.os.Handler
 import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.CreationExtras
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.RepressMode
@@ -17,17 +18,23 @@ import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundPlayer
 import java.lang.Integer.min
 import java.text.DecimalFormat
+import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.roundToInt
 
-class SoundViewModel(
+@OptIn(FlowPreview::class)
+@HiltViewModel
+class SoundViewModel @Inject constructor(
     private val repository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    private val soundIdInternal: Int,
     audioThreadHandler: Handler
 ) : LoggingObject, ViewModel() {
-    private val soundInternal: Flow<SoundExtended> = repository.get(soundIdInternal).filterNotNull()
+    private val soundIdInternal = MutableStateFlow<Int?>(null)
+    private val soundInternal: Flow<SoundExtended> = soundIdInternal.filterNotNull().flatMapConcat {
+        repository.get(it).filterNotNull()
+    }
+    // private val soundInternal: Flow<SoundExtended> = repository.get(soundIdInternal).filterNotNull()
     private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
     private val decimalFormatInternal = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
@@ -88,7 +95,12 @@ class SoundViewModel(
     val isPlayerPaused: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
     val isPlayerStarted: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
     val isSelectEnabled: LiveData<Boolean> = repository.isSelectEnabled.asLiveData()
-    val isSelected: LiveData<Boolean> = repository.selectedSoundIds.map { it.contains(soundIdInternal) }.asLiveData()
+    val isSelected: LiveData<Boolean> =
+        repository.selectedSoundIds.map { it.contains(soundIdInternal.value) }.asLiveData()
+
+    fun setSoundId(soundId: Int) {
+        soundIdInternal.value = soundId
+    }
 
     fun destroyParallelPlayers() = playerInternal.destroyParallelPlayers()
     fun pause() = playerInternal.pause()
@@ -101,8 +113,8 @@ class SoundViewModel(
     fun stopPaused() = playerInternal.stopPaused()
 
     fun enableSelect() = repository.enableSelect()
-    fun select() = repository.select(soundIdInternal)
-    fun unselect() = repository.unselect(soundIdInternal)
+    fun select() = soundIdInternal.value?.let { repository.select(it) }
+    fun unselect() = soundIdInternal.value?.let { repository.unselect(it) }
 
     fun selectAllFromLastSelected() = viewModelScope.launch {
         /** Select all sounds between this viewmodel's sound and the last selected one. */
@@ -110,7 +122,7 @@ class SoundViewModel(
 
         if (lastSelectedId != null) {
             val soundIds = repository.filteredSoundIdsOrdered.stateIn(viewModelScope).value
-            val thisPos = soundIds.indexOf(soundIdInternal)
+            val thisPos = soundIds.indexOf(soundIdInternal.value)
             val lastSelectedPos = soundIds.indexOf(lastSelectedId)
 
             if (thisPos > -1 && lastSelectedPos > -1) {
@@ -122,21 +134,4 @@ class SoundViewModel(
     }
 
     override fun onCleared() = playerInternal.destroy()
-
-
-    class Factory(
-        private val repository: SoundRepository,
-        private val settingsRepository: SettingsRepository,
-        private val colorHelper: ColorHelper,
-        private val soundId: Int,
-        private val audioThreadHandler: Handler
-    ) : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-            if (modelClass.isAssignableFrom(SoundViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return SoundViewModel(repository, settingsRepository, colorHelper, soundId, audioThreadHandler) as T
-            }
-            throw IllegalArgumentException("Unknown ViewModel class")
-        }
-    }
 }

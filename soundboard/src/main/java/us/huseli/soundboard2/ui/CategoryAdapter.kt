@@ -7,64 +7,58 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import us.huseli.soundboard2.data.repositories.CategoryRepository
-import us.huseli.soundboard2.data.repositories.SettingsRepository
-import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ItemCategoryBinding
-import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.viewmodels.CategoryViewModel
 
-class CategoryAdapter(
-    private val activity: MainActivity,
-    private val categoryRepository: CategoryRepository,
-    private val soundRepository: SoundRepository,
-    private val settingsRepository: SettingsRepository,
-    private val colorHelper: ColorHelper
-) : ListAdapter<Int, CategoryAdapter.ViewHolder>(Comparator()) {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        ViewHolder(ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+class CategoryAdapter(private val activity: MainActivity) : ListAdapter<Int, CategoryAdapter.ViewHolder>(Comparator()) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(
+        ItemCategoryBinding.inflate(LayoutInflater.from(parent.context), parent, false),
+        activity
+    )
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), activity, categoryRepository, soundRepository, settingsRepository, colorHelper)
+        holder.bind(getItem(position))
     }
 
+    class ViewHolder(
+        private val binding: ItemCategoryBinding,
+        private val activity: MainActivity,
+    ) : LoggingObject, RecyclerView.ViewHolder(binding.root) {
+        private val soundAdapter = SoundAdapter(activity)
+        private var viewModel: CategoryViewModel? = null
 
-    class ViewHolder(private val binding: ItemCategoryBinding) : LoggingObject, RecyclerView.ViewHolder(binding.root) {
-        internal fun bind(
-            categoryId: Int,
-            activity: MainActivity,
-            categoryRepository: CategoryRepository,
-            soundRepository: SoundRepository,
-            settingsRepository: SettingsRepository,
-            colorHelper: ColorHelper
-        ) {
-            val viewModel = ViewModelProvider(
-                activity.viewModelStore,
-                CategoryViewModel.Factory(
-                    categoryRepository,
-                    soundRepository,
-                    settingsRepository,
-                    colorHelper,
-                    categoryId
-                )
-            )["category-$categoryId", CategoryViewModel::class.java]
-            val soundAdapter = SoundAdapter(activity, soundRepository, settingsRepository, colorHelper)
-
+        init {
             binding.lifecycleOwner = activity
-            binding.viewModel = viewModel
             binding.soundList.adapter = soundAdapter
+            binding.soundList.setItemViewCacheSize(20)
+        }
 
-            binding.categoryCollapseButton.setOnClickListener { viewModel.toggleCollapsed() }
+        internal fun bind(categoryId: Int) {
+            if (viewModel == null) {
+                val localViewModel = ViewModelProvider(
+                    activity.viewModelStore,
+                    activity.defaultViewModelProviderFactory,
+                    activity.defaultViewModelCreationExtras
+                )["category-$categoryId", CategoryViewModel::class.java]
+
+                viewModel = localViewModel
+
+                binding.viewModel = localViewModel
+                binding.categoryCollapseButton.setOnClickListener { localViewModel.toggleCollapsed() }
+                binding.categoryMoveDown.setOnClickListener { localViewModel.moveDown() }
+                binding.categoryMoveUp.setOnClickListener { localViewModel.moveUp() }
+
+                localViewModel.soundIds.observe(activity) { soundAdapter.submitList(it) }
+                localViewModel.spanCount.observe(activity) {
+                    (binding.soundList.layoutManager as? GridLayoutManager)?.spanCount = it
+                }
+            }
+
+            viewModel?.setCategoryId(categoryId)
+
             binding.categoryDeleteButton.setOnClickListener { activity.showCategoryDeleteFragment(categoryId) }
             binding.categoryEditButton.setOnClickListener { activity.showCategoryEditFragment(categoryId) }
-            binding.categoryMoveDown.setOnClickListener { viewModel.moveDown() }
-            binding.categoryMoveUp.setOnClickListener { viewModel.moveUp() }
-
-            viewModel.soundIds.observe(activity) { soundAdapter.submitList(it) }
-            viewModel.spanCount.observe(activity) {
-                (binding.soundList.layoutManager as? GridLayoutManager)?.spanCount = it
-            }
         }
     }
 

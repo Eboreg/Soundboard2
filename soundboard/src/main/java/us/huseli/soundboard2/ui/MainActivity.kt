@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.util.DisplayMetrics
 import android.view.*
 import android.widget.ArrayAdapter
@@ -30,11 +29,8 @@ import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
-import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
-import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
-import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.MediaPlayerTests
 import us.huseli.soundboard2.ui.drawables.RepressModeIconDrawable
@@ -45,15 +41,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject, View.OnTouchListener {
     @Inject
-    lateinit var categoryRepository: CategoryRepository
-    @Inject
-    lateinit var colorHelper: ColorHelper
-    @Inject
     lateinit var settingsRepository: SettingsRepository
-    @Inject
-    lateinit var soundRepository: SoundRepository
-    @Inject
-    lateinit var audioThreadHandler: Handler
 
     private lateinit var binding: ActivityMainBinding
 
@@ -66,7 +54,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val categoryEditViewModel by viewModels<CategoryEditViewModel>()
     private val soundAddViewModel by viewModels<SoundAddViewModel>()
 
-    private val addSoundLauncher = registerForActivityResult(GetMultipleSounds()) { addSoundsFromUris(it) }
+    private val addSoundLauncher = registerForActivityResult(AddMultipleSounds()) { addSoundsFromUris(it) }
     private val scaleGestureDetector by lazy { ScaleGestureDetector(applicationContext, ScaleListener()) }
     private val soundActionModeCallback = SoundActionModeCallback()
 
@@ -75,14 +63,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private var soundFilterTerm = ""
     private var watchFolderTrashMissing: Boolean = false
 
-    inner class GetMultipleSounds : ActivityResultContracts.GetMultipleContents() {
+    private inner class AddMultipleSounds : ActivityResultContracts.GetMultipleContents() {
         override fun createIntent(context: Context, input: String): Intent {
             this@MainActivity.overridePendingTransition(0, 0)
             return super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
 
-    inner class SoundActionModeCallback : ActionMode.Callback {
+    private inner class SoundActionModeCallback : ActionMode.Callback {
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
             mode.menuInflater.inflate(R.menu.sound_actionmode_menu, menu)
             return true
@@ -106,6 +94,19 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
     }
 
+    private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+        override fun onScale(detector: ScaleGestureDetector): Boolean {
+            return if (detector.scaleFactor <= 0.8) {
+                zoomOut()
+                true
+            } else if (detector.scaleFactor >= 1.3) {
+                zoomIn()
+                true
+            } else super.onScale(detector)
+        }
+    }
+
+
     /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,16 +121,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             val metrics = DisplayMetrics()
             @Suppress("DEPRECATION")
             windowManager.defaultDisplay.getMetrics(metrics)
-            Pair(
-                metrics.widthPixels,
-                metrics.heightPixels
-            )
+            Pair(metrics.widthPixels, metrics.heightPixels)
         }
         appViewModel.setScreenSizePx(screenWidth, screenHeight)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         binding.debug = false
         setContentView(binding.root)
+
         setSupportActionBar(binding.actionBar.actionbarToolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
@@ -167,23 +166,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         if (BuildConfig.DEBUG) mptInit()
     }
 
-    override fun onStart() {
-        super.onStart()
-        settingsRepository.initialize()
-    }
-
-    override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
-        /** Flip caret icon when repress mode menu is opened. */
-        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.UP)
-        return super.onMenuOpened(featureId, menu)
-    }
-
-    override fun onPanelClosed(featureId: Int, menu: Menu) {
-        /** Flip caret icon when repress mode menu is closed. */
-        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.DOWN)
-        super.onPanelClosed(featureId, menu)
+    override fun onColorSelected(dialogId: Int, @ColorInt color: Int) {
+        /**
+         * ColorPicker will only allow Activities to handle callbacks, so hwre
+         * is where we figure out which fragment to delegate the event to, and
+         * then delegate it.
+         */
+        val fragment = getFragmentByDialogId(dialogId) { it is ColorPickerDialogListener }
+        (fragment as? ColorPickerDialogListener)?.onColorSelected(dialogId, color)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -197,7 +187,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             if (view is SearchView) initSearchAction(item, view)
         }
 
-        // The below ViewModel observers have to be done here, because the
+        // The below ViewModel observers have to be defined here, because the
         // callbacks make no sense unless the menu already exists.
         appViewModel.isZoomInPossible.observe(this) {
             setMenuItemEnabled(menu.findItem(R.id.actionZoomIn), it)
@@ -226,7 +216,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         return true
     }
 
+    override fun onDialogDismissed(dialogId: Int) {}
+
+    override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
+        /** Flip caret icon when repress mode menu is opened. */
+        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
+            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.UP)
+        return super.onMenuOpened(featureId, menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        /** User selected item from the "main menu" at the top. */
         when (item.itemId) {
             R.id.actionAddSound -> {
                 if (isWatchFolderEnabled && watchFolderTrashMissing) {
@@ -258,12 +258,17 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         return true
     }
 
-    override fun onColorSelected(dialogId: Int, @ColorInt color: Int) {
-        val fragment = getFragmentByDialogId(dialogId) { it is ColorPickerDialogListener }
-        (fragment as? ColorPickerDialogListener)?.onColorSelected(dialogId, color)
+    override fun onPanelClosed(featureId: Int, menu: Menu) {
+        /** Flip caret icon when repress mode menu is closed. */
+        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
+            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.DOWN)
+        super.onPanelClosed(featureId, menu)
     }
 
-    override fun onDialogDismissed(dialogId: Int) {}
+    override fun onStart() {
+        super.onStart()
+        settingsRepository.initialize()
+    }
 
     override fun onTouch(view: View, event: MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -277,6 +282,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
         return scaleGestureDetector.onTouchEvent(event)
     }
+
 
     /** PUBLIC METHODS *******************************************************/
 
@@ -294,7 +300,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
     }
 
-    /** PRIVATE METHODS ******************************************************/
+
+    /** PRIVATE/INTERNAL METHODS *********************************************/
 
     private fun addSoundsFromUris(uris: Collection<Uri>) {
         /** Used when adding sounds from within app and sharing sounds from other apps */
@@ -320,7 +327,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     }
 
     private fun initCategoryList() {
-        val adapter = CategoryAdapter(this, categoryRepository, soundRepository, settingsRepository, colorHelper)
+        val adapter = CategoryAdapter(this)
         binding.categoryList.adapter = adapter
         binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
         appViewModel.categoryIds.observe(this) {
@@ -428,19 +435,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             mpt.release()
             mpt = MediaPlayerTests(applicationContext)
             mpt.runChainTests()
-        }
-    }
-
-
-    private inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-        override fun onScale(detector: ScaleGestureDetector): Boolean {
-            return if (detector.scaleFactor <= 0.8) {
-                zoomOut()
-                true
-            } else if (detector.scaleFactor >= 1.3) {
-                zoomIn()
-                true
-            } else super.onScale(detector)
         }
     }
 }

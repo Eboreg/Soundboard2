@@ -73,10 +73,8 @@ class SettingsRepository @Inject constructor(
     val isAnimationEnabled: StateFlow<Boolean> = _isAnimationEnabled.asStateFlow()
     val isWatchFolderEnabled: StateFlow<Boolean> = _isWatchFolderEnabled.asStateFlow()
     val watchFolderUri: StateFlow<Uri?> = _watchFolderUri.asStateFlow()
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val watchFolderCategory: Flow<Category?> = _watchFolderCategoryId.flatMapLatest { categoryId ->
-        categoryId?.let { categoryDao.flowGet(it) } ?: emptyFlow()
-    }
+    val watchFolderCategory: Flow<Category?> =
+        _watchFolderCategoryId.map { categoryId -> categoryId?.let { categoryDao.get(it) } }
     val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
     val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
 

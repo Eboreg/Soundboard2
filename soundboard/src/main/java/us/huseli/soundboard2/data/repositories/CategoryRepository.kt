@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
+import us.huseli.soundboard2.data.entities.CategoryExtended
 import us.huseli.soundboard2.helpers.ColorHelper
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.SoundSorting
@@ -30,9 +31,7 @@ class CategoryRepository @Inject constructor(
         it.firstOrNull()
     }.filterNotNull()
 
-    fun flowGet(categoryId: Int): Flow<Category?> = categoryDao.flowGet(categoryId)
-    fun isFirstCategory(categoryId: Int): Flow<Boolean> = categoryIds.map { it.firstOrNull() == categoryId }
-    fun isLastCategory(categoryId: Int) = categoryIds.map { it.lastOrNull() == categoryId }
+    fun flowGetExtended(categoryId: Int): Flow<CategoryExtended?> = categoryDao.flowGetExtended(categoryId)
 
     suspend fun get(categoryId: Int): Category = categoryDao.get(categoryId)
     suspend fun getRandomColor(@ColorInt vararg exclude: Int): Int =

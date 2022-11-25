@@ -37,8 +37,9 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
 
     open fun onBindingCreated(binding: T) {}
     open fun onDialogCreated(dialog: AlertDialog) {}
-    @Suppress("SameReturnValue", "SameReturnValue")
+    @Suppress("SameReturnValue")
     open fun onPositiveButtonClick(): Boolean = true
+    @Suppress("SameReturnValue")
     open fun onNegativeButtonClick(): Boolean = true
 
     override fun onCreateDialog(savedInstanceState: Bundle?): AlertDialog {

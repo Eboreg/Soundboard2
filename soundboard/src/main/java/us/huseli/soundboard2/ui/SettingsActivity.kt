@@ -28,15 +28,7 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
     private var watchFolderUri: Uri? = null
     private var watchFolderLauncher = registerForActivityResult(GetWatchFolder()) { onWatchFolderSelected(it) }
 
-    private fun onWatchFolderSelected(uri: Uri?) {
-        if (uri != null) {
-            applicationContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            watchFolderUri = uri
-            viewModel.setWatchFolderUri(uri)
-        }
-    }
-
-    inner class GetWatchFolder : ActivityResultContracts.OpenDocumentTree() {
+    private inner class GetWatchFolder : ActivityResultContracts.OpenDocumentTree() {
         override fun createIntent(context: Context, input: Uri?): Intent {
             this@SettingsActivity.overridePendingTransition(0, 0)
             val intent = super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -44,6 +36,14 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
                 watchFolderUri?.also { intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
             }
             return intent
+        }
+    }
+
+    private fun onWatchFolderSelected(uri: Uri?) {
+        if (uri != null) {
+            applicationContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            watchFolderUri = uri
+            viewModel.setWatchFolderUri(uri)
         }
     }
 
