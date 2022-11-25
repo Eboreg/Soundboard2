@@ -12,7 +12,6 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         tools:layout_width="match_parent"
         tools:layout_height="wrap_content"
-        tools:padding="@dimen/margin_xlarge"
         android:layout_height="0dp"
         android:layout_width="wrap_content">
 
@@ -94,12 +93,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/margin_normal"
                 android:layout_weight="1"
-                app:layout_constraintHorizontal_weight="1"
                 app:icon="@drawable/fas_dice"
                 app:iconGravity="textEnd"
                 app:iconPadding="0dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_weight="1"
                 app:layout_constraintStart_toEndOf="@+id/selectColorButton"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:targetApi="o" />

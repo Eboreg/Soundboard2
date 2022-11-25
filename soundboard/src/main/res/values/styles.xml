@@ -68,7 +68,7 @@ Styles are a collection of view attributes; specific to a single type of widget"
         <item name="android:textSize">@dimen/title_text</item>
     </style>
 
-    <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.Light.ActionBar.Solid">
+    <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.ActionBar.Solid">
         <item name="android:background">?attr/colorPrimary</item>
         <item name="android:elevation">0dp</item>
         <item name="android:minHeight">?attr/actionBarSize</item>

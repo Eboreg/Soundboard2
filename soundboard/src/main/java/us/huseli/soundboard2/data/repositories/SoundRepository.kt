@@ -32,6 +32,7 @@ class SoundRepository @Inject constructor(
      * Flattened list of extended Sounds, ordered by their respective
      * categories' soundSorting.
      */
+    // TODO: Is this executing unnecessarily?
     private val allSoundsOrderedInternal: Flow<List<SoundExtended>> = categoryDao.flowListWithSounds().map { list ->
         val repr = list.map { Pair(it.category.name, it.sounds.map { sound -> sound.name }) }
         log("allSoundsOrdered: categoryWithSounds=$repr")

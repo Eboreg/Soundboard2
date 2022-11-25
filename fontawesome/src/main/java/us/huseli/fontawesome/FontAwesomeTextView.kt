@@ -27,7 +27,7 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
         } catch (_: Exception) {
         }
 
-        val explicitTypeface: String? = when (arr.getInt(R.styleable.FontAwesomeTextView_fa_typeface, -1)) {
+        val explicitTypeface: String? = when (arr.getInt(R.styleable.FontAwesomeTextView_fontAwesomeTypeface, -1)) {
             0 -> FontAwesomeCache.FA_FONT_REGULAR
             1 -> FontAwesomeCache.FA_FONT_SOLID
             2 -> FontAwesomeCache.FA_FONT_BRANDS
@@ -46,7 +46,7 @@ open class FontAwesomeTextView(context: Context, attrs: AttributeSet?, defStyleA
         )
     }
 
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.style.FontAwesomeTextView)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.attr.fontAwesomeTextViewStyle)
 
     constructor(context: Context) : this(context, null)
 

@@ -8,10 +8,19 @@ Styles are a collection of view attributes; specific to a single type of widget"
 - https://medium.com/androiddevelopers/android-styling-themes-vs-styles-ebe05f917578
 -->
 <resources>
+    <!-- A style: -->
     <style name="FontAwesomeTextView" parent="Widget.AppCompat.TextView">
         <item name="autoSizeMaxTextSize">1000sp</item>
         <item name="autoSizeTextType">uniform</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@android:color/primary_text_light</item>
+    </style>
+
+    <style name="FontAwesomeButton" parent="FontAwesomeTextView" />
+
+    <!-- A theme: -->
+    <style name="FontAwesomeTheme" parent="@android:style/Theme">
+        <item name="fontAwesomeTextViewStyle">@style/FontAwesomeTextView</item>
+        <item name="fontAwesomeButtonStyle">@style/FontAwesomeButton</item>
     </style>
 </resources>

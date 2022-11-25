@@ -14,6 +14,7 @@
     <color name="splashscreen_background_start" tools:keep="@color/splashscreen_background_start">#da9c3b</color>
     <color name="splashscreen_background_end" tools:keep="@color/splashscreen_background_end">#ba7c1b</color>
     <color name="ic_launcher_background">#DC9D3B</color>
+    <color name="backdrop">#80424242</color>
 
     <color name="red_50" tools:keep="@color/red_50">#FFEBEE</color>
     <color name="red_100" tools:keep="@color/red_100">#FFCDD2</color>

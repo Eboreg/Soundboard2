@@ -39,6 +39,10 @@ abstract class BaseSoundEditFragment : LoggingObject, BaseColorPickerDialogFragm
         viewModel.categories.observe(this) {
             binding.column1.category.adapter = CategorySpinnerAdapter(requireContext(), it)
         }
+
+        viewModel.isReady.observe(this) {
+            binding.progressCircle.visible = !it
+        }
     }
 
     override fun onDialogCreated(dialog: AlertDialog) {
@@ -49,7 +53,7 @@ abstract class BaseSoundEditFragment : LoggingObject, BaseColorPickerDialogFragm
             dialog.show()
         }
 
-        viewModel.isSaveEnabled.observe(this) {
+        viewModel.isReady.observe(this) {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = it
         }
     }

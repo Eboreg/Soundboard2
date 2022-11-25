@@ -2,5 +2,6 @@
 <resources>
     <declare-styleable name="Style.Soundboard">
         <attr name="menuIconColor" format="color" />
+        <attr name="colorOnPrimaryVariant" format="color" />
     </declare-styleable>
 </resources>

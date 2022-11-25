@@ -25,7 +25,7 @@ class FontAwesomeButton(context: Context, attrs: AttributeSet?, defStyleAttr: In
 
     override fun getTextAlignment() = View.TEXT_ALIGNMENT_CENTER
 
-    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.style.FontAwesomeTextView)
+    constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, R.attr.fontAwesomeButtonStyle)
 
     constructor(context: Context) : this(context, null)
 }

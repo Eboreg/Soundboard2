@@ -46,12 +46,16 @@ abstract class BaseCategoryEditFragment : BaseColorPickerDialogFragment<Fragment
         )
 
         binding.column1.randomColorButton.setOnClickListener { viewModel.setRandomBackgroundColor() }
+
+        viewModel.isReady.observe(this) {
+            binding.progressCircle.visible = !it
+        }
     }
 
     override fun onDialogCreated(dialog: AlertDialog) {
         super.onDialogCreated(dialog)
 
-        viewModel.isSaveEnabled.observe(this) {
+        viewModel.isReady.observe(this) {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = it
         }
     }

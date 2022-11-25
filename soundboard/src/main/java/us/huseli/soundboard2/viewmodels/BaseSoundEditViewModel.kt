@@ -19,7 +19,7 @@ abstract class BaseSoundEditViewModel(application: Application) : LoggingObject,
 
     protected val categoriesInternal = MutableStateFlow<List<Category>>(emptyList())
     protected val duplicatesInternal = MutableStateFlow<List<SoundExtended>>(emptyList())
-    protected val isSaveEnabledInternal = MutableStateFlow(false)
+    protected val isReadyInternal = MutableStateFlow(false)
     protected val soundCountInternal = MutableStateFlow(0)
 
     val addDuplicates = MutableStateFlow(false)
@@ -35,7 +35,7 @@ abstract class BaseSoundEditViewModel(application: Application) : LoggingObject,
     val categories: LiveData<List<Category>> = categoriesInternal.asLiveData()
     val duplicateCount: LiveData<Int> = duplicatesInternal.map { it.size }.asLiveData()
     val hasDuplicates: LiveData<Boolean> = duplicatesInternal.map { it.isNotEmpty() }.asLiveData()
-    val isSaveEnabled: LiveData<Boolean> = isSaveEnabledInternal.asLiveData()
+    val isReady: LiveData<Boolean> = isReadyInternal.asLiveData()
     val nameIsEditable: LiveData<Boolean> = soundCountInternal.map { it == 1 }.asLiveData()
     val soundCount: LiveData<Int> = soundCountInternal.asLiveData()
 
@@ -44,7 +44,7 @@ abstract class BaseSoundEditViewModel(application: Application) : LoggingObject,
 
     open fun initialize() {
         backgroundColor.value = Color.TRANSPARENT
-        isSaveEnabledInternal.value = false
+        isReadyInternal.value = false
     }
 
     abstract fun save()

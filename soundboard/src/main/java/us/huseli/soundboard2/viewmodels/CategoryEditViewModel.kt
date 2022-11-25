@@ -18,7 +18,7 @@ class CategoryEditViewModel @Inject constructor(
 
     fun initialize(categoryId: Int) {
         categoryIdInternal = categoryId
-        isSaveEnabledInternal.value = false
+        isReadyInternal.value = false
 
         viewModelScope.launch {
             val category = categoryRepository.get(categoryId)
@@ -27,7 +27,7 @@ class CategoryEditViewModel @Inject constructor(
             sortParameterPosition.value = SoundSorting.Parameter.values().indexOf(category.soundSorting.parameter)
             sortOrderAscending.value = category.soundSorting.order == SoundSorting.Order.ASCENDING
             sortOrderDescending.value = category.soundSorting.order == SoundSorting.Order.DESCENDING
-            isSaveEnabledInternal.value = true
+            isReadyInternal.value = true
         }
     }
 

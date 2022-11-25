@@ -43,7 +43,7 @@
                     android:id="@+id/sortOrderAscending"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="@dimen/elevation_large"
+                    android:layout_marginEnd="@dimen/margin_normal"
                     android:checked="@={viewModel.sortOrderAscending}"
                     android:text="@string/ascending" />
 

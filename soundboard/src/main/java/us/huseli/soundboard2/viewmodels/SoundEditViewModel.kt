@@ -61,7 +61,7 @@ class SoundEditViewModel @Inject constructor(
                 if (sounds.size == 1) sounds[0].name
                 else context.getString(R.string.multiple_sounds_selected, sounds.size)
 
-            isSaveEnabledInternal.value = true
+            isReadyInternal.value = true
         }
     }
 

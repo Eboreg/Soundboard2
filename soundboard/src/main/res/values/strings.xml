@@ -67,6 +67,7 @@
         <item quantity="other">Deleted %1$d orphan files from internal storage.</item>
     </plurals>
     <plurals name="deleted_orphan_sounds">
+        <item quantity="zero">No orphan sounds were found.</item>
         <item quantity="one">Deleted one orphan sound.</item>
         <item quantity="other">Deleted %1$d orphan sounds.</item>
     </plurals>

@@ -14,11 +14,16 @@ concrete values for these named resources."
         <item name="actionBarStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="actionModeStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
-        <item name="android:actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
         <item name="alertDialogTheme">@style/Theme.Soundboard.MaterialAlertDialog</item>
+        <item name="android:actionOverflowMenuStyle">@style/Style.Soundboard.Toolbar.PopupMenu.Overflow</item>
         <item name="android:dropDownSpinnerStyle">@style/Style.Soundboard.Spinner</item>
+        <item name="android:fontFamily">@font/lato</item>
+        <item name="android:navigationBarColor">@color/white</item>
         <item name="android:spinnerItemStyle">@style/Style.Soundboard.Spinner.Item</item>
         <item name="android:spinnerStyle">@style/Style.Soundboard.Spinner</item>
+        <item name="android:statusBarColor">?attr/colorPrimary</item>
+        <item name="fontAwesomeButtonStyle">@style/FontAwesomeButton</item>
+        <item name="fontAwesomeTextViewStyle">@style/FontAwesomeTextView</item>
         <item name="materialAlertDialogTheme">@style/Theme.Soundboard.MaterialAlertDialog</item>
         <item name="materialButtonStyle">@style/Style.Soundboard.Button</item>
     </style>
@@ -38,6 +43,7 @@ concrete values for these named resources."
 
         <!-- A color that passes accessibility guidelines for text/iconography when drawn on top of the primary color. -->
         <item name="colorOnPrimary">@color/black</item>
+        <item name="colorOnPrimaryVariant">@color/black</item>
 
         <!-- A color that passes accessibility guidelines for text/iconography when drawn on top of the secondary color. -->
         <item name="colorOnSecondary">@color/white</item>
@@ -53,7 +59,7 @@ concrete values for these named resources."
         <item name="colorPrimary">@color/blue_grey_200</item>
 
         <!-- A darker variant of the primary color, used for the status bar (on Android 5.0+) and contextual app bars. -->
-        <item name="colorPrimaryDark">@color/blue_grey_500</item>
+        <item name="colorPrimaryDark">@color/blue_grey_400</item>
 
         <!-- A tonal variation of the primary color. -->
         <item name="colorPrimaryVariant">@color/blue_grey_100</item>
@@ -85,5 +91,9 @@ concrete values for these named resources."
         <item name="buttonBarNeutralButtonStyle">@style/Style.Soundboard.Button.TextButton</item>
         <item name="buttonBarPositiveButtonStyle">@style/Style.Soundboard.Button.TextButton</item>
         <item name="materialAlertDialogTitleTextStyle">@style/Style.Soundboard.Title.Text</item>
+    </style>
+
+    <style name="Theme.Soundboard.MaterialAlertDialog.EqualButtons">
+        <item name="buttonBarNegativeButtonStyle">@style/Style.Soundboard.Button.TextButton</item>
     </style>
 </resources>

@@ -24,7 +24,7 @@ open class FontAwesomeDrawable(
         TEXT(android.R.attr.text),
         TEXT_COLOR(android.R.attr.textColor),
         TEXT_APPEARANCE(android.R.attr.textAppearance),
-        TYPEFACE(R.styleable.FontAwesomeDrawable_fa_typeface)
+        TYPEFACE(R.attr.fontAwesomeTypeface)
     }
 
     /** Some overrideable defaults */

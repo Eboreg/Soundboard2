@@ -14,7 +14,7 @@ class CategoryAddViewModel @Inject constructor(
     private val stateRepository: StateRepository
 ) : BaseCategoryEditViewModel(categoryRepository), LoggingObject {
     fun initialize() {
-        isSaveEnabledInternal.value = false
+        isReadyInternal.value = false
         name.value = ""
         sortOrderAscending.value = true
         sortOrderDescending.value = false
@@ -22,7 +22,7 @@ class CategoryAddViewModel @Inject constructor(
 
         viewModelScope.launch {
             setRandomBackgroundColorInternal()
-            isSaveEnabledInternal.value = true
+            isReadyInternal.value = true
         }
     }
 

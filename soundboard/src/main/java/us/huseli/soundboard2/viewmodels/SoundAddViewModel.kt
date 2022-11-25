@@ -59,7 +59,6 @@ class SoundAddViewModel @Inject constructor(
 
         viewModelScope.launch {
             categoriesInternal.value = categoryRepository.categories.stateIn(viewModelScope).value
-            isSaveEnabledInternal.value = true
         }
     }
 
@@ -67,7 +66,7 @@ class SoundAddViewModel @Inject constructor(
         val checksums = soundFiles.map { it.checksum }
         val context = getApplication<Application>().applicationContext
 
-        isSaveEnabledInternal.value = false
+        isReadyInternal.value = false
         soundCountInternal.value = soundFiles.size
         soundFilesInternal.value = soundFiles
         name.value =
@@ -77,7 +76,7 @@ class SoundAddViewModel @Inject constructor(
         viewModelScope.launch {
             duplicatesInternal.value =
                 soundRepository.allSounds.stateIn(viewModelScope).value.filter { it.checksum in checksums }
-            isSaveEnabledInternal.value = true
+            isReadyInternal.value = true
         }
     }
 

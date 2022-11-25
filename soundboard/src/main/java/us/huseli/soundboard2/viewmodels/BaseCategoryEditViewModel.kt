@@ -14,7 +14,7 @@ import us.huseli.soundboard2.helpers.SoundSorting
 import us.huseli.soundboard2.helpers.ValidationError
 
 abstract class BaseCategoryEditViewModel(protected val categoryRepository: CategoryRepository) : ViewModel() {
-    protected val isSaveEnabledInternal = MutableStateFlow(false)
+    protected val isReadyInternal = MutableStateFlow(false)
     protected val soundSortingInternal: SoundSorting
         get() = SoundSorting(
             SoundSorting.Parameter.values()[sortParameterPosition.value],
@@ -28,7 +28,7 @@ abstract class BaseCategoryEditViewModel(protected val categoryRepository: Categ
 
     @ColorInt
     val backgroundColor = MutableStateFlow(Color.TRANSPARENT)
-    val isSaveEnabled: LiveData<Boolean> = isSaveEnabledInternal.asLiveData()
+    val isReady: LiveData<Boolean> = isReadyInternal.asLiveData()
 
     protected suspend fun setRandomBackgroundColorInternal() {
         backgroundColor.value = categoryRepository.getRandomColor(backgroundColor.value)

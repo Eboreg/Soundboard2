@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- A style: -->
     <style name="FontAwesomeTextView" parent="Widget.AppCompat.TextView">
         <item name="android:autoSizeMaxTextSize">1000sp</item>
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:textAlignment">center</item>
         <item name="android:textColor">@android:color/primary_text_dark</item>
+    </style>
+    <!-- A theme: -->
+    <style name="FontAwesomeTheme" parent="@android:style/Theme">
+        <item name="fontAwesomeTextViewStyle">@style/FontAwesomeTextView</item>
     </style>
 </resources>

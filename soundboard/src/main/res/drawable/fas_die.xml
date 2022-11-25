@@ -1,0 +1,2 @@
+<us.huseli.fontawesome.FontAwesomeDrawable xmlns:android="http://schemas.android.com/apk/res/android"
+    android:text="@string/fas_dice_four" />
