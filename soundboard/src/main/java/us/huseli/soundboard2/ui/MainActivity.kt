@@ -3,7 +3,7 @@ package us.huseli.soundboard2.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.drawable.LevelListDrawable
+import android.graphics.drawable.LayerDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -35,7 +35,6 @@ import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.MediaPlayerTests
-import us.huseli.soundboard2.ui.drawables.RepressModeIconDrawable
 import us.huseli.soundboard2.ui.fragments.*
 import us.huseli.soundboard2.viewmodels.*
 import javax.inject.Inject
@@ -199,7 +198,8 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.repressMode.observe(this) {
             // Change to the appropriate icon when repress mode changes:
-            (menu.findItem(R.id.actionRepressMode).icon as LevelListDrawable).level = RepressMode.values().indexOf(it)
+            (menu.findItem(R.id.actionRepressMode).icon as LayerDrawable)
+                .findDrawableByLayerId(R.id.repress_mode_icon).level = RepressMode.values().indexOf(it)
             when (it) {
                 RepressMode.STOP -> menu.findItem(R.id.actionRepressModeStop).isChecked = true
                 RepressMode.RESTART -> menu.findItem(R.id.actionRepressModeRestart).isChecked = true
@@ -219,12 +219,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
             menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_up_caret, theme)
         return super.onMenuOpened(featureId, menu)
-    }
-
-    override fun onOptionsMenuClosed(menu: Menu?) {
-        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_down_caret, theme)
-        super.onOptionsMenuClosed(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -263,7 +257,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     override fun onPanelClosed(featureId: Int, menu: Menu) {
         /** Flip caret icon when repress mode menu is closed. */
         if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.DOWN)
+            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_down_caret, theme)
         super.onPanelClosed(featureId, menu)
     }
 
@@ -365,12 +359,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         item.setOnActionExpandListener(object : MenuItem.OnActionExpandListener {
             override fun onMenuItemActionExpand(item: MenuItem): Boolean {
                 view.isIconified = false
+                binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionRepressMode)?.isVisible = false
                 return true
             }
 
             override fun onMenuItemActionCollapse(item: MenuItem): Boolean {
                 view.setQuery("", true)
                 view.clearFocus()
+                binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionRepressMode)?.isVisible = true
                 return true
             }
         })

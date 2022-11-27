@@ -62,6 +62,9 @@
     <string name="zoom_out">Zoom out</string>
     <string name="edit_sound">Edit sound</string>
     <string name="random">Random</string>
+    <string name="collapse_expand">Collapse/expand</string>
+    <string name="move_down">Move down</string>
+    <string name="move_up">Move up</string>
     <plurals name="deleted_orphan_files">
         <item quantity="one">Deleted one orphan file from internal storage.</item>
         <item quantity="other">Deleted %1$d orphan files from internal storage.</item>

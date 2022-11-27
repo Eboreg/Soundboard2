@@ -10,6 +10,7 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        tools:layout_width="match_parent"
         android:layout_width="0dp"
         android:layout_height="wrap_content">
 
@@ -34,7 +35,6 @@
             android:minHeight="48dp"
             android:singleLine="true"
             android:text="@={viewModel.name}"
-            android:textColor="@android:color/primary_text_dark"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/soundNameLabel"
@@ -60,7 +60,6 @@
 
             <SeekBar
                 android:id="@+id/volume"
-                style="@style/Widget.AppCompat.SeekBar"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
                 android:layout_marginTop="@dimen/margin_normal"
@@ -105,18 +104,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/category"
+            android:layout_marginBottom="@dimen/margin_small"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/volumeSection" />
 
-        <Spinner
-            android:id="@+id/category"
+        <androidx.cardview.widget.CardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:minHeight="48dp"
-            android:selectedItemPosition="@={viewModel.categoryPosition}"
+            app:cardBackgroundColor="?attr/colorPrimary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/categoryLabel"
-            tools:ignore="DuplicateSpeakableTextCheck" />
+            app:layout_constraintTop_toBottomOf="@+id/categoryLabel">
+            <Spinner
+                android:id="@+id/category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:selectedItemPosition="@={viewModel.categoryPosition}"
+                tools:ignore="DuplicateSpeakableTextCheck" />
+        </androidx.cardview.widget.CardView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

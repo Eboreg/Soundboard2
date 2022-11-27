@@ -2,9 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/Style.Soundboard.Toolbar"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    style="@style/Toolbar">
 
     <ImageView
         android:id="@+id/actionbarLogo"
@@ -27,7 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_large"
         android:text="@string/settings"
-        style="@style/Style.Soundboard.TextView.H2"
+        style="@style/TextAppearance.H2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/actionbarLogo"

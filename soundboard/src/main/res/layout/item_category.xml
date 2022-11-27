@@ -18,32 +18,29 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/categoryHeader"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
+            android:layout_height="48dp"
             android:layout_marginBottom="@dimen/margin_small"
             android:orientation="horizontal"
-            android:padding="@dimen/margin_normal"
             app:backgroundColor="@{viewModel.backgroundColor}"
             tools:background="@color/purple_500">
 
-            <ImageView
+            <ImageButton
                 android:id="@+id/categoryCollapseButton"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:layout_margin="@dimen/margin_normal"
                 android:rotation="@{viewModel.collapseIconRotation}"
                 android:src="@drawable/icon_caret_down"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="1"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                android:contentDescription="@string/collapse_expand" />
 
             <TextView
                 android:id="@+id/categoryName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/margin_large"
-                android:layout_marginEnd="@dimen/margin_normal"
                 android:paddingStart="0dp"
                 android:paddingEnd="@dimen/margin_large"
                 android:text="@{viewModel.name}"
@@ -63,11 +60,10 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/categoryMoveDown"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_margin="@dimen/margin_normal"
                     android:src="@drawable/icon_chevron_down"
                     app:drawableColor="@{viewModel.textColor}"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -75,13 +71,13 @@
                     app:layout_constraintEnd_toStartOf="@+id/categoryMoveUp"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:visible="@{viewModel.isMoveDownPossible}" />
+                    app:visible="@{viewModel.isMoveDownPossible}"
+                    android:contentDescription="@string/move_down" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/categoryMoveUp"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_margin="@dimen/margin_normal"
                     android:src="@drawable/icon_chevron_up"
                     app:drawableColor="@{viewModel.textColor}"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -89,33 +85,34 @@
                     app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
                     app:layout_constraintStart_toEndOf="@+id/categoryMoveDown"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:visible="@{viewModel.isMoveUpPossible}" />
+                    app:visible="@{viewModel.isMoveUpPossible}"
+                    android:contentDescription="@string/move_up" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/categoryEditButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_margin="@dimen/margin_normal"
                     android:src="@drawable/icon_pen_to_square"
                     app:drawableColor="@{viewModel.textColor}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintDimensionRatio="1"
                     app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
                     app:layout_constraintStart_toEndOf="@+id/categoryMoveUp"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:contentDescription="@string/edit_category" />
 
-                <ImageView
+                <ImageButton
                     android:id="@+id/categoryDeleteButton"
                     android:layout_width="0dp"
                     android:layout_height="0dp"
-                    android:layout_margin="@dimen/margin_normal"
                     android:src="@drawable/icon_trash"
                     app:drawableColor="@{viewModel.textColor}"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintDimensionRatio="1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:contentDescription="@string/delete_category" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 

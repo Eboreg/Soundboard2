@@ -2,9 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/Style.Soundboard.Toolbar"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    style="@style/Toolbar">
 
     <ImageView
         android:id="@+id/actionbarLogo"
@@ -22,14 +20,15 @@
         app:srcCompat="@mipmap/ic_launcher_round"
         tools:ignore="ImageContrastCheck" />
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/actionbarToolbar"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:animateLayoutChanges="false"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:buttonGravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/actionbarLogo"
         app:layout_constraintTop_toTopOf="parent"
-        tools:menu="@menu/appbar_menu" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/appbar_menu" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

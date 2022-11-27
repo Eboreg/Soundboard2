@@ -14,14 +14,14 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Soundboard"
+        android:theme="@style/SoundboardTheme"
         tools:targetApi="32">
 
         <profileable android:shell="true" />
 
         <activity
             android:name=".ui.MainActivity"
-            android:theme="@style/Theme.Soundboard.NoActionBar"
+            android:theme="@style/SoundboardTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,12 +31,8 @@
 
         <activity
             android:name=".ui.SettingsActivity"
-            android:theme="@style/Theme.Soundboard.NoActionBar"
+            android:theme="@style/SoundboardTheme"
             android:parentActivityName=".ui.MainActivity" />
-
-        <meta-data
-            android:name="preloaded_fonts"
-            android:resource="@array/preloaded_fonts" />
 
     </application>
 </manifest>

@@ -21,7 +21,6 @@
             android:layout_height="0dp"
             android:alpha="0"
             android:elevation="0dp"
-            app:cardBackgroundColor="?attr/colorOnSurfaceVariant"
             app:cardCornerRadius="@dimen/sound_card_corner_radius"
             app:layout_constraintDimensionRatio="4:3"
             app:layout_constraintEnd_toEndOf="parent"
@@ -80,50 +79,54 @@
 
             <ImageView
                 android:id="@+id/soundLoadingIcon"
-                style="@style/Style.Soundboard.SoundCardIcon"
+                style="@style/SoundCardIcon"
                 android:src="@drawable/hourglass_half"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="ContentDescription" />
 
             <ImageView
                 android:id="@+id/soundPlayingIcon"
-                style="@style/Style.Soundboard.SoundCardIcon"
+                style="@style/SoundCardIcon"
                 android:src="@drawable/circle_play"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:visible="@{viewModel.isPlayerStarted}" />
+                app:visible="@{viewModel.isPlayerStarted}"
+                tools:ignore="ContentDescription" />
 
             <ImageView
                 android:id="@+id/soundPausedIcon"
-                style="@style/Style.Soundboard.SoundCardIcon"
+                style="@style/SoundCardIcon"
                 android:src="@drawable/circle_pause"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:visible="@{viewModel.isPlayerPaused}" />
+                app:visible="@{viewModel.isPlayerPaused}"
+                tools:ignore="ContentDescription" />
 
             <ImageView
                 android:id="@+id/soundErrorIcon"
-                style="@style/Style.Soundboard.SoundCardIcon"
+                style="@style/SoundCardIcon"
                 android:src="@drawable/skull_crossbones"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:visible="@{viewModel.isPlayerError}" />
+                app:visible="@{viewModel.isPlayerError}"
+                tools:ignore="ContentDescription" />
 
             <ImageView
                 android:id="@+id/soundSelectedIcon"
-                style="@style/Style.Soundboard.SoundCardIcon"
+                style="@style/SoundCardIcon"
                 android:background="#A0B2EBF2"
                 android:src="@drawable/check"
                 app:drawableColor="@{viewModel.textColor}"
@@ -131,7 +134,8 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:visible="@{viewModel.isSelected}" />
+                app:visible="@{viewModel.isSelected}"
+                tools:ignore="ContentDescription" />
 
             <ProgressBar
                 android:id="@+id/soundProgressBar"

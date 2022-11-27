@@ -91,7 +91,7 @@ dependencies {
     // Gson
     implementation 'com.google.code.gson:gson:2.10'
 
-    implementation project(':fontawesome')
+    // implementation project(':fontawesome')
 
     testImplementation 'junit:junit:4.13.2'
 

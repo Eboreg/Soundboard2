@@ -1,12 +1,6 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
-    <item
-        android:id="@+id/actionSearch"
-        android:icon="@drawable/icon_magnifying_glass"
-        app:showAsAction="ifRoom|collapseActionView"
-        android:title="@string/search"
-        app:actionViewClass="android.widget.SearchView" />
 
     <item
         android:id="@+id/actionRepressMode"
@@ -41,10 +35,18 @@
     </item>
 
     <item
+        android:id="@+id/actionSearch"
+        android:icon="@drawable/icon_magnifying_glass"
+        app:showAsAction="always|collapseActionView"
+        android:title="@string/search"
+        app:actionViewClass="android.widget.SearchView"
+        tools:ignore="AlwaysShowAction" />
+
+    <item
+        android:id="@+id/actionOverflowMenu"
         app:showAsAction="always"
         android:title=""
         android:icon="@drawable/icon_ellipsis_vertical">
-
         <menu>
             <group>
                 <item

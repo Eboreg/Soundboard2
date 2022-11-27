@@ -49,11 +49,12 @@
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:tint="?attr/menuIconColor" />
+                        app:tint="@color/menu_icon"
+                        tools:ignore="ContentDescription" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/isAnimationEnabled"
-                        style="@style/Style.Soundboard.TextView.H2"
+                        style="@style/TextAppearance.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:checked="@{viewModel.isAnimationEnabled}"
@@ -85,11 +86,12 @@
                         app:layout_constraintBottom_toBottomOf="@+id/isWatchFolderEnabled"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:tint="?attr/menuIconColor" />
+                        app:tint="@color/menu_icon"
+                        tools:ignore="ContentDescription" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/isWatchFolderEnabled"
-                        style="@style/Style.Soundboard.TextView.H2"
+                        style="@style/TextAppearance.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:checked="@{viewModel.isWatchFolderEnabled}"
@@ -136,7 +138,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/watchFolderSelectButton"
-                            style="@style/Style.Soundboard.Button.TextButton"
+                            style="@style/TextButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
@@ -146,7 +148,7 @@
 
                         <TextView
                             android:id="@+id/watchFolderCategoryLabel"
-                            style="@style/Style.Soundboard.TextView.H3"
+                            style="@style/TextAppearance.H3"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
@@ -165,17 +167,22 @@
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryLabel" />
 
-                        <Spinner
-                            android:id="@+id/watchFolderCategory"
+                        <androidx.cardview.widget.CardView
+                            android:id="@+id/watchFolderCategoryCard"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
-                            android:minHeight="48dp"
-                            android:selectedItemPosition="@{viewModel.watchFolderCategoryPosition}"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryText"
-                            tools:ignore="DuplicateSpeakableTextCheck" />
+                            app:cardBackgroundColor="?attr/colorPrimary">
+                            <Spinner
+                                android:id="@+id/watchFolderCategory"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:selectedItemPosition="@{viewModel.watchFolderCategoryPosition}"
+                                tools:ignore="DuplicateSpeakableTextCheck" />
+                        </androidx.cardview.widget.CardView>
 
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/watchFolderTrashMissing"
@@ -185,7 +192,7 @@
                             android:text="@string/auto_delete_missing"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toBottomOf="@+id/watchFolderCategory"
+                            app:layout_constraintTop_toBottomOf="@+id/watchFolderCategoryCard"
                             app:switchMinWidth="60dp" />
 
                         <TextView
@@ -219,7 +226,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/cancelButton"
-            style="@style/Style.Soundboard.Button.TextButton.Negative"
+            style="@style/TextButton.Negative"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/margin_normal"
@@ -230,7 +237,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/saveButton"
-            style="@style/Style.Soundboard.Button.TextButton"
+            style="@style/TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/margin_normal"
