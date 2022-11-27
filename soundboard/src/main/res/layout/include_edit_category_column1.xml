@@ -94,7 +94,7 @@
                 android:backgroundTint="?attr/colorPrimary"
                 android:elevation="2dp"
                 android:paddingStart="6dp"
-                android:paddingEnd="0dp"
+                android:paddingEnd="16dp"
                 app:icon="@drawable/dice"
                 app:iconGravity="textEnd"
                 app:layout_constraintBottom_toBottomOf="parent"

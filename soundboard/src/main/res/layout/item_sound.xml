@@ -46,7 +46,6 @@
             app:layout_constraintTop_toTopOf="@+id/soundCardBorder"
             tools:cardBackgroundColor="@color/purple_500">
 
-
         </androidx.cardview.widget.CardView>
 
         <androidx.constraintlayout.widget.ConstraintLayout

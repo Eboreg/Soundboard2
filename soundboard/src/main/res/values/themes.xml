@@ -33,17 +33,25 @@ concrete values for these named resources."
         <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
+    <style name="MaterialAlertDialogTitleText" parent="MaterialAlertDialog.MaterialComponents.Title.Text">
+        <item name="android:textSize">@dimen/text_h2</item>
+    </style>
+
     <style name="MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="android:windowMinWidthMajor">@dimen/dialog_min_width</item>
-        <item name="android:windowMinWidthMinor">@dimen/dialog_min_width</item>
+        <item name="android:fontFamily">@font/lato</item>
         <item name="buttonBarNegativeButtonStyle">@style/TextButton.Negative</item>
         <item name="buttonBarNeutralButtonStyle">@style/TextButton</item>
         <item name="buttonBarPositiveButtonStyle">@style/TextButton</item>
-        <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.H2</item>
+        <item name="materialAlertDialogTitleTextStyle">@style/MaterialAlertDialogTitleText</item>
     </style>
 
     <style name="MaterialAlertDialog.EqualButtons">
         <item name="buttonBarNegativeButtonStyle">@style/TextButton</item>
+    </style>
+
+    <style name="AlertDialog">
+        <item name="android:windowMinWidthMajor">@dimen/dialog_min_width</item>
+        <item name="android:windowMinWidthMinor">@dimen/dialog_min_width</item>
     </style>
 
     <style name="Toolbar">
@@ -53,7 +61,6 @@ concrete values for these named resources."
         <item name="android:maxButtonHeight">20dp</item>
     </style>
 
-    <!-- <style name="ActionButton" parent="Widget.AppCompat.ActionButton"> -->
     <style name="ActionButton" parent="Widget.AppCompat.ActionButton">
         <item name="android:minWidth">42dp</item>
         <item name="contentInsetEnd">24dp</item>
@@ -103,6 +110,10 @@ concrete values for these named resources."
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
     </style>
 
+    <style name="TextView" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/lato</item>
+    </style>
+
     <!--
     android:buttonCornerRadius - used for ImageButton and probably Button too, but not MaterialButton
     android:navigationBarColor - the bottom one
@@ -111,10 +122,13 @@ concrete values for these named resources."
     <style name="SoundboardThemeBase" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="actionModeStyle">@style/Toolbar.ActionBar</item>
         <item name="actionOverflowMenuStyle">@style/ActionOverflowMenu</item>
+        <item name="alertDialogStyle">@style/AlertDialog</item>
+        <!--<item name="alertDialogTheme">@style/MaterialAlertDialog</item>-->
         <item name="android:buttonCornerRadius" tools:targetApi="p">@dimen/button_corner_radius</item>
         <item name="android:colorBackground">?attr/colorSurface</item>
         <item name="android:colorForeground">?attr/colorOnSurface</item>
         <item name="android:dropDownSpinnerStyle">@style/Spinner</item>
+        <item name="android:fontFamily">@font/lato</item>
         <item name="android:navigationBarColor">?android:attr/colorBackground</item>
         <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
         <item name="android:spinnerStyle">@style/Spinner</item>
@@ -122,6 +136,7 @@ concrete values for these named resources."
         <item name="android:textAppearance">@style/TextAppearance</item>
         <item name="android:textColor">@color/primary_text</item>
         <item name="android:textSize">@dimen/text_normal</item>
+        <item name="android:textViewStyle">@style/TextView</item>
         <item name="cardCornerRadius">@dimen/button_corner_radius</item>
         <item name="imageButtonStyle">@style/ImageButton</item>
         <item name="materialAlertDialogTheme">@style/MaterialAlertDialog</item>
@@ -151,7 +166,6 @@ concrete values for these named resources."
         <item name="colorOnSecondary">@color/white</item>
         <item name="colorPrimaryDark">@color/blue_grey_400</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
-
 
         <item name="colorBackgroundFloating">@color/white</item>
         <item name="colorControlNormal">@color/grey_800</item>
