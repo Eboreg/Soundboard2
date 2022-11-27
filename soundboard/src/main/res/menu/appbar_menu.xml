@@ -3,38 +3,38 @@
 
     <item
         android:id="@+id/actionSearch"
-        android:icon="@drawable/fas_magnifying_glass"
+        android:icon="@drawable/icon_magnifying_glass"
         app:showAsAction="ifRoom|collapseActionView"
         android:title="@string/search"
         app:actionViewClass="android.widget.SearchView" />
 
     <item
         android:id="@+id/actionRepressMode"
-        app:showAsAction="always"
-        android:icon="@drawable/repress_mode_icon"
-        android:title="@string/repress_mode">
+        android:icon="@drawable/repress_mode_icon_with_down_caret"
+        android:title="@string/repress_mode"
+        app:showAsAction="always">
 
         <menu>
             <group android:checkableBehavior="single">
                 <item
-                    android:enabled="false"
                     android:checkable="false"
+                    android:enabled="false"
                     android:title="@string/repress_mode" />
                 <item
                     android:id="@+id/actionRepressModeStop"
-                    android:icon="@drawable/fas_stop"
+                    android:icon="@drawable/icon_stop"
                     android:title="@string/stop" />
                 <item
                     android:id="@+id/actionRepressModeRestart"
-                    android:icon="@drawable/fas_play"
+                    android:icon="@drawable/icon_play"
                     android:title="@string/restart" />
                 <item
                     android:id="@+id/actionRepressModeOverlap"
-                    android:icon="@drawable/fas_clone"
+                    android:icon="@drawable/icon_clone"
                     android:title="@string/overlap" />
                 <item
                     android:id="@+id/actionRepressModePause"
-                    android:icon="@drawable/fas_pause"
+                    android:icon="@drawable/icon_pause"
                     android:title="@string/pause" />
             </group>
         </menu>
@@ -43,50 +43,50 @@
     <item
         app:showAsAction="always"
         android:title=""
-        android:icon="@drawable/fas_ellipsis_vertical">
+        android:icon="@drawable/icon_ellipsis_vertical">
 
         <menu>
             <group>
                 <item
-                    android:icon="@drawable/fas_plus"
+                    android:icon="@drawable/icon_plus"
                     android:id="@+id/actionAddSound"
                     android:title="@string/add_sound" />
                 <item
                     android:id="@+id/actionAddCategory"
-                    android:icon="@drawable/fas_folder_plus"
+                    android:icon="@drawable/icon_folder_plus"
                     android:title="@string/add_category" />
             </group>
 
             <group>
                 <item
                     android:id="@+id/actionZoomIn"
-                    android:icon="@drawable/fas_magnifying_glass_plus"
+                    android:icon="@drawable/icon_magnifying_glass_plus"
                     android:title="@string/zoom_in" />
                 <item
                     android:id="@+id/actionZoomOut"
-                    android:icon="@drawable/fas_magnifying_glass_minus"
+                    android:icon="@drawable/icon_magnifying_glass_minus"
                     android:title="@string/zoom_out" />
             </group>
 
             <group>
                 <item
                     android:id="@+id/actionUndo"
-                    android:icon="@drawable/fas_rotate_left"
+                    android:icon="@drawable/icon_rotate_left"
                     android:title="@string/undo" />
                 <item
                     android:id="@+id/actionRedo"
-                    android:icon="@drawable/fas_rotate_right"
+                    android:icon="@drawable/icon_rotate_right"
                     android:title="@string/redo" />
             </group>
 
             <item
                 android:id="@+id/actionDeleteOrphans"
-                android:icon="@drawable/fas_baby"
+                android:icon="@drawable/icon_baby"
                 android:title="@string/delete_orphans" />
 
             <item
                 android:id="@+id/actionSettings"
-                android:icon="@drawable/fas_gear"
+                android:icon="@drawable/icon_gear"
                 android:title="@string/settings" />
         </menu>
     </item>

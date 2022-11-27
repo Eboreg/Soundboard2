@@ -62,9 +62,7 @@ import java.io.IOException
 
 @Suppress("BooleanMethodIsAlwaysInverted")
 class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
-    LoggingObject,
-    MediaPlayer.OnCompletionListener,
-    MediaPlayer.OnErrorListener {
+    LoggingObject, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     enum class State { IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR, END }
 
     fun interface OnStateChangeListener {

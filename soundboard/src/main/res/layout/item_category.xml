@@ -25,20 +25,16 @@
             app:backgroundColor="@{viewModel.backgroundColor}"
             tools:background="@color/purple_500">
 
-            <us.huseli.fontawesome.FontAwesomeButton
+            <ImageView
                 android:id="@+id/categoryCollapseButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:paddingStart="@dimen/margin_large"
-                android:paddingTop="@dimen/margin_normal"
-                android:paddingEnd="@dimen/margin_large"
-                android:paddingBottom="@dimen/margin_normal"
+                android:layout_margin="@dimen/margin_normal"
                 android:rotation="@{viewModel.collapseIconRotation}"
-                android:text="@string/fas_caret_down"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
+                android:src="@drawable/icon_caret_down"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryName"
+                app:layout_constraintDimensionRatio="1"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -46,79 +42,82 @@
                 android:id="@+id/categoryName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/margin_large"
+                android:layout_marginEnd="@dimen/margin_normal"
                 android:paddingStart="0dp"
                 android:paddingEnd="@dimen/margin_large"
                 android:text="@{viewModel.name}"
                 android:textColor="@{viewModel.textColor}"
                 android:textSize="@dimen/category_name_text_size"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryMoveDown"
+                app:layout_constraintEnd_toStartOf="@+id/categoryRightButtons"
                 app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="Category name" />
 
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryMoveDown"
-                visible="@{viewModel.isMoveDownPossible}"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/categoryRightButtons"
                 android:layout_width="wrap_content"
                 android:layout_height="0dp"
-                android:paddingStart="@dimen/margin_large"
-                android:paddingTop="@dimen/margin_normal"
-                android:paddingEnd="@dimen/margin_large"
-                android:paddingBottom="@dimen/margin_normal"
-                android:text="@string/fas_chevron_down"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/categoryName"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryMoveUp"
-                visible="@{viewModel.isMoveUpPossible}"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:paddingStart="@dimen/margin_large"
-                android:paddingTop="@dimen/margin_normal"
-                android:paddingEnd="@dimen/margin_large"
-                android:paddingBottom="@dimen/margin_normal"
-                android:text="@string/fas_chevron_up"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/categoryMoveDown"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryEditButton"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:paddingStart="@dimen/margin_large"
-                android:paddingTop="@dimen/margin_normal"
-                android:paddingEnd="@dimen/margin_large"
-                android:paddingBottom="@dimen/margin_normal"
-                android:text="@string/fas_pen_to_square"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/categoryMoveUp"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <us.huseli.fontawesome.FontAwesomeButton
-                android:id="@+id/categoryDeleteButton"
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:paddingStart="@dimen/margin_large"
-                android:paddingTop="@dimen/margin_normal"
-                android:paddingEnd="@dimen/margin_large"
-                android:paddingBottom="@dimen/margin_normal"
-                android:text="@string/fas_trash"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/categoryMoveDown"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_margin="@dimen/margin_normal"
+                    android:src="@drawable/icon_chevron_down"
+                    app:drawableColor="@{viewModel.textColor}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1"
+                    app:layout_constraintEnd_toStartOf="@+id/categoryMoveUp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:visible="@{viewModel.isMoveDownPossible}" />
+
+                <ImageView
+                    android:id="@+id/categoryMoveUp"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_margin="@dimen/margin_normal"
+                    android:src="@drawable/icon_chevron_up"
+                    app:drawableColor="@{viewModel.textColor}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1"
+                    app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
+                    app:layout_constraintStart_toEndOf="@+id/categoryMoveDown"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:visible="@{viewModel.isMoveUpPossible}" />
+
+                <ImageView
+                    android:id="@+id/categoryEditButton"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_margin="@dimen/margin_normal"
+                    android:src="@drawable/icon_pen_to_square"
+                    app:drawableColor="@{viewModel.textColor}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1"
+                    app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
+                    app:layout_constraintStart_toEndOf="@+id/categoryMoveUp"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageView
+                    android:id="@+id/categoryDeleteButton"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_margin="@dimen/margin_normal"
+                    android:src="@drawable/icon_trash"
+                    app:drawableColor="@{viewModel.textColor}"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintDimensionRatio="1"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

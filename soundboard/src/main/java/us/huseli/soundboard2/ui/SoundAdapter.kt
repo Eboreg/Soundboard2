@@ -66,6 +66,7 @@ class SoundAdapter(private val activity: MainActivity) :
                     activity.defaultViewModelCreationExtras
                 )["sound-$soundId", SoundViewModel::class.java]
 
+                localViewModel.setSoundId(soundId)
                 viewModel = localViewModel
                 binding.viewModel = localViewModel
 

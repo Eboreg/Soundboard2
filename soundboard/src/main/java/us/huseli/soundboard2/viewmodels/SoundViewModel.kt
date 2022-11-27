@@ -36,6 +36,7 @@ class SoundViewModel @Inject constructor(
     }
     // private val soundInternal: Flow<SoundExtended> = repository.get(soundIdInternal).filterNotNull()
     private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
+    // private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
     private val decimalFormatInternal = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
         symbols.decimalSeparator = '.'
@@ -99,7 +100,7 @@ class SoundViewModel @Inject constructor(
         repository.selectedSoundIds.map { it.contains(soundIdInternal.value) }.asLiveData()
 
     fun setSoundId(soundId: Int) {
-        soundIdInternal.value = soundId
+        if (soundId != soundIdInternal.value) soundIdInternal.value = soundId
     }
 
     fun destroyParallelPlayers() = playerInternal.destroyParallelPlayers()

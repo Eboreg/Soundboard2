@@ -1,5 +1,6 @@
 <resources>
     <style name="Theme.Soundboard" parent="Base.Theme.Soundboard">
+        <item name="actionMenuTextColor">@color/grey_400</item>
         <item name="colorAccent">@color/teal_300</item>
         <item name="colorBackgroundFloating">@color/grey_800</item>
         <item name="colorControlNormal">@color/grey_500</item>

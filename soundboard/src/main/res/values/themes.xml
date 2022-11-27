@@ -10,6 +10,7 @@ concrete values for these named resources."
 <resources>
 
     <style name="Base.Theme.Soundboard" parent="Theme.MaterialComponents.DayNight">
+        <item name="actionDropDownStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="actionBarSize">@dimen/actionbar_height</item>
         <item name="actionBarStyle">@style/Style.Soundboard.Toolbar</item>
         <item name="actionModeStyle">@style/Style.Soundboard.Toolbar</item>
@@ -29,6 +30,7 @@ concrete values for these named resources."
     </style>
 
     <style name="Theme.Soundboard" parent="Base.Theme.Soundboard">
+        <item name="actionMenuTextColor">@color/grey_800</item>
         <item name="android:textColorHint">@color/secondary_text</item>
         <item name="android:textColorTertiary">@color/secondary_text</item>
         <item name="android:windowBackground">?attr/colorSurface</item>

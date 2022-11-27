@@ -12,7 +12,7 @@ Styles are a collection of view attributes; specific to a single type of widget"
     <style name="Style" />
 
     <style name="Style.Soundboard">
-        <!--<item name="android:colorBackground">?attr/colorSurface</item>-->
+        <item name="android:colorBackground">?attr/colorSurface</item>
     </style>
 
     <style name="Style.Soundboard.Button" parent="Widget.MaterialComponents.Button" />
@@ -28,8 +28,8 @@ Styles are a collection of view attributes; specific to a single type of widget"
     </style>
 
     <style name="Style.Soundboard.SoundCardIcon" parent="FontAwesomeTextView">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
         <item name="android:alpha">@dimen/sound_card_alpha</item>
         <item name="android:visibility">invisible</item>
         <item name="android:padding">@dimen/margin_normal</item>
@@ -69,6 +69,9 @@ Styles are a collection of view attributes; specific to a single type of widget"
     </style>
 
     <style name="Style.Soundboard.Toolbar" parent="Widget.MaterialComponents.ActionBar.Solid">
+        <item name="maxButtonHeight">20dp</item>
+        <item name="subtitleTextStyle">@style/TextAppearance.MaterialComponents.Subtitle1</item>
+        <item name="actionButtonStyle">@style/Widget.AppCompat.ActionButton</item>
         <item name="android:background">?attr/colorPrimary</item>
         <item name="android:elevation">0dp</item>
         <item name="android:minHeight">?attr/actionBarSize</item>
@@ -85,5 +88,6 @@ Styles are a collection of view attributes; specific to a single type of widget"
         <item name="android:overlapAnchor">false</item>
         <item name="overlapAnchor">false</item>
         <item name="android:popupBackground">?attr/colorPrimaryDark</item>
+        <item name="android:padding">@dimen/margin_large</item>
     </style>
 </resources>

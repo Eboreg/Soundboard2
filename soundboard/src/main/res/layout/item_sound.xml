@@ -78,49 +78,59 @@
                 tools:text="Sound name"
                 tools:textColor="@color/white" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <ImageView
                 android:id="@+id/soundLoadingIcon"
                 style="@style/Style.Soundboard.SoundCardIcon"
-                android:text="@string/fas_hourglass_half"
-                android:textColor="@{viewModel.textColor}"
+                android:src="@drawable/hourglass_half"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
-                app:layout_constraintStart_toStartOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <ImageView
                 android:id="@+id/soundPlayingIcon"
                 style="@style/Style.Soundboard.SoundCardIcon"
-                android:text="@string/fa_circle_play"
-                android:textColor="@{viewModel.textColor}"
+                android:src="@drawable/circle_play"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isPlayerStarted}" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <ImageView
                 android:id="@+id/soundPausedIcon"
                 style="@style/Style.Soundboard.SoundCardIcon"
-                android:text="@string/fa_circle_pause"
-                android:textColor="@{viewModel.textColor}"
+                android:src="@drawable/circle_pause"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isPlayerPaused}" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <ImageView
                 android:id="@+id/soundErrorIcon"
                 style="@style/Style.Soundboard.SoundCardIcon"
-                android:text="@string/fas_skull_crossbones"
-                android:textColor="@{viewModel.textColor}"
+                android:src="@drawable/skull_crossbones"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isPlayerError}" />
 
-            <us.huseli.fontawesome.FontAwesomeTextView
+            <ImageView
                 android:id="@+id/soundSelectedIcon"
                 style="@style/Style.Soundboard.SoundCardIcon"
                 android:background="#A0B2EBF2"
-                android:text="@string/fas_check"
-                android:textColor="@{viewModel.textColor}"
+                android:src="@drawable/check"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toTopOf="@+id/soundProgressBar"
+                app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isSelected}" />
 
             <ProgressBar

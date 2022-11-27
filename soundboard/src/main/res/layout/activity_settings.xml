@@ -41,17 +41,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <us.huseli.fontawesome.FontAwesomeTextView
+                    <ImageView
                         android:id="@+id/animationsIcon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:width="40sp"
-                        android:text="@string/fas_person_running"
-                        android:textColor="?attr/menuIconColor"
-                        android:textSize="@dimen/text_h2"
+                        android:layout_width="40sp"
+                        android:layout_height="@dimen/text_h1"
+                        android:src="@drawable/icon_person_running"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="?attr/menuIconColor" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/isAnimationEnabled"
@@ -79,17 +77,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <us.huseli.fontawesome.FontAwesomeTextView
+                    <ImageView
                         android:id="@+id/watchFolderIcon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:width="40sp"
-                        android:text="@string/fas_folder"
-                        android:textColor="?attr/menuIconColor"
-                        android:textSize="@dimen/text_h2"
+                        android:layout_width="40sp"
+                        android:layout_height="@dimen/text_h2"
+                        android:src="@drawable/icon_folder"
                         app:layout_constraintBottom_toBottomOf="@+id/isWatchFolderEnabled"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="?attr/menuIconColor" />
 
                     <androidx.appcompat.widget.SwitchCompat
                         android:id="@+id/isWatchFolderEnabled"

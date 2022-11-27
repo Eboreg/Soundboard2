@@ -2,16 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/selectAll"
-        android:icon="@drawable/fas_check_double"
+        android:icon="@drawable/icon_check_double"
         android:title="@string/select_all" />
 
     <item
         android:id="@+id/edit"
-        android:icon="@drawable/fas_pen_to_square"
+        android:icon="@drawable/icon_pen_to_square"
         android:title="@string/edit" />
 
     <item
         android:id="@+id/delete"
-        android:icon="@drawable/fas_trash"
+        android:icon="@drawable/icon_trash"
         android:title="@string/delete" />
 </menu>

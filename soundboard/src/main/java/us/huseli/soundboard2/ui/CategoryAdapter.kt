@@ -31,7 +31,7 @@ class CategoryAdapter(private val activity: MainActivity) : ListAdapter<Int, Cat
         init {
             binding.lifecycleOwner = activity
             binding.soundList.adapter = soundAdapter
-            binding.soundList.setItemViewCacheSize(20)
+            binding.soundList.layoutManager?.isItemPrefetchEnabled = true
         }
 
         internal fun bind(categoryId: Int) {
@@ -42,6 +42,7 @@ class CategoryAdapter(private val activity: MainActivity) : ListAdapter<Int, Cat
                     activity.defaultViewModelCreationExtras
                 )["category-$categoryId", CategoryViewModel::class.java]
 
+                localViewModel.setCategoryId(categoryId)
                 viewModel = localViewModel
 
                 binding.viewModel = localViewModel
@@ -49,7 +50,12 @@ class CategoryAdapter(private val activity: MainActivity) : ListAdapter<Int, Cat
                 binding.categoryMoveDown.setOnClickListener { localViewModel.moveDown() }
                 binding.categoryMoveUp.setOnClickListener { localViewModel.moveUp() }
 
-                localViewModel.soundIds.observe(activity) { soundAdapter.submitList(it) }
+                localViewModel.soundIds.observe(activity) {
+                    // Gotta cache 'em all:
+                    binding.soundList.setItemViewCacheSize(it.size)
+                    soundAdapter.submitList(it)
+                }
+
                 localViewModel.spanCount.observe(activity) {
                     (binding.soundList.layoutManager as? GridLayoutManager)?.spanCount = it
                 }

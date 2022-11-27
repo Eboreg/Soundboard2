@@ -3,6 +3,7 @@ package us.huseli.soundboard2.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.LevelListDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -15,6 +16,7 @@ import androidx.activity.viewModels
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
@@ -39,7 +41,7 @@ import us.huseli.soundboard2.viewmodels.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject, View.OnTouchListener {
+class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
@@ -156,12 +158,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.deleteOrphanSoundFiles()
 
-        binding.categoryList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                appViewModel.registerScrollEvent()
-            }
-        })
-
         setupEasterEggClickListener()
         if (BuildConfig.DEBUG) mptInit()
     }
@@ -203,7 +199,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.repressMode.observe(this) {
             // Change to the appropriate icon when repress mode changes:
-            (menu.findItem(R.id.actionRepressMode).icon as RepressModeIconDrawable).setRepressMode(it)
+            (menu.findItem(R.id.actionRepressMode).icon as LevelListDrawable).level = RepressMode.values().indexOf(it)
             when (it) {
                 RepressMode.STOP -> menu.findItem(R.id.actionRepressModeStop).isChecked = true
                 RepressMode.RESTART -> menu.findItem(R.id.actionRepressModeRestart).isChecked = true
@@ -221,8 +217,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
         /** Flip caret icon when repress mode menu is opened. */
         if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            (menu.item.icon as? RepressModeIconDrawable)?.setCaretType(RepressModeIconDrawable.CaretType.UP)
+            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_up_caret, theme)
         return super.onMenuOpened(featureId, menu)
+    }
+
+    override fun onOptionsMenuClosed(menu: Menu?) {
+        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
+            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_down_caret, theme)
+        super.onOptionsMenuClosed(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -270,19 +272,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         settingsRepository.initialize()
     }
 
-    override fun onTouch(view: View, event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_UP -> {
-                view.performClick()
-                return false
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (event.pointerCount == 1) return false
-            }
-        }
-        return scaleGestureDetector.onTouchEvent(event)
-    }
-
 
     /** PUBLIC METHODS *******************************************************/
 
@@ -326,14 +315,37 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             .firstOrNull { it.dialogId == dialogId && (extraCond == null || extraCond.invoke(it)) }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun initCategoryList() {
         val adapter = CategoryAdapter(this)
         binding.categoryList.adapter = adapter
         binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
+
         appViewModel.categoryIds.observe(this) {
+            binding.categoryList.setItemViewCacheSize(it.size)
             adapter.submitList(it)
             if (it.isEmpty()) appViewModel.createDefaultCategory()
         }
+
+        binding.categoryList.setOnTouchListener { view, event ->
+            /** Pinch to zoom */
+            when (event.actionMasked) {
+                MotionEvent.ACTION_UP -> {
+                    view.performClick()
+                    return@setOnTouchListener false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (event.pointerCount == 1) return@setOnTouchListener false
+                }
+            }
+            return@setOnTouchListener scaleGestureDetector.onTouchEvent(event)
+        }
+
+        binding.categoryList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                appViewModel.registerScrollEvent()
+            }
+        })
     }
 
     private fun initSearchAction(item: MenuItem, view: SearchView) {
