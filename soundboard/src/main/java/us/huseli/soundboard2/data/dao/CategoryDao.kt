@@ -64,7 +64,7 @@ interface CategoryDao {
     @Insert
     fun insert(categories: Collection<Category>)
 
-    @Query("SELECT * FROM Category")
+    @Query("SELECT * FROM Category ORDER BY position")
     suspend fun list(): List<Category>
 
     @Query("SELECT DISTINCT backgroundColor FROM Category")

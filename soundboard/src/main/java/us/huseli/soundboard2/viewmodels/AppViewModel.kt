@@ -9,6 +9,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -62,24 +63,24 @@ class AppViewModel @Inject constructor(
         setSnackbarText(context.getText(resId))
     }
 
-    fun createDefaultCategory() = viewModelScope.launch { categoryRepository.createDefault() }
+    fun createDefaultCategory() = viewModelScope.launch(Dispatchers.IO) { categoryRepository.createDefault() }
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
     fun setSoundFilterTerm(value: String) = settingsRepository.setSoundFilterTerm(value)
 
     fun zoomIn() = settingsRepository.zoomIn()
     fun zoomOut() = settingsRepository.zoomOut()
 
-    fun selectAllSounds() = viewModelScope.launch {
+    fun selectAllSounds() = viewModelScope.launch(Dispatchers.IO) {
         soundRepository.filteredSoundIdsOrdered.stateIn(this).value.forEach { soundRepository.select(it) }
     }
 
-    fun unselectAllSounds() = viewModelScope.launch {
+    fun unselectAllSounds() = viewModelScope.launch(Dispatchers.IO) {
         soundRepository.allSoundIds.stateIn(this).value.forEach { soundId ->
             soundRepository.unselect(soundId)
         }
     }
 
-    fun syncWatchFolder() = viewModelScope.launch {
+    fun syncWatchFolder() = viewModelScope.launch(Dispatchers.IO) {
         val treeUri = settingsRepository.watchFolderUri.value
         val context = getApplication<Application>().applicationContext
         var added = 0
@@ -140,15 +141,15 @@ class AppViewModel @Inject constructor(
         }
     }
 
-    fun undo() = viewModelScope.launch {
+    fun undo() = viewModelScope.launch(Dispatchers.IO) {
         if (stateRepository.undo()) setSnackbarText(R.string.undid)
     }
 
-    fun redo() = viewModelScope.launch {
+    fun redo() = viewModelScope.launch(Dispatchers.IO) {
         if (stateRepository.redo()) setSnackbarText(R.string.redid)
     }
 
-    fun deleteOrphanSoundObjects() = viewModelScope.launch {
+    fun deleteOrphanSoundObjects() = viewModelScope.launch(Dispatchers.IO) {
         /** Checks for Sound objects with missing files, deletes the objects. */
         var deleted = 0
         val sounds = soundRepository.allSounds.stateIn(this).value
@@ -170,7 +171,7 @@ class AppViewModel @Inject constructor(
         stateRepository.replaceCurrent()
     }
 
-    fun deleteOrphanSoundFiles() = viewModelScope.launch {
+    fun deleteOrphanSoundFiles() = viewModelScope.launch(Dispatchers.IO) {
         /** Checks for files with missing Sound objects (including any undo states), deletes the files. */
         val context = getApplication<Application>().applicationContext
         val directory = context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE)

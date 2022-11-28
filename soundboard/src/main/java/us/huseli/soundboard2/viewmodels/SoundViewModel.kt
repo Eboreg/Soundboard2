@@ -6,6 +6,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -28,25 +29,27 @@ class SoundViewModel @Inject constructor(
     private val repository: SoundRepository,
     private val settingsRepository: SettingsRepository,
     colorHelper: ColorHelper,
-    audioThreadHandler: Handler
+    private val audioThreadHandler: Handler
 ) : LoggingObject, ViewModel() {
-    private val soundIdInternal = MutableStateFlow<Int?>(null)
-    private val soundInternal: Flow<SoundExtended> = soundIdInternal.filterNotNull().flatMapConcat {
-        repository.get(it).filterNotNull()
-    }
-    // private val soundInternal: Flow<SoundExtended> = repository.get(soundIdInternal).filterNotNull()
-    private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
-    // private val playerInternal = SoundPlayer(viewModelScope, audioThreadHandler)
     private val decimalFormatInternal = DecimalFormat(".#").also {
         val symbols = it.decimalFormatSymbols
         symbols.decimalSeparator = '.'
         it.decimalFormatSymbols = symbols
+    }
+    private val soundPlayerInternal = SoundPlayer(viewModelScope)
+    private val soundIdInternal = MutableStateFlow<Int?>(null)
+    private val soundInternal: Flow<SoundExtended> = soundIdInternal.filterNotNull().flatMapConcat {
+        repository.get(it).filterNotNull()
     }
 
     @ColorInt
     val backgroundColor: LiveData<Int> = soundInternal.map {
         if (it.backgroundColor == Color.TRANSPARENT) it.categoryColor else it.backgroundColor
     }.asLiveData()
+    val currentPosition: Int
+        get() = soundPlayerInternal.currentPosition
+    val duration: Int?
+        get() = soundPlayerInternal.duration
     val durationString = soundInternal.map { sound ->
         when {
             sound.duration > -1 && sound.duration < 950 -> decimalFormatInternal.format(sound.duration.toDouble() / 1000) + "s"
@@ -57,9 +60,9 @@ class SoundViewModel @Inject constructor(
     val isAnimationEnabled: LiveData<Boolean> = settingsRepository.isAnimationEnabled.asLiveData()
     val name: LiveData<String> = soundInternal.map { it.name }.asLiveData()
     val path: LiveData<String> = soundInternal.map { it.uri.path }.filterNotNull().asLiveData()
-    val playerPermanentError: LiveData<String> = playerInternal.permanentError.asLiveData()
-    val playerState: LiveData<SoundPlayer.State> = playerInternal.state.asLiveData()
-    val playerTemporaryError: LiveData<String> = playerInternal.temporaryError.asLiveData()
+    val playerPermanentError: LiveData<String> = soundPlayerInternal.permanentError.asLiveData()
+    val playerState: LiveData<SoundPlayer.State> = soundPlayerInternal.state.asLiveData()
+    val playerTemporaryError: LiveData<String> = soundPlayerInternal.temporaryError.asLiveData()
     val repressMode: LiveData<RepressMode> = settingsRepository.repressMode.asLiveData()
     val screenHeightPx: Int
         get() = settingsRepository.screenHeightPx
@@ -70,54 +73,65 @@ class SoundViewModel @Inject constructor(
     @IntRange(from = 0, to = 100)
     val volume: LiveData<Int> = soundInternal.map { it.volume }.asLiveData()
 
-    val duration: Int?
-        get() = playerInternal.duration
-    val currentPosition: Int
-        get() = playerInternal.currentPosition
+    /** State booleans etc: */
+
+    val isPlayerError: LiveData<Boolean> = soundPlayerInternal.state.map { it == SoundPlayer.State.ERROR }.asLiveData()
+    val isPlayerPaused: LiveData<Boolean> =
+        soundPlayerInternal.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
+    val isPlayerStarted: LiveData<Boolean> =
+        soundPlayerInternal.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
+    val isSelectEnabled: LiveData<Boolean> = repository.isSelectEnabled.asLiveData()
+    val isSelected: LiveData<Boolean> =
+        repository.selectedSoundIds.map { it.contains(soundIdInternal.value) }.asLiveData()
 
     init {
-        viewModelScope.launch {
+        /**
+         * Has to be down here because: "During the initialization of an instance, the initializer blocks are executed
+         * in the same order as they appear in the class body".
+         */
+        viewModelScope.launch(Dispatchers.Default) {
             soundInternal.collect { sound ->
-                playerInternal.setPath(sound.uri.path)
-                playerInternal.setVolume(sound.volume)
+                soundPlayerInternal.setPath(sound.uri.path)
+                soundPlayerInternal.setVolume(sound.volume)
             }
         }
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             // If duration from player differs from duration in DB, update DB with
             // the (hopefully) more correct player duration.
-            combineTransform(playerInternal.durationFlow, soundInternal) { duration, sound ->
+            combineTransform(soundPlayerInternal.durationFlow, soundInternal) { duration, sound ->
                 if (duration.toLong() != sound.duration) emit(sound.clone(duration = duration.toLong()))
             }.collect { sound -> repository.update(listOf(sound)) }
         }
     }
 
-    /** State booleans etc. */
-    val isPlayerError: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.ERROR }.asLiveData()
-    val isPlayerPaused: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.PAUSED }.asLiveData()
-    val isPlayerStarted: LiveData<Boolean> = playerInternal.state.map { it == SoundPlayer.State.STARTED }.asLiveData()
-    val isSelectEnabled: LiveData<Boolean> = repository.isSelectEnabled.asLiveData()
-    val isSelected: LiveData<Boolean> =
-        repository.selectedSoundIds.map { it.contains(soundIdInternal.value) }.asLiveData()
-
     fun setSoundId(soundId: Int) {
         if (soundId != soundIdInternal.value) soundIdInternal.value = soundId
     }
 
-    fun destroyParallelPlayers() = playerInternal.destroyParallelPlayers()
-    fun pause() = playerInternal.pause()
-    fun play() = playerInternal.play()
-    fun playParallel() = playerInternal.playParallel()
-    fun restart() = playerInternal.restart()
-    fun schedulePlayerInit() = playerInternal.scheduleInit()
-    fun schedulePlayerReset() = playerInternal.scheduleReset()
-    fun stop() = playerInternal.stop()
-    fun stopPaused() = playerInternal.stopPaused()
+    /** High prio player methods: */
+
+    fun pause() = audioThreadHandler.post { soundPlayerInternal.pause() }
+    fun play() = audioThreadHandler.post { soundPlayerInternal.play() }
+    fun playParallel() = audioThreadHandler.post { soundPlayerInternal.playParallel() }
+    fun restart() = audioThreadHandler.post { soundPlayerInternal.restart() }
+    fun stop() = audioThreadHandler.post { soundPlayerInternal.stop() }
+
+    /** Low prio player methods: */
+
+    fun destroyParallelPlayers() =
+        viewModelScope.launch(Dispatchers.IO) { soundPlayerInternal.destroyParallelWrappers() }
+
+    fun schedulePlayerInit() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal.scheduleInit() }
+    fun schedulePlayerReset() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal.scheduleReset() }
+    fun stopPaused() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal.stopPaused() }
+
+    /** Selection: */
 
     fun enableSelect() = repository.enableSelect()
     fun select() = soundIdInternal.value?.let { repository.select(it) }
     fun unselect() = soundIdInternal.value?.let { repository.unselect(it) }
 
-    fun selectAllFromLastSelected() = viewModelScope.launch {
+    fun selectAllFromLastSelected() = viewModelScope.launch(Dispatchers.IO) {
         /** Select all sounds between this viewmodel's sound and the last selected one. */
         val lastSelectedId = repository.lastSelectedId.stateIn(viewModelScope).value
 
@@ -134,5 +148,5 @@ class SoundViewModel @Inject constructor(
         }
     }
 
-    override fun onCleared() = playerInternal.destroy()
+    override fun onCleared() = soundPlayerInternal.destroy()
 }

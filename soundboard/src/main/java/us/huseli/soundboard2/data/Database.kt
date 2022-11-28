@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Color
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabase.QueryCallback
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -12,6 +13,8 @@ import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.Sound
+import us.huseli.soundboard2.helpers.LoggingObject
+import java.util.concurrent.Executors
 
 @androidx.room.Database(
     entities = [Sound::class, Category::class],
@@ -23,7 +26,7 @@ abstract class Database : RoomDatabase() {
     abstract fun soundDao(): SoundDao
     abstract fun categoryDao(): CategoryDao
 
-    companion object {
+    companion object : LoggingObject {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE Sound RENAME COLUMN path TO uri")
@@ -131,6 +134,11 @@ abstract class Database : RoomDatabase() {
         }
 
         fun build(context: Context): Database {
+            val callback = QueryCallback { sqlQuery, bindArgs ->
+                log("$sqlQuery, bindArgs=$bindArgs")
+            }
+            val executor = Executors.newSingleThreadExecutor()
+
             return Room
                 .databaseBuilder(context.applicationContext, Database::class.java, Constants.DATABASE_NAME)
                 .addMigrations(MIGRATION_1_2)
@@ -138,6 +146,7 @@ abstract class Database : RoomDatabase() {
                 .addMigrations(MIGRATION_3_4)
                 .addMigrations(MIGRATION_4_5)
                 .addMigrations(MIGRATION_5_6)
+                .setQueryCallback(callback, executor)
                 .build()
         }
     }

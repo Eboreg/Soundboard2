@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class SoundDeleteViewModel @Inject constructor(
         SoundDeleteData(it.size, if (it.size == 1) it[0].name else "")
     }.asLiveData()
 
-    fun delete() = viewModelScope.launch {
+    fun delete() = viewModelScope.launch(Dispatchers.IO) {
         repository.delete(repository.selectedSounds.stateIn(viewModelScope).value)
         repository.disableSelect()
         stateRepository.push()

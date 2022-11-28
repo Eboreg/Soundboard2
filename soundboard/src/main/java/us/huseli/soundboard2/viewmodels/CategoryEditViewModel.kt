@@ -2,6 +2,7 @@ package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.StateRepository
@@ -20,7 +21,7 @@ class CategoryEditViewModel @Inject constructor(
         categoryIdInternal = categoryId
         isReadyInternal.value = false
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val category = categoryRepository.get(categoryId)
             name.value = category.name
             backgroundColor.value = category.backgroundColor
@@ -33,7 +34,7 @@ class CategoryEditViewModel @Inject constructor(
 
     override fun save() {
         categoryIdInternal?.let { categoryId ->
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 val oldCategory = categoryRepository.get(categoryId)
                 val newCategory = oldCategory.clone(
                     name = name.value.trim(),

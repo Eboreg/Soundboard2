@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.R
@@ -36,7 +37,7 @@ abstract class BaseCategoryEditViewModel(protected val categoryRepository: Categ
 
     abstract fun save()
 
-    fun setRandomBackgroundColor() = viewModelScope.launch {
+    fun setRandomBackgroundColor() = viewModelScope.launch(Dispatchers.IO) {
         setRandomBackgroundColorInternal()
     }
 

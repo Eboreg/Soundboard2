@@ -3,6 +3,7 @@ package us.huseli.soundboard2.viewmodels
 import androidx.annotation.ColorInt
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -47,12 +48,12 @@ class CategoryViewModel @Inject constructor(
         _categoryId.value = categoryId
     }
 
-    fun toggleCollapsed() = viewModelScope.launch {
+    fun toggleCollapsed() = viewModelScope.launch(Dispatchers.IO) {
         _categoryId.value?.let { categoryId -> repository.toggleCollapsed(categoryId) }
     }
 
     /** Switch places of this category and the next one, if any. */
-    fun moveDown() = viewModelScope.launch {
+    fun moveDown() = viewModelScope.launch(Dispatchers.IO) {
         val categories = repository.categories.stateIn(viewModelScope).value
         val idx = categories.indexOfFirst { it.id == _categoryId.value }
         // Double check so it's not already the last category:
@@ -65,7 +66,7 @@ class CategoryViewModel @Inject constructor(
     }
 
     /** Switch places of this category and the previous one, if any. */
-    fun moveUp() = viewModelScope.launch {
+    fun moveUp() = viewModelScope.launch(Dispatchers.IO) {
         val categories = repository.categories.stateIn(viewModelScope).value
         val idx = categories.indexOfFirst { it.id == _categoryId.value }
         // Double check so it's not already the first category:

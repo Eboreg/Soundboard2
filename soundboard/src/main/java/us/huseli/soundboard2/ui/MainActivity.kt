@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Enums.RepressMode
@@ -289,7 +290,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private fun addSoundsFromUris(uris: Collection<Uri>) {
         /** Used when adding sounds from within app and sharing sounds from other apps */
         soundAddViewModel.initialize()
-        lifecycleScope.launch {
+        lifecycleScope.launch(Dispatchers.Default) {
             soundAddViewModel.setSoundFiles(Functions.extractMetadata(applicationContext, uris))
         }
         showFragment(SoundAddFragment::class.java)

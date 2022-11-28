@@ -15,7 +15,7 @@ import us.huseli.soundboard2.R
 class EasterEggFragment : DialogFragment() {
     private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
-    private fun play(@AnyRes resourceId: Int) = scope.launch {
+    private fun play(@AnyRes resourceId: Int) = scope.launch(Dispatchers.Default) {
         MediaPlayer.create(requireContext(), resourceId).apply {
             setOnCompletionListener { it.release() }
             start()

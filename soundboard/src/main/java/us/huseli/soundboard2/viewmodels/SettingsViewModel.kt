@@ -8,6 +8,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
@@ -63,7 +64,7 @@ class SettingsViewModel @Inject constructor(
         watchFolderUri: Uri?,
         watchFolderCategory: Category?,
         watchFolderTrashMissing: Boolean
-    ) = viewModelScope.launch {
+    ) = viewModelScope.launch(Dispatchers.IO) {
         log("save(): animationsEnabled=$animationsEnabled, watchFolderEnabled=$watchFolderEnabled, watchFolderUri=$watchFolderUri, watchFolderCategory=$watchFolderCategory, watchFolderTrashMissing=$watchFolderTrashMissing")
         if (animationsEnabled) settingsRepository.enableAnimations()
         else settingsRepository.disableAnimations()

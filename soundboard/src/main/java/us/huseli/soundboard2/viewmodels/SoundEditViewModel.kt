@@ -6,6 +6,7 @@ import android.graphics.Color
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
@@ -34,7 +35,7 @@ class SoundEditViewModel @Inject constructor(
 
         keepVolume.value = true
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val context = getApplication<Application>().applicationContext
             categoriesInternal.value =
                 listOf(emptyCategoryInternal) + categoryRepository.categories.stateIn(viewModelScope).value
@@ -68,7 +69,7 @@ class SoundEditViewModel @Inject constructor(
     override fun save() {
         validate()
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val category = categoriesInternal.value[categoryPosition.value]
             val sounds = repository.selectedSounds.stateIn(viewModelScope).value
 

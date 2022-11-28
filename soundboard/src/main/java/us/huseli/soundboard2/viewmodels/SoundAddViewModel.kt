@@ -5,6 +5,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
@@ -57,7 +58,7 @@ class SoundAddViewModel @Inject constructor(
         soundFilesInternal.value = emptyList()
         volume.value = Constants.DEFAULT_VOLUME
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             categoriesInternal.value = categoryRepository.categories.stateIn(viewModelScope).value
         }
     }
@@ -73,7 +74,7 @@ class SoundAddViewModel @Inject constructor(
             if (soundFiles.size == 1) soundFiles[0].name
             else context.getString(R.string.multiple_sounds_selected, soundFiles.size)
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             duplicatesInternal.value =
                 soundRepository.allSounds.stateIn(viewModelScope).value.filter { it.checksum in checksums }
             isReadyInternal.value = true
@@ -83,7 +84,7 @@ class SoundAddViewModel @Inject constructor(
     override fun save() {
         validate()
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             var created = false
             val category = categoriesInternal.value[categoryPosition.value]
 

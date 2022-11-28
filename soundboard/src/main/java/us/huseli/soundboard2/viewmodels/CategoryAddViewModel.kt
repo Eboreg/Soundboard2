@@ -2,6 +2,7 @@ package us.huseli.soundboard2.viewmodels
 
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.StateRepository
@@ -20,14 +21,14 @@ class CategoryAddViewModel @Inject constructor(
         sortOrderDescending.value = false
         sortParameterPosition.value = 0
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             setRandomBackgroundColorInternal()
             isReadyInternal.value = true
         }
     }
 
     override fun save() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             categoryRepository.create(name.value.trim(), backgroundColor.value, soundSortingInternal)
             stateRepository.push()
         }

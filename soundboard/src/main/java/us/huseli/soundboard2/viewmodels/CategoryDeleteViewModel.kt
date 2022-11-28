@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.data.entities.Category
@@ -48,7 +49,7 @@ class CategoryDeleteViewModel @Inject constructor(
         soundActionMove.value = true
         soundActionDelete.value = false
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val (category, otherCategories) = getCategories(categoryId)
             val soundCount = repository.getSoundCount(categoryId)
             val isLastCategory = otherCategories.isEmpty()
@@ -64,7 +65,7 @@ class CategoryDeleteViewModel @Inject constructor(
 
     fun delete() {
         categoryIdInternal?.let { categoryId ->
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 val (category, otherCategories) = getCategories(categoryId)
                 val newCategoryId = if (soundActionMove.value) otherCategories[newCategoryPosition.value].id else null
                 repository.delete(category, newCategoryId)

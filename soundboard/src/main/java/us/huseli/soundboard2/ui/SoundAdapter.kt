@@ -83,7 +83,6 @@ class SoundAdapter(private val activity: MainActivity) :
 
                 localViewModel.playerState.observe(activity) {
                     if (it != playerState) {
-                        log("playerState.observe: new playState=$it, was=$playerState")
                         playerState = it
                         when (it) {
                             SoundPlayer.State.STARTED -> startProgressAnimation()
@@ -115,7 +114,7 @@ class SoundAdapter(private val activity: MainActivity) :
                     localViewModel.scrollEndSignal.observe(activity) {
                         val screenLocation = IntArray(2)
                         binding.root.getLocationOnScreen(screenLocation)
-                        val (locationX, locationY) = screenLocation
+                        val (_, locationY) = screenLocation
 
                         if (localViewModel.screenHeightPx > 0) {
                             if (locationY + binding.root.height < 0 || locationY > localViewModel.screenHeightPx) {
@@ -126,7 +125,6 @@ class SoundAdapter(private val activity: MainActivity) :
                                 localViewModel.schedulePlayerInit()
                             }
                         }
-                        log("name=$name received scrollEndSignal; screenLocation=($locationX, $locationY), height=${binding.root.height}, bottom=${locationY + binding.root.height}, screenHeightPx=${localViewModel.screenHeightPx}, isLaidOut=${binding.root.isLaidOut}")
                     }
                 }
             }

@@ -102,7 +102,6 @@ class SettingsRepository @Inject constructor(
         while (true) {
             while (!_hasScrolled) delay(500)
             if (System.currentTimeMillis() - _lastScrollEvent > 200) {
-                log("emitting scrollEndSignal")
                 _scrollEndSignal.emit(true)
                 _hasScrolled = false
             } else delay(200)

@@ -4,12 +4,9 @@ import android.media.MediaPlayer
 import android.media.SyncParams
 import android.util.Log
 import androidx.annotation.IntRange
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Constants
 import java.io.FileNotFoundException
@@ -161,8 +158,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
             it.cancel()
             _resetJob = null
         }
-        log("scheduleInit: starting, _state=${_state.value}, _path=${_path.value}")
-        if (_state.value == State.IDLE) coroutineScope.launch {
+        if (_state.value == State.IDLE) coroutineScope.launch(Dispatchers.Default) {
             // This _should_ suspend until path is not null:
             _path.filterNotNull().take(1).collect {
                 log("scheduleInit: initializing, _state=${_state.value}, _path=$it")
@@ -176,7 +172,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
             it.cancel()
             _initJob = null
         }
-        if (_state.value != State.IDLE) coroutineScope.launch {
+        if (_state.value != State.IDLE) coroutineScope.launch(Dispatchers.Default) {
             while (_mp.isPlaying) delay(10)
             log("scheduleReset: resetting, _state=${_state.value}, _path=${_path.value}")
             wrapReset()
@@ -251,7 +247,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
     private fun wrapPause() {
         try {
             _mp.pause()
-            coroutineScope.launch {
+            coroutineScope.launch(Dispatchers.Default) {
                 while (_mp.isPlaying) delay(10)
                 changeState(State.PAUSED)
             }
@@ -331,7 +327,7 @@ class MediaPlayerWrapper(private val coroutineScope: CoroutineScope) :
         log("wrapStart(): _state=${_state.value}, _path=${_path.value}")
         try {
             _mp.start()
-            coroutineScope.launch {
+            coroutineScope.launch(Dispatchers.Default) {
                 while (!_mp.isPlaying) delay(10)
                 changeState(State.STARTED)
             }
