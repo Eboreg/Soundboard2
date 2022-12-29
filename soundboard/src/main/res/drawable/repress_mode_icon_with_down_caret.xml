@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:height="24dp"
+        android:width="18dp"
+        android:end="30dp"
         android:id="@+id/repress_mode_icon"
-        android:gravity="center"
-        android:end="20dp"
+        android:gravity="start|center_vertical"
         android:drawable="@drawable/repress_mode_icon" />
     <item
-        android:left="26dp"
         android:drawable="@drawable/icon_caret_down"
-        android:gravity="center" />
+        android:height="18dp"
+        android:width="10dp"
+        android:gravity="end|center_vertical" />
 </layer-list>

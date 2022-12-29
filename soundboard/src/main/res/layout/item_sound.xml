@@ -21,14 +21,13 @@
             android:layout_height="0dp"
             android:alpha="0"
             android:elevation="0dp"
+            app:cardBackgroundColor="?attr/colorOnSurfaceVariant"
             app:cardCornerRadius="@dimen/sound_card_corner_radius"
             app:layout_constraintDimensionRatio="4:3"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:alpha="1" >
-
-        </androidx.cardview.widget.CardView>
+            tools:alpha="1" />
 
         <androidx.cardview.widget.CardView
             android:id="@+id/soundCard"

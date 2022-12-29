@@ -76,7 +76,7 @@ class SoundAddViewModel @Inject constructor(
 
         viewModelScope.launch(Dispatchers.IO) {
             duplicatesInternal.value =
-                soundRepository.allSounds.stateIn(viewModelScope).value.filter { it.checksum in checksums }
+                soundRepository.allSounds.stateIn(this).value.filter { it.checksum in checksums }
             isReadyInternal.value = true
         }
     }

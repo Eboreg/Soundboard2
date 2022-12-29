@@ -38,11 +38,12 @@ android {
     buildTypes {
         release {
             // minifyEnabled true
+            debuggable false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            signingConfig signingConfigs.debug
         }
         debug {
-            jniDebuggable true
+            debuggable true
             renderscriptDebuggable true
             applicationIdSuffix ".debug"
             signingConfig signingConfigs.debug
@@ -74,10 +75,11 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
 
     // activityViewModels
-    implementation 'androidx.fragment:fragment-ktx:1.5.4'
+    implementation 'androidx.fragment:fragment-ktx:1.5.5'
 
     // Hilt
     implementation 'com.google.dagger:hilt-android:2.44.2'
+    implementation 'androidx.recyclerview:recyclerview:1.3.0-rc01'
     kapt 'com.google.dagger:hilt-compiler:2.44.2'
 
     // Room

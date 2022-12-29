@@ -57,7 +57,7 @@
                         style="@style/TextAppearance.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.isAnimationEnabled}"
+                        android:checked="@={viewModel.isAnimationEnabled}"
                         android:text="@string/enable_animations"
                         android:textColor="?attr/colorOnPrimary"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -94,7 +94,7 @@
                         style="@style/TextAppearance.H2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:checked="@{viewModel.isWatchFolderEnabled}"
+                        android:checked="@={viewModel.isWatchFolderEnabled}"
                         android:text="@string/watch_folder"
                         android:textColor="?attr/colorOnPrimary"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -125,11 +125,13 @@
 
                         <EditText
                             android:id="@+id/watchFolderString"
+                            style="@style/TextAppearance.H3"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
                             android:enabled="false"
                             android:text="@{viewModel.watchFolderString}"
+                            android:textColor="?attr/colorOnPrimary"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
@@ -138,7 +140,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/watchFolderSelectButton"
-                            style="@style/TextButton"
+                            style="@style/MaterialButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
@@ -152,6 +154,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginVertical="@dimen/margin_normal"
+                            android:layout_marginTop="@dimen/margin_large"
                             android:labelFor="@+id/watchFolderCategory"
                             android:text="@string/category_for_new_sounds"
                             app:layout_constraintStart_toStartOf="parent"
@@ -180,15 +183,17 @@
                                 android:id="@+id/watchFolderCategory"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:selectedItemPosition="@{viewModel.watchFolderCategoryPosition}"
+                                android:selectedItemPosition="@={viewModel.watchFolderCategoryPosition}"
                                 tools:ignore="DuplicateSpeakableTextCheck" />
                         </androidx.cardview.widget.CardView>
 
                         <androidx.appcompat.widget.SwitchCompat
                             android:id="@+id/watchFolderTrashMissing"
+                            style="@style/TextAppearance.H3"
                             android:layout_width="0dp"
                             android:layout_height="48dp"
-                            android:checked="@{viewModel.watchFolderTrashMissing}"
+                            android:layout_marginTop="@dimen/margin_large"
+                            android:checked="@={viewModel.watchFolderTrashMissing}"
                             android:text="@string/auto_delete_missing"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintStart_toStartOf="parent"

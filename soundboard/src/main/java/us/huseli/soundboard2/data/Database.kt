@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase.QueryCallback
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
@@ -19,7 +20,7 @@ import java.util.concurrent.Executors
 @androidx.room.Database(
     entities = [Sound::class, Category::class],
     exportSchema = false,
-    version = 6,
+    version = 7,
 )
 @TypeConverters(Converters::class)
 abstract class Database : RoomDatabase() {
@@ -133,21 +134,74 @@ abstract class Database : RoomDatabase() {
             }
         }
 
-        fun build(context: Context): Database {
-            val callback = QueryCallback { sqlQuery, bindArgs ->
-                log("$sqlQuery, bindArgs=$bindArgs")
-            }
-            val executor = Executors.newSingleThreadExecutor()
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """
+                    CREATE TABLE Category_new (
+                        categoryId INTEGER PRIMARY KEY NOT NULL,
+                        categoryName TEXT NOT NULL,
+                        backgroundColor INTEGER NOT NULL,
+                        position INTEGER NOT NULL,
+                        collapsed INTEGER NOT NULL DEFAULT 0,
+                        soundSorting INTEGER NOT NULL DEFAULT 1
+                    )""".trimIndent()
+                )
+                database.execSQL(
+                    """
+                    INSERT INTO Category_new (categoryId, categoryName, backgroundColor, position, collapsed, soundSorting)
+                    SELECT id, name, backgroundColor, position, collapsed, soundSorting FROM Category
+                    """.trimIndent()
+                )
+                database.execSQL("DROP TABLE Category")
+                database.execSQL("ALTER TABLE Category_new RENAME TO Category")
 
-            return Room
+                database.execSQL(
+                    """
+                    CREATE TABLE Sound_new (
+                        soundId INTEGER PRIMARY KEY NOT NULL,
+                        soundCategoryId INTEGER NOT NULL,
+                        soundName TEXT NOT NULL,
+                        uri TEXT NOT NULL,
+                        duration INTEGER NOT NULL,
+                        checksum TEXT NOT NULL,
+                        volume INTEGER NOT NULL,
+                        added INTEGER NOT NULL,
+                        soundBackgroundColor INTEGER NOT NULL DEFAULT ${Color.TRANSPARENT},
+                        FOREIGN KEY (soundCategoryId) REFERENCES Category(categoryId) ON UPDATE CASCADE ON DELETE SET NULL
+                    )""".trimIndent()
+                )
+                database.execSQL(
+                    """
+                    INSERT INTO Sound_new (soundId, soundCategoryId, soundName, uri, duration, checksum, volume, added, soundBackgroundColor)
+                    SELECT id, categoryId, name, uri, duration, checksum, volume, added, backgroundColor FROM Sound
+                    """.trimIndent()
+                )
+                database.execSQL("DROP TABLE Sound")
+                database.execSQL("ALTER TABLE Sound_new RENAME TO Sound")
+                database.execSQL("CREATE INDEX index_Sound_categoryId ON Sound(soundCategoryId)")
+            }
+        }
+
+        fun build(context: Context): Database {
+            val builder = Room
                 .databaseBuilder(context.applicationContext, Database::class.java, Constants.DATABASE_NAME)
                 .addMigrations(MIGRATION_1_2)
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
                 .addMigrations(MIGRATION_4_5)
                 .addMigrations(MIGRATION_5_6)
-                .setQueryCallback(callback, executor)
-                .build()
+                .addMigrations(MIGRATION_6_7)
+
+            if (BuildConfig.DEBUG) {
+                val callback = QueryCallback { sqlQuery, bindArgs ->
+                    log("$sqlQuery, bindArgs=$bindArgs")
+                }
+                val executor = Executors.newSingleThreadExecutor()
+                builder.setQueryCallback(callback, executor)
+            }
+
+            return builder.build()
         }
     }
 }

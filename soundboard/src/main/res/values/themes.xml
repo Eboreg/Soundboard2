@@ -123,7 +123,7 @@ concrete values for these named resources."
         <item name="actionModeStyle">@style/Toolbar.ActionBar</item>
         <item name="actionOverflowMenuStyle">@style/ActionOverflowMenu</item>
         <item name="alertDialogStyle">@style/AlertDialog</item>
-        <!--<item name="alertDialogTheme">@style/MaterialAlertDialog</item>-->
+        <item name="alertDialogTheme">@style/MaterialAlertDialog</item>
         <item name="android:buttonCornerRadius" tools:targetApi="p">@dimen/button_corner_radius</item>
         <item name="android:colorBackground">?attr/colorSurface</item>
         <item name="android:colorForeground">?attr/colorOnSurface</item>

@@ -3,10 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <data>
-        <variable name="debug" type="Boolean" />
-    </data>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/appContainer"
         android:layout_width="match_parent"
@@ -20,81 +16,28 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.recyclerview.widget.RecyclerView
+        <include
+            layout="@layout/include_progress_circle"
+            android:id="@+id/progressCircle"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            tools:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/actionBar" />
+
+        <us.huseli.soundboard2.ui.CategorySoundRecyclerView
             android:id="@+id/categoryList"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/actionBar"
             tools:itemCount="3"
             tools:listitem="@layout/item_category" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/mediaPlayerTest"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            visible="@{debug}"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent">
-
-            <Spinner
-                android:id="@+id/mediaPlayerTestSpinner"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:minHeight="48dp"
-                android:background="@color/white"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <Button
-                android:id="@+id/mediaPlayerTestRun"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Run"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/mediaPlayerTestReset"
-                app:layout_constraintTop_toBottomOf="@+id/mediaPlayerTestSpinner"
-                tools:ignore="HardcodedText" />
-
-            <Button
-                android:id="@+id/mediaPlayerTestReset"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Reset"
-                app:layout_constraintEnd_toStartOf="@id/mediaPlayerTestRunAll"
-                app:layout_constraintStart_toEndOf="@id/mediaPlayerTestRun"
-                app:layout_constraintTop_toBottomOf="@+id/mediaPlayerTestSpinner"
-                tools:ignore="HardcodedText" />
-
-            <Button
-                android:id="@+id/mediaPlayerTestRunAll"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Run all"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/mediaPlayerTestReset"
-                app:layout_constraintTop_toBottomOf="@+id/mediaPlayerTestSpinner"
-                tools:ignore="HardcodedText" />
-
-            <Button
-                android:id="@+id/mediaPlayerTestRunChain"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Run chain"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/mediaPlayerTestRunAll"
-                tools:ignore="HardcodedText" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

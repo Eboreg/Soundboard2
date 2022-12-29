@@ -2,7 +2,6 @@ package us.huseli.soundboard2.viewmodels
 
 import android.app.Application
 import android.content.Context
-import androidx.annotation.StringRes
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -10,20 +9,22 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
+import us.huseli.soundboard2.data.entities.CategoryExtended
+import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.data.repositories.CategoryRepository
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.data.repositories.SoundRepository
 import us.huseli.soundboard2.data.repositories.StateRepository
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.SnackbarTextListener
 import java.io.File
 import java.util.*
 import javax.inject.Inject
@@ -40,48 +41,48 @@ class AppViewModel @Inject constructor(
         viewModelScope.launch { stateRepository.push() }
     }
 
-    private val _snackbarText = Channel<CharSequence>()
+    private var _snackbarTextListener: SnackbarTextListener? = null
 
-    val categoryIds: LiveData<List<Int>> = categoryRepository.categoryIds.asLiveData()
+    val categorySoundMultimap: LiveData<Map<CategoryExtended, List<SoundExtended>>> =
+        soundRepository.categorySoundMultimapVisible.asLiveData()
     val isRedoPossible: LiveData<Boolean> = stateRepository.isRedoPossible.asLiveData()
     val isSelectEnabled: LiveData<Boolean> = soundRepository.isSelectEnabled.asLiveData()
     val isUndoPossible: LiveData<Boolean> = stateRepository.isUndoPossible.asLiveData()
-    val isWatchFolderEnabled: LiveData<Boolean> = settingsRepository.isWatchFolderEnabled.asLiveData()
+    val isWatchFolderEnabled: Boolean
+        get() = settingsRepository.isWatchFolderEnabled
     val isZoomInPossible: LiveData<Boolean> = settingsRepository.isZoomInPossible.asLiveData()
     val repressMode: LiveData<Enums.RepressMode> = settingsRepository.repressMode.asLiveData()
     val soundFilterTerm: LiveData<String> = settingsRepository.soundFilterTerm.asLiveData()
-    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
+    val spanCount: LiveData<Int> = settingsRepository.spanCount.asLiveData()
+    val watchFolderTrashMissing: Boolean
+        get() = settingsRepository.watchFolderTrashMissing
+    val selectedAndTotalSoundCount: LiveData<Pair<Int, Int>> = combine(
+        soundRepository.selectedSounds.map { it.size },
+        soundRepository.visibleSounds.map { it.size },
+    ) { selected, total -> Pair(selected, total) }.asLiveData()
 
-    // Using Flow instead of LiveData, because the latter does not seem to
-    // enable us to display a message only _once_.
-    val snackbarText: Flow<CharSequence> = _snackbarText.receiveAsFlow()
-
-    private fun setSnackbarText(text: CharSequence) = _snackbarText.trySend(text)
-
-    private fun setSnackbarText(@StringRes resId: Int) {
-        val context = getApplication<Application>().applicationContext
-        setSnackbarText(context.getText(resId))
+    fun createDefaultCategoryIfNeeded() = viewModelScope.launch(Dispatchers.IO) {
+        if (categoryRepository.list().isEmpty()) categoryRepository.createDefault()
     }
 
-    fun createDefaultCategory() = viewModelScope.launch(Dispatchers.IO) { categoryRepository.createDefault() }
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
     fun setSoundFilterTerm(value: String) = settingsRepository.setSoundFilterTerm(value)
 
     fun zoomIn() = settingsRepository.zoomIn()
     fun zoomOut() = settingsRepository.zoomOut()
 
-    fun selectAllSounds() = viewModelScope.launch(Dispatchers.IO) {
-        soundRepository.filteredSoundIdsOrdered.stateIn(this).value.forEach { soundRepository.select(it) }
+    fun setSnackbarTextListener(listener: SnackbarTextListener) {
+        _snackbarTextListener = listener
     }
 
-    fun unselectAllSounds() = viewModelScope.launch(Dispatchers.IO) {
-        soundRepository.allSoundIds.stateIn(this).value.forEach { soundId ->
-            soundRepository.unselect(soundId)
-        }
+    fun disableSelect() = soundRepository.disableSelect()
+
+    fun selectAllSounds() = viewModelScope.launch(Dispatchers.IO) {
+        soundRepository.visibleSounds.stateIn(this).value.forEach { soundRepository.select(it) }
     }
 
     fun syncWatchFolder() = viewModelScope.launch(Dispatchers.IO) {
-        val treeUri = settingsRepository.watchFolderUri.value
+        val treeUri = settingsRepository.watchFolderUri
         val context = getApplication<Application>().applicationContext
         var added = 0
         var deleted = 0
@@ -89,10 +90,9 @@ class AppViewModel @Inject constructor(
         if (treeUri != null) {
             // TODO: Does this work when there are no categories?
             val category =
-                settingsRepository.watchFolderCategory.stateIn(this).value ?: categoryRepository.firstCategory.stateIn(
-                    this
-                ).value
-            val trashMissing = settingsRepository.watchFolderTrashMissing.value
+                settingsRepository.watchFolderCategory.stateIn(this).value
+                ?: categoryRepository.firstCategory.stateIn(this).value
+            val trashMissing = settingsRepository.watchFolderTrashMissing
             val fileUris = DocumentFile.fromTreeUri(context, treeUri)
                 ?.listFiles()
                 ?.filter { it.type?.startsWith("audio/") == true }
@@ -135,18 +135,18 @@ class AppViewModel @Inject constructor(
                         deleted
                     )
                 }
-                setSnackbarText(snackbarString)
+                _snackbarTextListener?.setSnackbarText(snackbarString)
                 stateRepository.replaceCurrent()
             }
         }
     }
 
     fun undo() = viewModelScope.launch(Dispatchers.IO) {
-        if (stateRepository.undo()) setSnackbarText(R.string.undid)
+        if (stateRepository.undo()) _snackbarTextListener?.setSnackbarText(R.string.undid)
     }
 
     fun redo() = viewModelScope.launch(Dispatchers.IO) {
-        if (stateRepository.redo()) setSnackbarText(R.string.redid)
+        if (stateRepository.redo()) _snackbarTextListener?.setSnackbarText(R.string.redid)
     }
 
     fun deleteOrphanSoundObjects() = viewModelScope.launch(Dispatchers.IO) {
@@ -161,7 +161,7 @@ class AppViewModel @Inject constructor(
                 }
             }
         }
-        setSnackbarText(
+        _snackbarTextListener?.setSnackbarText(
             getApplication<Application>().applicationContext.resources.getQuantityString(
                 R.plurals.deleted_orphan_sounds,
                 deleted,
@@ -187,7 +187,7 @@ class AppViewModel @Inject constructor(
             }
         }
 
-        if (deleted > 0) setSnackbarText(
+        if (deleted > 0) _snackbarTextListener?.setSnackbarText(
             context.resources.getQuantityString(
                 R.plurals.deleted_orphan_files,
                 deleted,
@@ -196,7 +196,7 @@ class AppViewModel @Inject constructor(
         )
     }
 
-    fun registerScrollEvent() = settingsRepository.registerScrollEvent()
-
-    fun setScreenSizePx(width: Int, height: Int) = settingsRepository.setScreenSizePx(width, height)
+    fun stopAllSounds() = viewModelScope.launch {
+        soundRepository.stopAll()
+    }
 }

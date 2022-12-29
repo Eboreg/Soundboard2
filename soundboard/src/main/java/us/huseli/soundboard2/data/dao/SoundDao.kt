@@ -24,7 +24,7 @@ interface SoundDao {
 
     @Query(
         """
-        INSERT INTO Sound (name, uri, duration, checksum, volume, added, categoryId, backgroundColor)
+        INSERT INTO Sound (soundName, uri, duration, checksum, volume, added, soundCategoryId, soundBackgroundColor)
         VALUES (:name, :uri, :duration, :checksum, :volume, :added, :categoryId, :backgroundColor)
     """
     )
@@ -42,20 +42,21 @@ interface SoundDao {
     @Delete
     suspend fun delete(sounds: Collection<Sound>)
 
-    @Query("DELETE FROM Sound WHERE categoryId = :categoryId")
+    @Query("DELETE FROM Sound WHERE soundCategoryId = :categoryId")
     suspend fun deleteByCategoryId(categoryId: Int)
 
-    @Query("SELECT s.*, c.backgroundColor AS categoryColor FROM Sound s JOIN Category c ON s.categoryId = c.id WHERE s.id = :soundId")
-    fun flowGet(soundId: Int): Flow<SoundExtended>
-
-    @Query("SELECT s.*, c.backgroundColor AS categoryColor FROM Sound s JOIN Category c ON s.categoryId = c.id")
+    @Query(
+        """
+        SELECT s.*, c.backgroundColor AS categoryColor FROM Sound s JOIN Category c ON s.soundCategoryId = c.categoryId
+        ORDER BY c.position, CASE ABS(c.soundSorting)
+            WHEN 1 THEN LOWER(s.soundName)
+            WHEN 2 THEN s.duration
+            WHEN 3 THEN s.added
+            ELSE NULL
+        END
+        """
+    )
     fun flowList(): Flow<List<SoundExtended>>
-
-    @Query("SELECT * FROM Sound WHERE id IN (:soundIds)")
-    fun flowListByIds(soundIds: Collection<Int>): Flow<List<Sound>>
-
-    @Query("SELECT id FROM Sound")
-    fun flowListIds(): Flow<List<Int>>
 
     @Insert
     suspend fun insert(sounds: Collection<Sound>)
@@ -63,7 +64,7 @@ interface SoundDao {
     @Query("SELECT * FROM Sound")
     suspend fun list(): List<Sound>
 
-    @Query("SELECT * FROM Sound WHERE categoryId = :categoryId")
+    @Query("SELECT * FROM Sound WHERE soundCategoryId = :categoryId")
     suspend fun listByCategoryId(categoryId: Int): List<Sound>
 
     @Update

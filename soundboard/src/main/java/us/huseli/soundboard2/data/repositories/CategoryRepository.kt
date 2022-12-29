@@ -1,9 +1,8 @@
 package us.huseli.soundboard2.data.repositories
 
 import androidx.annotation.ColorInt
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import us.huseli.soundboard2.data.dao.CategoryDao
@@ -20,18 +19,17 @@ import javax.inject.Singleton
 class CategoryRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val soundDao: SoundDao,
-    private val colorHelper: ColorHelper
+    private val colorHelper: ColorHelper,
+    ioScope: CoroutineScope
 ) : LoggingObject {
     private val _defaultCategoryCreationMutex = Mutex()
 
-    val categories: Flow<List<Category>> = categoryDao.flowList()
-    val categoryIds: Flow<List<Int>> = categoryDao.flowListIds()
+    val categories: SharedFlow<List<CategoryExtended>> =
+        categoryDao.flowListExtended().shareIn(ioScope, SharingStarted.Lazily, 1)
     val firstCategory: Flow<Category> = categories.map {
         if (it.isEmpty()) createDefault()
         it.firstOrNull()
     }.filterNotNull()
-
-    fun flowGetExtended(categoryId: Int): Flow<CategoryExtended?> = categoryDao.flowGetExtended(categoryId)
 
     suspend fun get(categoryId: Int): Category = categoryDao.get(categoryId)
     suspend fun getRandomColor(@ColorInt vararg exclude: Int): Int =

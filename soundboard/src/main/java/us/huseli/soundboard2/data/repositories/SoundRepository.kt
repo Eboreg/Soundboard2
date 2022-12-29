@@ -6,7 +6,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
 import androidx.core.net.toUri
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Functions
@@ -14,9 +14,11 @@ import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.dao.SoundDao
 import us.huseli.soundboard2.data.entities.Category
+import us.huseli.soundboard2.data.entities.CategoryExtended
 import us.huseli.soundboard2.data.entities.Sound
 import us.huseli.soundboard2.data.entities.SoundExtended
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.SoundSorting
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,39 +28,52 @@ class SoundRepository @Inject constructor(
     private val soundDao: SoundDao,
     categoryDao: CategoryDao,
     settingsRepository: SettingsRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    ioScope: CoroutineScope
 ) : LoggingObject {
-    /**
-     * Flattened list of extended Sounds, ordered by their respective
-     * categories' soundSorting.
-     */
-    // TODO: Is this executing unnecessarily?
-    private val allSoundsOrderedInternal: Flow<List<SoundExtended>> = categoryDao.flowListWithSounds().map { list ->
-        val repr = list.map { Pair(it.category.name, it.sounds.map { sound -> sound.name }) }
-        log("allSoundsOrdered: categoryWithSounds=$repr")
-        list.flatMap { (category, sounds) ->
-            sounds
-                .map { sound -> SoundExtended.create(sound, category) }
-                .sortedWith(Sound.Comparator(category.soundSorting))
+    private val _stopAllSignal = MutableSharedFlow<Boolean>()
+
+    private val _categorySoundMultimap: Flow<Map<CategoryExtended, List<SoundExtended>>> =
+        combine(categoryDao.flowListExtended(), soundDao.flowList()) { categories, sounds ->
+            categories.associateWith { category ->
+                when (category.soundSorting.order) {
+                    SoundSorting.Order.ASCENDING -> sounds.filter { it.categoryId == category.id }
+                    SoundSorting.Order.DESCENDING -> sounds.filter { it.categoryId == category.id }.reversed()
+                }
+            }
+        }.shareIn(ioScope, SharingStarted.Lazily, 1)
+
+    val categorySoundMultimapVisible: Flow<Map<CategoryExtended, List<SoundExtended>>> =
+        combine(settingsRepository.soundFilterTerm, _categorySoundMultimap) { term, multimap ->
+            multimap.mapValues { (category, sounds) ->
+                if (category.collapsed) emptyList()
+                else if (term.isNotBlank()) sounds.filter { sound -> sound.name.lowercase().contains(term.lowercase()) }
+                else sounds
+            }
         }
+
+    /**
+     * Flattened list of extended Sounds, ordered by:
+     * 1. category.position
+     * 2. category.soundSorting
+     */
+    val allSounds: Flow<List<SoundExtended>> = _categorySoundMultimap.map { multimap ->
+        multimap.flatMap { it.value }
+    }.shareIn(ioScope, SharingStarted.Lazily, 1)
+
+    /**
+     * Sounds ordered as above, filtered by Category.collapsed and current
+     * soundFilterTerm.
+     */
+    val visibleSounds: Flow<List<SoundExtended>> = categorySoundMultimapVisible.map { multimap ->
+        multimap.flatMap { it.value }
     }
 
-    private val filteredSoundsOrderedInternal: Flow<List<SoundExtended>> =
-        combine(settingsRepository.soundFilterTerm, allSoundsOrderedInternal) { term, sounds ->
-            sounds.filter { it.name.lowercase().contains(term.lowercase()) }
-        }
-
-    val allSounds: Flow<List<SoundExtended>> = soundDao.flowList()
-    val allSoundIds: Flow<List<Int>> = soundDao.flowListIds()
     val allChecksums: Flow<Set<String>> = allSounds.map { list -> list.map { it.checksum }.toSet() }
-    val filteredSoundIdsOrdered: Flow<List<Int>> = filteredSoundsOrderedInternal.map { list -> list.map { it.id } }
 
-    fun get(soundId: Int): Flow<SoundExtended?> = soundDao.flowGet(soundId)
+    val stopAllSignal: SharedFlow<Boolean> = _stopAllSignal.asSharedFlow()
 
-    suspend fun list() = soundDao.list()
-
-    fun listIdsByCategoryIdFiltered(categoryId: Int): Flow<List<Int>> =
-        filteredSoundsOrderedInternal.map { list -> list.filter { it.categoryId == categoryId }.map { it.id } }
+    suspend fun list(): List<Sound> = soundDao.list()
 
     /** If duplicate == null: copy file to local storage. Otherwise: just use same path as duplicate. */
     suspend fun create(
@@ -91,16 +106,19 @@ class SoundRepository @Inject constructor(
 
     suspend fun update(sounds: Collection<Sound>) = soundDao.update(sounds)
 
+    suspend fun stopAll() {
+        log("stopAll()")
+        _stopAllSignal.emit(true)
+    }
+
     /** SOUND SELECTION ******************************************************/
 
-    private val selectedSoundIdsInternal = MutableStateFlow<Set<Int>>(emptySet())
-    private val isSelectEnabledInternal = MutableStateFlow<Boolean?>(null)
+    private val selectedSoundsInternal = MutableStateFlow<Set<Sound>>(emptySet())
+    private val isSelectEnabledInternal = MutableStateFlow(false)
 
-    val lastSelectedId: Flow<Int?> = selectedSoundIdsInternal.map { it.lastOrNull() }
+    val lastSelectedSound: Flow<Sound?> = selectedSoundsInternal.map { it.lastOrNull() }
     val isSelectEnabled: Flow<Boolean> = isSelectEnabledInternal.filterNotNull()
-    val selectedSoundIds: Flow<List<Int>> = selectedSoundIdsInternal.map { it.toList() }
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val selectedSounds: Flow<List<Sound>> = selectedSoundIds.flatMapLatest { soundDao.flowListByIds(it) }
+    val selectedSounds: Flow<List<Sound>> = selectedSoundsInternal.map { it.toList() }
 
     fun enableSelect() {
         isSelectEnabledInternal.value = true
@@ -108,15 +126,14 @@ class SoundRepository @Inject constructor(
 
     fun disableSelect() {
         isSelectEnabledInternal.value = false
-        selectedSoundIdsInternal.value = emptySet()
+        selectedSoundsInternal.value = emptySet()
     }
 
-    fun select(soundId: Int) {
-        selectedSoundIdsInternal.value += soundId
+    fun select(sound: Sound) {
+        selectedSoundsInternal.value += sound
     }
 
-    fun unselect(soundId: Int) {
-        selectedSoundIdsInternal.value -= soundId
-        if (selectedSoundIdsInternal.value.isEmpty()) disableSelect()
+    fun unselect(sound: Sound) {
+        selectedSoundsInternal.value -= sound
     }
 }

@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.net.Uri
 import androidx.preference.PreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
 import us.huseli.soundboard2.Enums
@@ -14,7 +13,6 @@ import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.helpers.LoggingObject
-import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -38,7 +36,6 @@ class SettingsRepository @Inject constructor(
     }
 
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(context)
-    // private val _screenRatio = MutableStateFlow(getScreenRatio())
     private val _spanCountPortrait =
         MutableStateFlow(_preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT))
     private val _spanCountLandscape = MutableStateFlow(
@@ -51,16 +48,14 @@ class SettingsRepository @Inject constructor(
         _preferences.getString("repressMode", null)
             ?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
     )
-    private val _isAnimationEnabled = MutableStateFlow(_preferences.getBoolean("isAnimationEnabled", true))
-    private val _isWatchFolderEnabled =
-        MutableStateFlow(_preferences.getBoolean("isWatchFolderEnabled", false))
-    private val _watchFolderUri =
-        MutableStateFlow(_preferences.getString("watchFolderUri", null)?.let { Uri.parse(it) })
+    private var _isAnimationEnabled = _preferences.getBoolean("isAnimationEnabled", true)
+    private var _isWatchFolderEnabled = _preferences.getBoolean("isWatchFolderEnabled", false)
+    private var _watchFolderUri =
+        _preferences.getString("watchFolderUri", null)?.let { Uri.parse(it) }
     private val _watchFolderCategoryId = MutableStateFlow(
         _preferences.getInt("watchFolderCategoryId", -1).let { if (it == -1) null else it }
     )
-    private val _watchFolderTrashMissing =
-        MutableStateFlow(_preferences.getBoolean("watchFolderTrashMissing", false))
+    private var _watchFolderTrashMissing = _preferences.getBoolean("watchFolderTrashMissing", false)
     private val _soundFilterTerm = MutableStateFlow("")
 
     val spanCount: Flow<Int> = combine(_orientation, _spanCountPortrait) { orientation, spanCountPortrait ->
@@ -70,12 +65,16 @@ class SettingsRepository @Inject constructor(
 
     val repressMode: StateFlow<RepressMode> = _repressMode.asStateFlow()
     val isZoomInPossible: Flow<Boolean> = spanCount.map { it > 1 }
-    val isAnimationEnabled: StateFlow<Boolean> = _isAnimationEnabled.asStateFlow()
-    val isWatchFolderEnabled: StateFlow<Boolean> = _isWatchFolderEnabled.asStateFlow()
-    val watchFolderUri: StateFlow<Uri?> = _watchFolderUri.asStateFlow()
+    val isAnimationEnabled: Boolean
+        get() = _isAnimationEnabled
+    val isWatchFolderEnabled: Boolean
+        get() = _isWatchFolderEnabled
+    val watchFolderUri: Uri?
+        get() = _watchFolderUri
     val watchFolderCategory: Flow<Category?> =
         _watchFolderCategoryId.map { categoryId -> categoryId?.let { categoryDao.get(it) } }
-    val watchFolderTrashMissing: StateFlow<Boolean> = _watchFolderTrashMissing.asStateFlow()
+    val watchFolderTrashMissing: Boolean
+        get() = _watchFolderTrashMissing
     val soundFilterTerm: StateFlow<String> = _soundFilterTerm.asStateFlow()
 
     fun initialize() {
@@ -89,51 +88,11 @@ class SettingsRepository @Inject constructor(
     }
 
 
-    /** SCROLLING ************************************************************/
-
-    // Not really a "settings" thing, but can't think of a better place.
-    private var _hasScrolled = false
-    private val _scrollNotifierScope = CoroutineScope(Job() + Dispatchers.Default)
-    private val _scrollEndSignal = MutableSharedFlow<Boolean>()
-    private var _lastScrollEvent = 0L
-
-    @Suppress("unused")
-    private val _scrollEndNotifier = _scrollNotifierScope.launch {
-        while (true) {
-            while (!_hasScrolled) delay(500)
-            if (System.currentTimeMillis() - _lastScrollEvent > 200) {
-                _scrollEndSignal.emit(true)
-                _hasScrolled = false
-            } else delay(200)
-        }
-    }
-
-    val scrollEndSignal: SharedFlow<Boolean> = _scrollEndSignal.asSharedFlow()
-
-    fun registerScrollEvent() {
-        _hasScrolled = true
-        _lastScrollEvent = System.currentTimeMillis()
-    }
-
-
     /** ZOOMING & DIMENSIONS *************************************************/
-
-    private var _screenWidthPx: Int = 0
-    private var _screenHeightPx: Int = 0
-    @Suppress("unused")
-    val screenWidthPx: Int
-        get() = _screenWidthPx
-    val screenHeightPx: Int
-        get() = _screenHeightPx
 
     internal fun landscapeSpanCountToPortrait(spanCount: Int) = max((spanCount * getScreenRatio()).roundToInt(), 1)
 
     internal fun portraitSpanCountToLandscape(spanCount: Int) = max((spanCount / getScreenRatio()).roundToInt(), 1)
-
-    fun setScreenSizePx(width: Int, height: Int) {
-        _screenWidthPx = width
-        _screenHeightPx = height
-    }
 
     private fun getScreenRatio(): Double {
         val width = context.resources.configuration.screenWidthDp.toDouble()
@@ -171,9 +130,7 @@ class SettingsRepository @Inject constructor(
 
     fun setRepressMode(value: RepressMode) = _preferences.edit().putString("repressMode", value.name).apply()
 
-    fun enableAnimations() = _preferences.edit().putBoolean("isAnimationEnabled", true).apply()
-
-    fun disableAnimations() = _preferences.edit().putBoolean("isAnimationEnabled", false).apply()
+    fun setAnimationEnabled(value: Boolean) = _preferences.edit().putBoolean("isAnimationEnabled", value).apply()
 
     fun setWatchFolder(enabled: Boolean, uri: Uri? = null, categoryId: Int? = null, trashMissing: Boolean? = null) {
         if (enabled)
@@ -202,14 +159,14 @@ class SettingsRepository @Inject constructor(
             }
             "repressMode" -> _preferences.getString(key, null)
                 .also { it?.let { _repressMode.value = RepressMode.valueOf(it) } }
-            "isAnimationEnabled" -> _preferences.getBoolean(key, false).also { _isAnimationEnabled.value = it }
-            "isWatchFolderEnabled" -> _preferences.getBoolean(key, false).also { _isWatchFolderEnabled.value = it }
+            "isAnimationEnabled" -> _preferences.getBoolean(key, false).also { _isAnimationEnabled = it }
+            "isWatchFolderEnabled" -> _preferences.getBoolean(key, false).also { _isWatchFolderEnabled = it }
             "watchFolderUri" -> _preferences.getString(key, null)
-                .also { folder -> _watchFolderUri.value = folder?.let { Uri.parse(it) } }
+                .also { folder -> _watchFolderUri = folder?.let { Uri.parse(it) } }
             "watchFolderCategoryId" -> _preferences.getInt(key, -1)
                 .also { _watchFolderCategoryId.value = if (it < 0) null else it }
             "watchFolderTrashMissing" -> _preferences.getBoolean(key, false)
-                .also { _watchFolderTrashMissing.value = it }
+                .also { _watchFolderTrashMissing = it }
         }
     }
 }

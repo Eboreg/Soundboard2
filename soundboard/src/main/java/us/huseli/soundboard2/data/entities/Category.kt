@@ -1,15 +1,20 @@
 package us.huseli.soundboard2.data.entities
 
 import androidx.annotation.ColorInt
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import us.huseli.soundboard2.helpers.SoundSorting
 
 @Entity(tableName = "Category")
 open class Category(
-    @PrimaryKey(autoGenerate = true) open val id: Int,
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "categoryId")
+    open val id: Int,
+    @ColumnInfo(name = "categoryName")
     open val name: String,
-    @ColorInt open val backgroundColor: Int,
+    @ColorInt
+    open val backgroundColor: Int,
     open val position: Int,
     open val collapsed: Boolean = false,
     open val soundSorting: SoundSorting = SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)

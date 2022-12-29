@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
-import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.databinding.ActivitySettingsBinding
 import us.huseli.soundboard2.helpers.LoggingObject
@@ -24,7 +23,7 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
     private lateinit var binding: ActivitySettingsBinding
-    private val viewModel by viewModels<SettingsViewModel>()
+    internal val viewModel by viewModels<SettingsViewModel>()
     private var watchFolderUri: Uri? = null
     private var watchFolderLauncher = registerForActivityResult(GetWatchFolder()) { onWatchFolderSelected(it) }
 
@@ -56,8 +55,6 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
         setContentView(binding.root)
 
         viewModel.watchFolderUri.observe(this) { watchFolderUri = it }
-        viewModel.watchFolderString.observe(this) { binding.watchFolderString.setText(it) }
-        viewModel.watchFolderCategoryPosition.observe(this) { binding.watchFolderCategory.setSelection(it) }
 
         viewModel.categories.observe(this) {
             binding.watchFolderCategory.adapter = CategorySpinnerAdapter(this, it)
@@ -65,28 +62,14 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
 
         binding.watchFolderSelectButton.setOnClickListener { watchFolderLauncher.launch(watchFolderUri) }
 
-        binding.isWatchFolderEnabled.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setWatchFolderEnabled(isChecked)
-        }
-
-        binding.isAnimationEnabled.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.setAnimationEnabled(isChecked)
-        }
-
         binding.saveButton.setOnClickListener {
-            viewModel.save(
-                binding.isAnimationEnabled.isChecked,
-                binding.isWatchFolderEnabled.isChecked,
-                watchFolderUri,
-                binding.watchFolderCategory.selectedItem as? Category,
-                binding.watchFolderTrashMissing.isChecked
-            )
+            viewModel.save()
             finish()
         }
 
         binding.cancelButton.setOnClickListener { finish() }
 
-        viewModel.isWatchFolderEnabled.observe(this) { isChecked ->
+        viewModel.isWatchFolderEnabledLive.observe(this) { isChecked ->
             if (isChecked) {
                 // Expand; 0 to wrap_content
                 binding.watchFolderOptions.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT

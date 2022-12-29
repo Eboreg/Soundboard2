@@ -5,7 +5,6 @@ import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.data.entities.CategoryExtended
-import us.huseli.soundboard2.data.entities.CategoryWithSounds
 import us.huseli.soundboard2.helpers.SoundSorting
 
 @Dao
@@ -23,7 +22,7 @@ interface CategoryDao {
 
     @Query(
         """
-        INSERT INTO Category (name, backgroundColor, position, soundSorting, collapsed)
+        INSERT INTO Category (categoryName, backgroundColor, position, soundSorting, collapsed)
         VALUES (:name, :backgroundColor, :position, :soundSorting, 0)
         """
     )
@@ -37,28 +36,18 @@ interface CategoryDao {
             SELECT *,
                 CASE WHEN (SELECT MIN(position) FROM Category) = position THEN 1 ELSE 0 END AS isFirst,
                 CASE WHEN (SELECT MAX(position) FROM Category) = position THEN 1 ELSE 0 END AS isLast
-            FROM Category WHERE id = :categoryId
+            FROM Category ORDER BY position
         """
     )
-    fun flowGetExtended(categoryId: Int): Flow<CategoryExtended?>
+    fun flowListExtended(): Flow<List<CategoryExtended>>
 
-    @Query("SELECT * FROM Category ORDER BY position")
-    fun flowList(): Flow<List<Category>>
-
-    @Query("SELECT id FROM Category ORDER BY position")
-    fun flowListIds(): Flow<List<Int>>
-
-    @Transaction
-    @Query("SELECT * FROM Category ORDER BY position")
-    fun flowListWithSounds(): Flow<List<CategoryWithSounds>>
-
-    @Query("SELECT * FROM Category WHERE id = :categoryId")
+    @Query("SELECT * FROM Category WHERE categoryId = :categoryId")
     suspend fun get(categoryId: Int): Category
 
     @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM Category")
     suspend fun getNextPosition(): Int
 
-    @Query("SELECT COUNT(*) FROM Sound WHERE categoryId = :categoryId")
+    @Query("SELECT COUNT(*) FROM Sound WHERE soundCategoryId = :categoryId")
     suspend fun getSoundCount(categoryId: Int): Int
 
     @Insert
@@ -70,7 +59,7 @@ interface CategoryDao {
     @Query("SELECT DISTINCT backgroundColor FROM Category")
     suspend fun listUsedColors(): List<Int>
 
-    @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE id = :categoryId")
+    @Query("UPDATE Category SET collapsed = CASE WHEN collapsed = 0 THEN 1 ELSE 0 END WHERE categoryId = :categoryId")
     suspend fun toggleCollapsed(categoryId: Int)
 
     @Update

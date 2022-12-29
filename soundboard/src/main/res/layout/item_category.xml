@@ -10,129 +10,111 @@
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/categoryItem"
+        android:id="@+id/categoryHeader"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="48dp"
+        android:paddingBottom="@dimen/margin_xsmall">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/categoryHeader"
+        <View
+            android:id="@+id/categoryHeaderBackground"
             android:layout_width="0dp"
             android:layout_height="48dp"
-            android:layout_marginBottom="4dp"
             app:backgroundColor="@{viewModel.backgroundColor}"
-            app:layout_constraintBottom_toTopOf="@+id/soundList"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:background="@color/purple_500">
+            tools:background="@color/purple_500" />
+
+        <ImageButton
+            android:id="@+id/categoryCollapseButton"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:contentDescription="@string/collapse_expand"
+            android:rotation="@{viewModel.collapseIconRotation}"
+            android:src="@drawable/icon_caret_down"
+            app:drawableColor="@{viewModel.textColor}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/categoryName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingEnd="@dimen/margin_large"
+            android:text="@{viewModel.name}"
+            android:textColor="@{viewModel.textColor}"
+            android:textSize="@dimen/category_name_text_size"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/categoryRightButtons"
+            app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Category name" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/categoryRightButtons"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageButton
-                android:id="@+id/categoryCollapseButton"
+                android:id="@+id/categoryMoveDown"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
-                android:contentDescription="@string/collapse_expand"
-                android:rotation="@{viewModel.collapseIconRotation}"
-                android:src="@drawable/icon_caret_down"
+                android:contentDescription="@string/move_down"
+                android:src="@drawable/icon_chevron_down"
                 app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="1"
+                app:layout_constraintEnd_toStartOf="@+id/categoryMoveUp"
                 app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:visible="@{viewModel.isMoveDownPossible}" />
+
+            <ImageButton
+                android:id="@+id/categoryMoveUp"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="@string/move_up"
+                android:src="@drawable/icon_chevron_up"
+                app:drawableColor="@{viewModel.textColor}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="1"
+                app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
+                app:layout_constraintStart_toEndOf="@+id/categoryMoveDown"
+                app:layout_constraintTop_toTopOf="parent"
+                app:visible="@{viewModel.isMoveUpPossible}" />
+
+            <ImageButton
+                android:id="@+id/categoryEditButton"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:contentDescription="@string/edit_category"
+                android:src="@drawable/icon_pen_to_square"
+                app:drawableColor="@{viewModel.textColor}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="1"
+                app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
+                app:layout_constraintStart_toEndOf="@+id/categoryMoveUp"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/categoryName"
+            <ImageButton
+                android:id="@+id/categoryDeleteButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:paddingStart="0dp"
-                android:paddingEnd="@dimen/margin_large"
-                android:text="@{viewModel.name}"
-                android:textColor="@{viewModel.textColor}"
-                android:textSize="@dimen/category_name_text_size"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/categoryRightButtons"
-                app:layout_constraintStart_toEndOf="@+id/categoryCollapseButton"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="Category name" />
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/categoryRightButtons"
-                android:layout_width="wrap_content"
                 android:layout_height="0dp"
+                android:contentDescription="@string/delete_category"
+                android:src="@drawable/icon_trash"
+                app:drawableColor="@{viewModel.textColor}"
                 app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="1"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageButton
-                    android:id="@+id/categoryMoveDown"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:contentDescription="@string/move_down"
-                    android:src="@drawable/icon_chevron_down"
-                    app:drawableColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1"
-                    app:layout_constraintEnd_toStartOf="@+id/categoryMoveUp"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:visible="@{viewModel.isMoveDownPossible}" />
-
-                <ImageButton
-                    android:id="@+id/categoryMoveUp"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:contentDescription="@string/move_up"
-                    android:src="@drawable/icon_chevron_up"
-                    app:drawableColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1"
-                    app:layout_constraintEnd_toStartOf="@+id/categoryEditButton"
-                    app:layout_constraintStart_toEndOf="@+id/categoryMoveDown"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:visible="@{viewModel.isMoveUpPossible}" />
-
-                <ImageButton
-                    android:id="@+id/categoryEditButton"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:contentDescription="@string/edit_category"
-                    android:src="@drawable/icon_pen_to_square"
-                    app:drawableColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1"
-                    app:layout_constraintEnd_toStartOf="@+id/categoryDeleteButton"
-                    app:layout_constraintStart_toEndOf="@+id/categoryMoveUp"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <ImageButton
-                    android:id="@+id/categoryDeleteButton"
-                    android:layout_width="0dp"
-                    android:layout_height="0dp"
-                    android:contentDescription="@string/delete_category"
-                    android:src="@drawable/icon_trash"
-                    app:drawableColor="@{viewModel.textColor}"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintDimensionRatio="1"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                app:layout_constraintStart_toEndOf="@+id/categoryEditButton"
+                app:layout_constraintTop_toTopOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/soundList"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/categoryHeader"
-            app:spanCount="4"
-            app:visible="@{viewModel.isSoundListVisible}"
-            tools:itemCount="4"
-            tools:listitem="@layout/item_sound" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

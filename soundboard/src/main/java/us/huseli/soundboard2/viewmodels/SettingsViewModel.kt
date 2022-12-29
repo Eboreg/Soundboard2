@@ -8,11 +8,9 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.entities.Category
@@ -25,54 +23,44 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val settingsRepository: SettingsRepository,
-    categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository
 ) : LoggingObject, ViewModel() {
-    private val _isAnimationEnabled = MutableStateFlow(settingsRepository.isAnimationEnabled.value)
-    private val _isWatchFolderEnabled = MutableStateFlow(settingsRepository.isWatchFolderEnabled.value)
-    private val _watchFolderUri = MutableStateFlow(settingsRepository.watchFolderUri.value)
+    private val _watchFolderUri = MutableStateFlow(settingsRepository.watchFolderUri)
 
     val categories: LiveData<List<Category>> = categoryRepository.categories.asLiveData()
-    val isAnimationEnabled: LiveData<Boolean> = _isAnimationEnabled.asLiveData()
-    val isWatchFolderEnabled: LiveData<Boolean> = _isWatchFolderEnabled.asLiveData()
+    val isAnimationEnabled = MutableStateFlow(settingsRepository.isAnimationEnabled)
+    val isWatchFolderEnabled = MutableStateFlow(settingsRepository.isWatchFolderEnabled)
+    val isWatchFolderEnabledLive = isWatchFolderEnabled.asLiveData()
     val watchFolderString: LiveData<String> =
         _watchFolderUri.map { it?.path?.split(":")?.last() ?: context.getString(R.string.not_set) }.asLiveData()
-    val watchFolderTrashMissing: LiveData<Boolean> = settingsRepository.watchFolderTrashMissing.asLiveData()
-    val watchFolderUri: LiveData<Uri?> = settingsRepository.watchFolderUri.asLiveData()
+    val watchFolderTrashMissing = MutableStateFlow(settingsRepository.watchFolderTrashMissing)
+    val watchFolderUri: LiveData<Uri?> = _watchFolderUri.asLiveData()
+    val watchFolderCategoryPosition = MutableStateFlow(0)
 
-    val watchFolderCategoryPosition: LiveData<Int> = combine(
-        settingsRepository.watchFolderCategory,
-        categoryRepository.categories
-    ) { categoryId, categoryIds ->
-        categoryIds.indexOfFirst { it == categoryId }
-    }.filter { it != -1 }.asLiveData()
-
-    fun setAnimationEnabled(value: Boolean) {
-        _isAnimationEnabled.value = value
-    }
-
-    fun setWatchFolderEnabled(value: Boolean) {
-        _isWatchFolderEnabled.value = value
+    init {
+        viewModelScope.launch {
+            settingsRepository.watchFolderCategory.stateIn(this).value?.let { category ->
+                val categories = categoryRepository.categories.stateIn(this).value
+                val categoryPosition = categories.indexOfFirst { it == category }
+                if (categoryPosition > -1) watchFolderCategoryPosition.value = categoryPosition
+            }
+        }
     }
 
     fun setWatchFolderUri(value: Uri?) {
         _watchFolderUri.value = value
     }
 
-    fun save(
-        animationsEnabled: Boolean,
-        watchFolderEnabled: Boolean,
-        watchFolderUri: Uri?,
-        watchFolderCategory: Category?,
-        watchFolderTrashMissing: Boolean
-    ) = viewModelScope.launch(Dispatchers.IO) {
-        log("save(): animationsEnabled=$animationsEnabled, watchFolderEnabled=$watchFolderEnabled, watchFolderUri=$watchFolderUri, watchFolderCategory=$watchFolderCategory, watchFolderTrashMissing=$watchFolderTrashMissing")
-        if (animationsEnabled) settingsRepository.enableAnimations()
-        else settingsRepository.disableAnimations()
+    fun save() = viewModelScope.launch {
+        val categories = categoryRepository.categories.stateIn(this).value
+        val watchFolderCategory = categories.getOrNull(watchFolderCategoryPosition.value)
+
+        settingsRepository.setAnimationEnabled(isAnimationEnabled.value)
         settingsRepository.setWatchFolder(
-            watchFolderEnabled,
-            watchFolderUri,
+            isWatchFolderEnabled.value,
+            _watchFolderUri.value,
             watchFolderCategory?.id,
-            watchFolderTrashMissing
+            watchFolderTrashMissing.value
         )
     }
 }

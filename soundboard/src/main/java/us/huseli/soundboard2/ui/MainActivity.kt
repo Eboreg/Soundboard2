@@ -5,47 +5,39 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.LayerDrawable
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.*
-import android.widget.ArrayAdapter
 import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.ColorInt
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.bundleOf
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textview.MaterialTextView
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import us.huseli.soundboard2.BuildConfig
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
 import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.helpers.MediaPlayerTests
+import us.huseli.soundboard2.helpers.SnackbarTextListener
 import us.huseli.soundboard2.ui.fragments.*
 import us.huseli.soundboard2.viewmodels.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject {
+class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject, SnackbarTextListener {
     @Inject
     lateinit var settingsRepository: SettingsRepository
-
-    private lateinit var binding: ActivityMainBinding
 
     internal val appViewModel by viewModels<AppViewModel>()
     internal val soundEditViewModel by viewModels<SoundEditViewModel>()
@@ -55,15 +47,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val categoryDeleteViewModel by viewModels<CategoryDeleteViewModel>()
     private val categoryEditViewModel by viewModels<CategoryEditViewModel>()
     private val soundAddViewModel by viewModels<SoundAddViewModel>()
-
     private val addSoundLauncher = registerForActivityResult(AddMultipleSounds()) { addSoundsFromUris(it) }
     private val scaleGestureDetector by lazy { ScaleGestureDetector(applicationContext, ScaleListener()) }
     private val soundActionModeCallback = SoundActionModeCallback()
 
+    private lateinit var soundActionModeCustomView: MaterialTextView
+    private lateinit var binding: ActivityMainBinding
     private var actionMode: ActionMode? = null
-    private var isWatchFolderEnabled: Boolean = false
     private var soundFilterTerm = ""
-    private var watchFolderTrashMissing: Boolean = false
 
     private inner class AddMultipleSounds : ActivityResultContracts.GetMultipleContents() {
         override fun createIntent(context: Context, input: String): Intent {
@@ -74,6 +65,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     private inner class SoundActionModeCallback : ActionMode.Callback {
         override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+            mode.customView = soundActionModeCustomView
             mode.menuInflater.inflate(R.menu.sound_actionmode_menu, menu)
             return true
         }
@@ -92,7 +84,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         override fun onPrepareActionMode(mode: ActionMode, menu: Menu) = false
         override fun onDestroyActionMode(mode: ActionMode) {
-            appViewModel.unselectAllSounds()
+            appViewModel.disableSelect()
         }
     }
 
@@ -111,57 +103,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     /** OVERRIDDEN METHODS ***************************************************/
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val (screenWidth, screenHeight) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            Pair(
-                windowManager.currentWindowMetrics.bounds.right,
-                windowManager.currentWindowMetrics.bounds.bottom
-            )
-        } else {
-            val metrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getMetrics(metrics)
-            Pair(metrics.widthPixels, metrics.heightPixels)
-        }
-        appViewModel.setScreenSizePx(screenWidth, screenHeight)
-
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        binding.debug = false
-        setContentView(binding.root)
-
-        setSupportActionBar(binding.actionBar.actionbarToolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-
-        initCategoryList()
-
-        lifecycleScope.launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.CREATED) {
-                appViewModel.snackbarText.collect { showSnackbar(it) }
-            }
-        }
-
-        appViewModel.watchFolderTrashMissing.observe(this) { watchFolderTrashMissing = it }
-        appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
-
-        // If we are supposed to watch a folder, now is the time to sync it.
-        appViewModel.isWatchFolderEnabled.observe(this) {
-            isWatchFolderEnabled = it
-            if (it) appViewModel.syncWatchFolder()
-        }
-
-        appViewModel.isSelectEnabled.observe(this) {
-            if (it) actionMode = startSupportActionMode(soundActionModeCallback)
-            else actionMode?.finish()
-        }
-
-        appViewModel.deleteOrphanSoundFiles()
-
-        setupEasterEggClickListener()
-        if (BuildConfig.DEBUG) mptInit()
-    }
-
     override fun onColorSelected(dialogId: Int, @ColorInt color: Int) {
         /**
          * ColorPicker will only allow Activities to handle callbacks, so hwre
@@ -170,6 +111,34 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
          */
         val fragment = getFragmentByDialogId(dialogId) { it is ColorPickerDialogListener }
         (fragment as? ColorPickerDialogListener)?.onColorSelected(dialogId, color)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding.lifecycleOwner = this
+        setContentView(binding.root)
+        soundActionModeCustomView = MaterialTextView(this)
+        setSupportActionBar(binding.actionBar.actionbarToolbar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        initCategoryList()
+
+        appViewModel.setSnackbarTextListener(this)
+        appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
+
+        appViewModel.isSelectEnabled.observe(this) {
+            if (it) actionMode = startSupportActionMode(soundActionModeCallback)
+            else actionMode?.finish()
+        }
+
+        appViewModel.selectedAndTotalSoundCount.observe(this) { (selected, total) ->
+            soundActionModeCustomView.text = getString(R.string.selected_sounds, selected, total)
+        }
+
+        appViewModel.deleteOrphanSoundFiles()
+        setupEasterEggClickListener()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -215,18 +184,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     override fun onDialogDismissed(dialogId: Int) {}
 
-    override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
-        /** Flip caret icon when repress mode menu is opened. */
-        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_up_caret, theme)
-        return super.onMenuOpened(featureId, menu)
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         /** User selected item from the "main menu" at the top. */
         when (item.itemId) {
             R.id.actionAddSound -> {
-                if (isWatchFolderEnabled && watchFolderTrashMissing) {
+                if (appViewModel.isWatchFolderEnabled && appViewModel.watchFolderTrashMissing) {
                     showFragment(
                         InfoDialogFragment::class.java,
                         bundleOf(Pair("message", getText(R.string.cannot_add_sounds)))
@@ -250,21 +212,25 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             R.id.actionUndo -> appViewModel.undo()
             R.id.actionRedo -> appViewModel.redo()
             R.id.actionDeleteOrphans -> appViewModel.deleteOrphanSoundObjects()
+            R.id.actionStopAll -> appViewModel.stopAllSounds()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
     }
 
-    override fun onPanelClosed(featureId: Int, menu: Menu) {
-        /** Flip caret icon when repress mode menu is closed. */
-        if (menu is SubMenu && menu.item.itemId == R.id.actionRepressMode)
-            menu.item.icon = ResourcesCompat.getDrawable(resources, R.drawable.repress_mode_icon_with_down_caret, theme)
-        super.onPanelClosed(featureId, menu)
+    override fun onResume() {
+        super.onResume()
+        settingsRepository.initialize()
+        // If we are supposed to watch a folder, now is the time to sync it.
+        if (appViewModel.isWatchFolderEnabled) appViewModel.syncWatchFolder()
     }
 
-    override fun onStart() {
-        super.onStart()
-        settingsRepository.initialize()
+    override fun setSnackbarText(resId: Int) {
+        setSnackbarText(applicationContext.getText(resId))
+    }
+
+    override fun setSnackbarText(text: CharSequence) {
+        if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
     }
 
 
@@ -278,10 +244,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     fun showCategoryEditFragment(categoryId: Int) {
         categoryEditViewModel.initialize(categoryId)
         showFragment(CategoryEditFragment::class.java)
-    }
-
-    fun showSnackbar(text: CharSequence) {
-        if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
     }
 
 
@@ -312,15 +274,16 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     @SuppressLint("ClickableViewAccessibility")
     private fun initCategoryList() {
-        val adapter = CategoryAdapter(this)
-        binding.categoryList.adapter = adapter
-        binding.categoryList.layoutManager?.isItemPrefetchEnabled = true
-
-        appViewModel.categoryIds.observe(this) {
-            binding.categoryList.setItemViewCacheSize(it.size)
-            adapter.submitList(it)
-            if (it.isEmpty()) appViewModel.createDefaultCategory()
+        appViewModel.categorySoundMultimap.observe(this) { multimap ->
+            binding.categoryList.setCategoryIds(this, multimap.keys.map { it.id })
+            multimap.forEach { (category, sounds) ->
+                binding.categoryList.setSoundIds(category.id, sounds.map { it.id })
+            }
+            binding.categoryList.setItemViewCacheSize(multimap.values.sumOf { it.size + 1 })
         }
+
+        appViewModel.createDefaultCategoryIfNeeded()
+        appViewModel.spanCount.observe(this) { binding.categoryList.setSpanCount(it) }
 
         binding.categoryList.setOnTouchListener { view, event ->
             /** Pinch to zoom */
@@ -336,11 +299,13 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             return@setOnTouchListener scaleGestureDetector.onTouchEvent(event)
         }
 
-        binding.categoryList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                appViewModel.registerScrollEvent()
+        binding.categoryList.doOnLayout {
+            // TODO: Not working
+            if (binding.categoryList.measuredWidth > 0 && binding.categoryList.measuredHeight > 0) {
+                log("doOnLayout: w=${binding.categoryList.measuredWidth}, h=${binding.categoryList.measuredHeight}")
+                binding.progressCircle.visible = false
             }
-        })
+        }
     }
 
     private fun initSearchAction(item: MenuItem, view: SearchView) {
@@ -361,6 +326,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
             override fun onMenuItemActionExpand(item: MenuItem): Boolean {
                 view.isIconified = false
                 binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionRepressMode)?.isVisible = false
+                binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionStopAll)?.isVisible = false
                 return true
             }
 
@@ -368,6 +334,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
                 view.setQuery("", true)
                 view.clearFocus()
                 binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionRepressMode)?.isVisible = true
+                binding.actionBar.actionbarToolbar.menu.findItem(R.id.actionStopAll)?.isVisible = true
                 return true
             }
         })
@@ -407,43 +374,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
     internal fun zoomIn() {
         val zoomPercent = appViewModel.zoomIn()
-        showSnackbar(getString(R.string.zoom_level_percent, zoomPercent))
+        setSnackbarText(getString(R.string.zoom_level_percent, zoomPercent))
     }
 
     internal fun zoomOut() {
         val zoomPercent = appViewModel.zoomOut()
-        showSnackbar(getString(R.string.zoom_level_percent, zoomPercent))
-    }
-
-
-    /** MEDIA PLAYER TEST SHIT ***********************************************/
-
-    private lateinit var mpt: MediaPlayerTests
-
-    private fun mptInit() {
-        mpt = MediaPlayerTests(applicationContext)
-
-        binding.mediaPlayerTestSpinner.adapter = ArrayAdapter(
-            applicationContext,
-            android.R.layout.simple_spinner_item,
-            MediaPlayerTests.Func.values()
-        )
-        binding.mediaPlayerTestRun.setOnClickListener {
-            mpt.runFunc(binding.mediaPlayerTestSpinner.selectedItem as MediaPlayerTests.Func)
-        }
-        binding.mediaPlayerTestReset.setOnClickListener {
-            mpt.release()
-            mpt = MediaPlayerTests(applicationContext)
-        }
-        binding.mediaPlayerTestRunAll.setOnClickListener {
-            mpt.release()
-            mpt = MediaPlayerTests(applicationContext)
-            mpt.runTests()
-        }
-        binding.mediaPlayerTestRunChain.setOnClickListener {
-            mpt.release()
-            mpt = MediaPlayerTests(applicationContext)
-            mpt.runChainTests()
-        }
+        setSnackbarText(getString(R.string.zoom_level_percent, zoomPercent))
     }
 }
