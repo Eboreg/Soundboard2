@@ -45,6 +45,8 @@ class AppViewModel @Inject constructor(
 
     val categorySoundMultimap: LiveData<Map<CategoryExtended, List<SoundExtended>>> =
         soundRepository.categorySoundMultimapVisible.asLiveData()
+    val isAnimationEnabled: Boolean
+        get() = settingsRepository.isAnimationEnabled
     val isRedoPossible: LiveData<Boolean> = stateRepository.isRedoPossible.asLiveData()
     val isSelectEnabled: LiveData<Boolean> = soundRepository.isSelectEnabled.asLiveData()
     val isUndoPossible: LiveData<Boolean> = stateRepository.isUndoPossible.asLiveData()
@@ -60,6 +62,7 @@ class AppViewModel @Inject constructor(
         soundRepository.selectedSounds.map { it.size },
         soundRepository.visibleSounds.map { it.size },
     ) { selected, total -> Pair(selected, total) }.asLiveData()
+    var themeResId = R.style.SoundboardTheme
 
     fun createDefaultCategoryIfNeeded() = viewModelScope.launch(Dispatchers.IO) {
         if (categoryRepository.list().isEmpty()) categoryRepository.createDefault()

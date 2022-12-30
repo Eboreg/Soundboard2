@@ -15,7 +15,7 @@ class CategorySoundRecyclerView : RecyclerView, LoggingObject {
     private data class AdapterCombo(
         val categoryId: Int,
         val headerAdapter: CategoryHeaderAdapter,
-        var soundAdapter: SoundAdapter? = null,
+        var soundAdapter: SoundAdapter,
     )
 
     init {
@@ -41,37 +41,53 @@ class CategorySoundRecyclerView : RecyclerView, LoggingObject {
     }
 
     fun setCategoryIds(activity: MainActivity, categoryIds: Collection<Int>) {
-        val adapterCombos = getAdapterCombos()
+        val existingCombos = getAdapterCombos()
+        val newCombos = mutableListOf<AdapterCombo>()
 
         // 1. If adapters already exist for all the category ID's and no
         // others, and they are in the correct order: do nothing
-        if (categoryIds == adapterCombos.map { it.categoryId }) return
+        if (categoryIds == existingCombos.map { it.categoryId }) return
 
-        // 2. Add adapters for any new category ID's
-        categoryIds.minus(adapterCombos.map { it.categoryId }.toSet()).forEach { categoryId ->
-            val combo = AdapterCombo(
-                categoryId,
-                CategoryHeaderAdapter(activity, categoryId).apply { setHasStableIds(true) },
-                SoundAdapter(activity).apply { setHasStableIds(true) }
+        // 2. Create adapters for any new category ID's
+        categoryIds.minus(existingCombos.map { it.categoryId }.toSet()).forEach { categoryId ->
+            newCombos.add(
+                AdapterCombo(
+                    categoryId,
+                    CategoryHeaderAdapter(activity, categoryId).apply { setHasStableIds(true) },
+                    SoundAdapter(activity).apply { setHasStableIds(true) }
+                )
             )
-            adapterCombos.add(combo)
         }
 
         // 3. Remove adapters for any old category ID's
-        adapterCombos.map { it.categoryId }.minus(categoryIds.toSet()).forEach { categoryId ->
-            adapterCombos.removeIf { it.categoryId == categoryId }
+        (adapter as? ConcatAdapter)?.let { concatAdapter ->
+            existingCombos.filterNot { it.categoryId in categoryIds }.forEach { (_, headerAdapter, soundAdapter) ->
+                concatAdapter.removeAdapter(headerAdapter)
+                concatAdapter.removeAdapter(soundAdapter)
+            }
         }
 
-        // 4. Reorder adapters if needed
-        adapterCombos.sortBy { categoryIds.indexOf(it.categoryId) }
-
-        // 5. Remove and re-add adapters from ConcatAdapter, because apparently
-        // this is how we have to do it
+        // 4. Insert new adapters in the right place and reorder existing
         (adapter as? ConcatAdapter)?.let { concatAdapter ->
-            concatAdapter.adapters.forEach { concatAdapter.removeAdapter(it) }
-            adapterCombos.forEach { (_, headerAdapter, soundAdapter) ->
-                concatAdapter.addAdapter(headerAdapter)
-                soundAdapter?.let { concatAdapter.addAdapter(it) }
+            categoryIds.forEachIndexed { index, categoryId ->
+                // If adapters for this category ID are already in the correct
+                // place, do nothing:
+                if ((concatAdapter.adapters.getOrNull(index * 2) as? CategoryHeaderAdapter)?.categoryId != categoryId) {
+                    val existingCombo = existingCombos.firstOrNull { it.categoryId == categoryId }
+                    val newCombo = newCombos.firstOrNull { it.categoryId == categoryId }
+
+                    if (existingCombo != null) {
+                        // Adapters exist but in the wrong place; move them.
+                        concatAdapter.removeAdapter(existingCombo.headerAdapter)
+                        concatAdapter.removeAdapter(existingCombo.soundAdapter)
+                        concatAdapter.addAdapter(index * 2, existingCombo.headerAdapter)
+                        concatAdapter.addAdapter(index * 2 + 1, existingCombo.soundAdapter)
+                    } else if (newCombo != null) {
+                        // Adapters do not exist; add them.
+                        concatAdapter.addAdapter(index * 2, newCombo.headerAdapter)
+                        concatAdapter.addAdapter(index * 2 + 1, newCombo.soundAdapter)
+                    }
+                }
             }
         }
     }
@@ -100,13 +116,12 @@ class CategorySoundRecyclerView : RecyclerView, LoggingObject {
         // We assume that a CategoryHeaderAdapter is always followed by a
         // SoundAdapter for that category.
         val combos = mutableListOf<AdapterCombo>()
-        var currentCombo: AdapterCombo? = null
         (adapter as? ConcatAdapter)?.let { concatAdapter ->
-            concatAdapter.adapters.forEach { adapter ->
-                when (adapter) {
-                    is CategoryHeaderAdapter ->
-                        currentCombo = AdapterCombo(adapter.categoryId, adapter).also { combos.add(it) }
-                    is SoundAdapter -> currentCombo?.let { it.soundAdapter = adapter }
+            concatAdapter.adapters.forEachIndexed { index, adapter ->
+                if (adapter is CategoryHeaderAdapter) {
+                    (concatAdapter.adapters.getOrNull(index + 1) as? SoundAdapter)?.let { soundAdapter ->
+                        combos.add(AdapterCombo(adapter.categoryId, adapter, soundAdapter))
+                    }
                 }
             }
         }

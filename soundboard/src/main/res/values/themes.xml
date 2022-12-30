@@ -166,7 +166,6 @@ concrete values for these named resources."
         <item name="colorOnSecondary">@color/white</item>
         <item name="colorPrimaryDark">@color/blue_grey_400</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
-
         <item name="colorBackgroundFloating">@color/white</item>
         <item name="colorControlNormal">@color/grey_800</item>
         <item name="colorOnPrimary">@color/black</item>
@@ -176,5 +175,46 @@ concrete values for these named resources."
         <item name="colorPrimaryVariant">@color/blue_grey_100</item>
         <item name="colorSecondary">@color/teal_300</item>
         <item name="colorSurface">@color/grey_100</item>
+    </style>
+
+    <!-- NOANIMATION STYLES                                                 -->
+
+    <style name="ImageButton.NoAnimation" parent="ImageButton">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="rippleColor">@android:color/transparent</item>
+    </style>
+
+    <style name="MaterialButton.NoAnimation" parent="MaterialButton">
+        <item name="rippleColor">@null</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+    </style>
+
+    <style name="ActionButton.NoAnimation" parent="ActionButton">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="TextButton.NoAnimation" parent="TextButton">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="TextButton.Negative.NoAnimation" parent="TextButton.Negative">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="MaterialAlertDialog.NoAnimation" parent="MaterialAlertDialog">
+        <item name="buttonBarNegativeButtonStyle">@style/TextButton.Negative.NoAnimation</item>
+        <item name="buttonBarNeutralButtonStyle">@style/TextButton.NoAnimation</item>
+        <item name="buttonBarPositiveButtonStyle">@style/TextButton.NoAnimation</item>
+    </style>
+
+    <style name="SoundboardTheme.NoAnimation" parent="SoundboardTheme">
+        <item name="actionBarItemBackground">@android:color/transparent</item>
+        <item name="actionButtonStyle">@style/ActionButton.NoAnimation</item>
+        <item name="alertDialogTheme">@style/MaterialAlertDialog.NoAnimation</item>
+        <item name="imageButtonStyle">@style/ImageButton.NoAnimation</item>
+        <item name="materialAlertDialogTheme">@style/MaterialAlertDialog.NoAnimation</item>
+        <item name="materialButtonStyle">@style/MaterialButton.NoAnimation</item>
+        <item name="selectableItemBackground">@android:color/transparent</item>
+        <item name="selectableItemBackgroundBorderless">@android:color/transparent</item>
     </style>
 </resources>

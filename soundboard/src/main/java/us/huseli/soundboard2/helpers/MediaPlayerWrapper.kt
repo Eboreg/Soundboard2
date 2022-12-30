@@ -199,7 +199,8 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
                 in listOf(
                     State.STOPPED,
                     State.ERROR,
-                    State.PLAYBACK_COMPLETED
+                    State.PLAYBACK_COMPLETED,
+                    State.NONE
                 ) -> _playerEventListener?.onPlaybackStopped()
                 else -> {}
             }

@@ -17,6 +17,8 @@ import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.preference.PreferenceManager
+import androidx.recyclerview.widget.DefaultItemAnimator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textview.MaterialTextView
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
@@ -114,6 +116,11 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val isAnimationEnabled = PreferenceManager.getDefaultSharedPreferences(applicationContext)
+            .getBoolean("isAnimationEnabled", true)
+        if (isAnimationEnabled) setTheme(R.style.SoundboardTheme)
+        else setTheme(R.style.SoundboardTheme_NoAnimation)
+
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -221,8 +228,23 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     override fun onResume() {
         super.onResume()
         settingsRepository.initialize()
+
         // If we are supposed to watch a folder, now is the time to sync it.
         if (appViewModel.isWatchFolderEnabled) appViewModel.syncWatchFolder()
+
+        val themeResId: Int?
+        if (!appViewModel.isAnimationEnabled) {
+            binding.categoryList.itemAnimator = null
+            themeResId = R.style.SoundboardTheme_NoAnimation
+        } else {
+            binding.categoryList.itemAnimator = DefaultItemAnimator()
+            themeResId = R.style.SoundboardTheme
+        }
+        if (themeResId != appViewModel.themeResId) {
+            log("Old theme=${appViewModel.themeResId}, new theme=$themeResId; run setTheme() & recreate()")
+            recreate()
+        }
+        appViewModel.themeResId = themeResId
     }
 
     override fun setSnackbarText(resId: Int) {
