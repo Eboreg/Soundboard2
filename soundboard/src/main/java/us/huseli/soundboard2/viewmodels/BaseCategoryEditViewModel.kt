@@ -31,14 +31,14 @@ abstract class BaseCategoryEditViewModel(protected val categoryRepository: Categ
     val backgroundColor = MutableStateFlow(Color.TRANSPARENT)
     val isReady: LiveData<Boolean> = isReadyInternal.asLiveData()
 
-    protected suspend fun setRandomBackgroundColorInternal() {
-        backgroundColor.value = categoryRepository.getRandomColor(backgroundColor.value)
-    }
-
     abstract fun save()
 
     fun setRandomBackgroundColor() = viewModelScope.launch(Dispatchers.IO) {
         setRandomBackgroundColorInternal()
+    }
+
+    protected suspend fun setRandomBackgroundColorInternal() {
+        backgroundColor.value = categoryRepository.getRandomColor(backgroundColor.value)
     }
 
     open fun validate() {

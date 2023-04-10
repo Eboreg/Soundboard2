@@ -54,14 +54,12 @@ abstract class BaseDialogFragment<T : ViewDataBinding> : DialogFragment() {
         val dialog = builder.create()
 
         dialog.setOnShowListener {
-            if (positiveButtonText != null)
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                    if (onPositiveButtonClick()) dismiss()
-                }
-            if (negativeButtonText != null)
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
-                    if (onNegativeButtonClick()) dismiss()
-                }
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                if (onPositiveButtonClick()) dismiss()
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.setOnClickListener {
+                if (onNegativeButtonClick()) dismiss()
+            }
         }
 
         onDialogCreated(dialog)

@@ -10,24 +10,38 @@ import android.provider.DocumentsContract
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import dagger.hilt.android.AndroidEntryPoint
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.databinding.ActivitySettingsBinding
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.ui.fragments.BackupFragment
+import us.huseli.soundboard2.ui.fragments.RestoreFragment
 import us.huseli.soundboard2.viewmodels.SettingsViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SettingsActivity : LoggingObject, AppCompatActivity() {
+class SettingsActivity : LoggingObject, BaseActivity<ActivitySettingsBinding>() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
-    private lateinit var binding: ActivitySettingsBinding
-    internal val viewModel by viewModels<SettingsViewModel>()
+    private val settingsViewModel by viewModels<SettingsViewModel>()
     private var watchFolderUri: Uri? = null
-    private var watchFolderLauncher = registerForActivityResult(GetWatchFolder()) { onWatchFolderSelected(it) }
+    private val watchFolderLauncher = registerForActivityResult(WatchFolderContract()) { onWatchFolderSelected(it) }
+    // private val restoreFileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+    private val restoreFileLauncher = registerForActivityResult(RestoreFileContract()) { uri ->
+        showFragment(
+            RestoreFragment::class.java,
+            bundleOf(Pair("uri", uri))
+        )
+    }
 
-    private inner class GetWatchFolder : ActivityResultContracts.OpenDocumentTree() {
+    private class RestoreFileContract : ActivityResultContracts.OpenDocument() {
+        override fun createIntent(context: Context, input: Array<String>): Intent {
+            return super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+    }
+
+    private inner class WatchFolderContract : ActivityResultContracts.OpenDocumentTree() {
         override fun createIntent(context: Context, input: Uri?): Intent {
             this@SettingsActivity.overridePendingTransition(0, 0)
             val intent = super.createIntent(context, input).addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -38,38 +52,33 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
         }
     }
 
-    private fun onWatchFolderSelected(uri: Uri?) {
-        if (uri != null) {
-            applicationContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            watchFolderUri = uri
-            viewModel.setWatchFolderUri(uri)
-        }
-    }
+    /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         binding.lifecycleOwner = this
-        binding.viewModel = viewModel
+        binding.viewModel = settingsViewModel
         setContentView(binding.root)
 
-        viewModel.watchFolderUri.observe(this) { watchFolderUri = it }
+        settingsViewModel.watchFolderUri.observe(this) { watchFolderUri = it }
 
-        viewModel.categories.observe(this) {
+        settingsViewModel.categories.observe(this) {
             binding.watchFolderCategory.adapter = CategorySpinnerAdapter(this, it)
         }
 
-        binding.watchFolderSelectButton.setOnClickListener { watchFolderLauncher.launch(watchFolderUri) }
-
         binding.saveButton.setOnClickListener {
-            viewModel.save()
+            settingsViewModel.save()
             finish()
         }
 
+        binding.watchFolderSelectButton.setOnClickListener { watchFolderLauncher.launch(watchFolderUri) }
         binding.cancelButton.setOnClickListener { finish() }
+        binding.backupButton.setOnClickListener { startBackup() }
+        binding.restoreButton.setOnClickListener { startRestore() }
 
-        viewModel.isWatchFolderEnabledLive.observe(this) { isChecked ->
+        settingsViewModel.isWatchFolderEnabledLive.observe(this) { isChecked ->
             if (isChecked) {
                 // Expand; 0 to wrap_content
                 binding.watchFolderOptions.layoutParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -91,5 +100,31 @@ class SettingsActivity : LoggingObject, AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         settingsRepository.initialize()
+    }
+
+    private fun startBackup() {
+        showFragment(BackupFragment::class.java, bundleOf(Pair("includeSounds", binding.backupIncludeSounds.isChecked)))
+    }
+
+    private fun startRestore() {
+        /*
+        val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+            addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            type = "application/zip"
+            addCategory(Intent.CATEGORY_OPENABLE)
+        }
+        restoreFileLauncher.launch(intent)
+         */
+        restoreFileLauncher.launch(arrayOf("application/zip"))
+    }
+
+    /** PRIVATE METHODS ******************************************************/
+
+    private fun onWatchFolderSelected(uri: Uri?) {
+        if (uri != null) {
+            applicationContext.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            watchFolderUri = uri
+            settingsViewModel.setWatchFolderUri(uri)
+        }
     }
 }

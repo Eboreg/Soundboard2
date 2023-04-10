@@ -5,11 +5,9 @@
     <dimen name="margin_large">16dp</dimen>
     <dimen name="margin_xlarge">24dp</dimen>
     <dimen name="sound_card_corner_radius">4dp</dimen>
-    <dimen name="elevation_large">8dp</dimen>
     <dimen name="sound_card_alpha">0.5</dimen>
     <dimen name="actionbar_height">60dp</dimen>
     <dimen name="dialog_min_width" type="dimen">95%</dimen>
-    <dimen name="title_text">18sp</dimen>
     <dimen name="action_button_height">32dp</dimen>
     <dimen name="elevation_normal">2dp</dimen>
     <dimen name="text_small">10sp</dimen>

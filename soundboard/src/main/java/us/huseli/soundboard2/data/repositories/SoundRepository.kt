@@ -73,7 +73,7 @@ class SoundRepository @Inject constructor(
 
     val stopAllSignal: SharedFlow<Boolean> = _stopAllSignal.asSharedFlow()
 
-    suspend fun list(): List<Sound> = soundDao.list()
+    suspend fun applyState(sounds: Collection<Sound>) = soundDao.applyState(sounds)
 
     /** If duplicate == null: copy file to local storage. Otherwise: just use same path as duplicate. */
     suspend fun create(
@@ -84,7 +84,7 @@ class SoundRepository @Inject constructor(
         category: Category,
         duplicate: Sound?
     ) {
-        val uri = duplicate?.uri ?: Functions.copyFileToLocal(context, soundFile).toUri()
+        val uri = duplicate?.uri ?: Functions.copySoundFileToLocal(context, soundFile).toUri()
         val name = explicitName ?: duplicate?.name ?: soundFile.name
 
         soundDao.create(
@@ -104,12 +104,14 @@ class SoundRepository @Inject constructor(
 
     suspend fun delete(sounds: Collection<Sound>) = soundDao.delete(sounds)
 
-    suspend fun update(sounds: Collection<Sound>) = soundDao.update(sounds)
+    suspend fun list(): List<Sound> = soundDao.list()
 
     suspend fun stopAll() {
         log("stopAll()")
         _stopAllSignal.emit(true)
     }
+
+    suspend fun update(sounds: Collection<Sound>) = soundDao.update(sounds)
 
     /** SOUND SELECTION ******************************************************/
 

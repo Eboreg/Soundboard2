@@ -175,6 +175,7 @@ concrete values for these named resources."
         <item name="colorPrimaryVariant">@color/blue_grey_100</item>
         <item name="colorSecondary">@color/teal_300</item>
         <item name="colorSurface">@color/grey_100</item>
+        <item name="colorError">@color/red_900</item>
     </style>
 
     <!-- NOANIMATION STYLES                                                 -->

@@ -16,15 +16,15 @@ class SoundSorting(val parameter: Parameter, val order: Order) {
         DESCENDING(-1),
     }
 
-    override fun toString() = "${parameter.name} / ${order.name}"
+    class SortParameterItem(val value: Parameter, private val label: String) {
+        override fun toString() = label
+    }
 
     override fun equals(other: Any?) = other is SoundSorting && other.order == order && other.parameter == parameter
 
     override fun hashCode() = parameter.value * order.value
 
-    class SortParameterItem(val value: Parameter, private val label: String) {
-        override fun toString() = label
-    }
+    override fun toString() = "${parameter.name} / ${order.name}"
 
     companion object {
         private val sortParameters = listOf(

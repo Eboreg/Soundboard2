@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <level-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_set_repress_mode_stop"
         android:drawable="@drawable/icon_stop"
         android:maxLevel="0" />
     <item
-        android:id="@+id/action_set_repress_mode_restart"
         android:drawable="@drawable/icon_play"
         android:maxLevel="1" />
     <item
-        android:id="@+id/action_set_repress_mode_overlap"
         android:drawable="@drawable/icon_clone"
         android:maxLevel="2" />
     <item
-        android:id="@+id/action_set_repress_mode_pause"
         android:drawable="@drawable/icon_pause"
         android:maxLevel="3" />
 </level-list>

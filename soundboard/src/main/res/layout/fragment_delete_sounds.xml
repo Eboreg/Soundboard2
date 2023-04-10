@@ -14,7 +14,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/deleteSoundsText"
-            tools:text="Do you want to delete the 6 selected sounds?" />
+            tools:text="Do you want to delete the 6 selected sounds?"
+            tools:ignore="SelectableText" />
 
     </LinearLayout>
 

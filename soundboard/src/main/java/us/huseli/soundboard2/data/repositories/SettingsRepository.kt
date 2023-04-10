@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.net.Uri
 import androidx.preference.PreferenceManager
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import us.huseli.soundboard2.Constants
@@ -13,12 +15,15 @@ import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.dao.CategoryDao
 import us.huseli.soundboard2.data.entities.Category
 import us.huseli.soundboard2.helpers.LoggingObject
+import us.huseli.soundboard2.helpers.UriDeserializer
+import us.huseli.soundboard2.helpers.UriSerializer
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
+@Suppress("BooleanMethodIsAlwaysInverted")
 @Singleton
 class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -35,7 +40,27 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    private inner class JsonFields {
+        val isAnimationEnabled = _isAnimationEnabled
+        val isWatchFolderEnabled = _isWatchFolderEnabled
+        val watchFolderUri = _watchFolderUri
+        val watchFolderTrashMissing = _watchFolderTrashMissing
+        val spanCountPortrait = _spanCountPortrait.value
+        val repressMode = _repressMode.value
+        val watchFolderCategoryId = _watchFolderCategoryId.value
+    }
+
+    private val _gson: Gson = GsonBuilder()
+        .registerTypeAdapter(Uri::class.java, UriSerializer())
+        .registerTypeAdapter(Uri::class.java, UriDeserializer())
+        .create()
+
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(context)
+    private var _isAnimationEnabled = _preferences.getBoolean("isAnimationEnabled", true)
+    private var _isWatchFolderEnabled = _preferences.getBoolean("isWatchFolderEnabled", false)
+    private var _watchFolderUri = _preferences.getString("watchFolderUri", null)?.let { Uri.parse(it) }
+    private var _watchFolderTrashMissing = _preferences.getBoolean("watchFolderTrashMissing", false)
+
     private val _spanCountPortrait =
         MutableStateFlow(_preferences.getInt("spanCountPortrait", Constants.DEFAULT_SPANCOUNT_PORTRAIT))
     private val _spanCountLandscape = MutableStateFlow(
@@ -48,14 +73,9 @@ class SettingsRepository @Inject constructor(
         _preferences.getString("repressMode", null)
             ?.let { RepressMode.valueOf(it) } ?: RepressMode.STOP
     )
-    private var _isAnimationEnabled = _preferences.getBoolean("isAnimationEnabled", true)
-    private var _isWatchFolderEnabled = _preferences.getBoolean("isWatchFolderEnabled", false)
-    private var _watchFolderUri =
-        _preferences.getString("watchFolderUri", null)?.let { Uri.parse(it) }
     private val _watchFolderCategoryId = MutableStateFlow(
         _preferences.getInt("watchFolderCategoryId", -1).let { if (it == -1) null else it }
     )
-    private var _watchFolderTrashMissing = _preferences.getBoolean("watchFolderTrashMissing", false)
     private val _soundFilterTerm = MutableStateFlow("")
 
     val spanCount: Flow<Int> = combine(_orientation, _spanCountPortrait) { orientation, spanCountPortrait ->
@@ -86,7 +106,6 @@ class SettingsRepository @Inject constructor(
                 else -> Enums.Orientation.PORTRAIT
             }
     }
-
 
     /** ZOOMING & DIMENSIONS *************************************************/
 
@@ -125,12 +144,33 @@ class SettingsRepository @Inject constructor(
 
     fun zoomOut() = zoom(1)
 
+    /** META **************************************************************/
+
+    fun dumpJson(): String = _gson.toJson(JsonFields())
+
+    fun loadJson(json: String) {
+        _gson.fromJson(json, JsonFields::class.java)?.also { fields ->
+            setAnimationEnabled(fields.isAnimationEnabled)
+            setWatchFolder(
+                fields.isWatchFolderEnabled,
+                fields.watchFolderUri,
+                fields.watchFolderCategoryId,
+                fields.watchFolderTrashMissing
+            )
+            _preferences.edit().putInt("spanCountPortrait", fields.spanCountPortrait).apply()
+            setRepressMode(fields.repressMode)
+        }
+    }
 
     /** VARIOUS **************************************************************/
 
+    fun setAnimationEnabled(value: Boolean) = _preferences.edit().putBoolean("isAnimationEnabled", value).apply()
+
     fun setRepressMode(value: RepressMode) = _preferences.edit().putString("repressMode", value.name).apply()
 
-    fun setAnimationEnabled(value: Boolean) = _preferences.edit().putBoolean("isAnimationEnabled", value).apply()
+    fun setSoundFilterTerm(value: String) {
+        _soundFilterTerm.value = value
+    }
 
     fun setWatchFolder(enabled: Boolean, uri: Uri? = null, categoryId: Int? = null, trashMissing: Boolean? = null) {
         if (enabled)
@@ -143,11 +183,6 @@ class SettingsRepository @Inject constructor(
         else
             _preferences.edit().putBoolean("isWatchFolderEnabled", false).apply()
     }
-
-    fun setSoundFilterTerm(value: String) {
-        _soundFilterTerm.value = value
-    }
-
 
     /** OVERRIDDEN METHODS ***************************************************/
 

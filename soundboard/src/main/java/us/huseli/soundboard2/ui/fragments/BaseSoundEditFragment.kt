@@ -28,9 +28,6 @@ abstract class BaseSoundEditFragment : LoggingObject, BaseColorPickerDialogFragm
 
     override fun getSelectColorButton(binding: FragmentEditSoundsBinding) = binding.column2.selectColorButton
 
-    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
-        FragmentEditSoundsBinding.inflate(layoutInflater)
-
     override fun onBindingCreated(binding: FragmentEditSoundsBinding) {
         super.onBindingCreated(binding)
 
@@ -45,6 +42,13 @@ abstract class BaseSoundEditFragment : LoggingObject, BaseColorPickerDialogFragm
         }
     }
 
+    override fun onColorSelected(dialogId: Int, @ColorInt color: Int) {
+        viewModel.backgroundColor.value = color
+    }
+
+    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
+        FragmentEditSoundsBinding.inflate(layoutInflater)
+
     override fun onDialogCreated(dialog: AlertDialog) {
         super.onDialogCreated(dialog)
 
@@ -56,10 +60,6 @@ abstract class BaseSoundEditFragment : LoggingObject, BaseColorPickerDialogFragm
         viewModel.isReady.observe(this) {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = it
         }
-    }
-
-    override fun onColorSelected(dialogId: Int, @ColorInt color: Int) {
-        viewModel.backgroundColor.value = color
     }
 
     override fun onPositiveButtonClick(): Boolean {

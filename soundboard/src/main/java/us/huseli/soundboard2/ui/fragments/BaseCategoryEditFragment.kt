@@ -27,13 +27,6 @@ abstract class BaseCategoryEditFragment : BaseColorPickerDialogFragment<Fragment
 
     override fun getSelectColorButton(binding: FragmentEditCategoryBinding) = binding.column1.selectColorButton
 
-    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
-        FragmentEditCategoryBinding.inflate(layoutInflater)
-
-    override fun onColorSelected(dialogId: Int, color: Int) {
-        viewModel.backgroundColor.value = color
-    }
-
     override fun onBindingCreated(binding: FragmentEditCategoryBinding) {
         super.onBindingCreated(binding)
 
@@ -50,6 +43,13 @@ abstract class BaseCategoryEditFragment : BaseColorPickerDialogFragment<Fragment
         viewModel.isReady.observe(this) {
             binding.progressCircle.visible = !it
         }
+    }
+
+    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
+        FragmentEditCategoryBinding.inflate(layoutInflater)
+
+    override fun onColorSelected(dialogId: Int, color: Int) {
+        viewModel.backgroundColor.value = color
     }
 
     override fun onDialogCreated(dialog: AlertDialog) {

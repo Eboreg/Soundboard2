@@ -16,5 +16,6 @@
         <item name="colorPrimaryVariant">@color/blue_grey_900</item>
         <item name="colorSecondary">@color/teal_500</item>
         <item name="colorSurface">@color/grey_900</item>
+        <item name="colorError">@color/red_400</item>
     </style>
 </resources>

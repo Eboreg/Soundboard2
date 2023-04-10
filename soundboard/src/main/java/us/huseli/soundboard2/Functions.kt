@@ -10,43 +10,9 @@ import us.huseli.soundboard2.data.SoundFile
 import us.huseli.soundboard2.helpers.MD5
 import java.io.File
 import java.io.FileOutputStream
+import java.util.*
 
 object Functions {
-    suspend fun extractChecksum(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
-        return@withContext runCatching {
-            (context.contentResolver.openInputStream(uri) ?: run {
-                throw Exception("extractChecksum: openInputStream returned null")
-            }).use { return@use MD5.calculate(it) }
-        }.getOrElse { throw Exception("extractChecksum threw exception", it) }
-    }
-
-    suspend fun copyFileToLocal(context: Context, soundFile: SoundFile): File {
-        val path = soundFile.uri.lastPathSegment
-        val filename = if (path != null) {
-            val (basename, ext) = getFilenameAndExtension(path)
-            val maxBasenameLength = 128 - (1 + soundFile.checksum.length + (ext?.let { 1 + ext.length } ?: 0))
-            if (basename.length > maxBasenameLength)
-                basename.substring(0, maxBasenameLength)
-            else basename + "-${soundFile.checksum}" + (ext?.let { ".$ext" } ?: "")
-        } else soundFile.checksum
-
-        return withContext(Dispatchers.IO) {
-            return@withContext runCatching {
-                val outputFile = File(context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE), filename)
-                (context.contentResolver.openInputStream(soundFile.uri) ?: run {
-                    throw Exception("copyFileToLocal: openInputStream returned null")
-                }).use { inputStream ->
-                    FileOutputStream(outputFile).use { outputStream ->
-                        val buf = ByteArray(1024)
-                        var len: Int
-                        while (inputStream.read(buf).also { len = it } > 0) outputStream.write(buf, 0, len)
-                    }
-                }
-                return@runCatching outputFile
-            }
-        }.getOrElse { throw Exception("copyFileToLocal threw exception", it) }
-    }
-
     /** Returns Pair of name: String, duration: Long. */
     private fun _extractMetadata(retriever: MediaMetadataRetriever, defaultName: String): Pair<String, Long> {
         if (retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)?.startsWith("audio") != true)
@@ -56,6 +22,48 @@ object Functions {
             ?: run { throw Exception("extractMetadata: Could not get duration") }
         val name = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
         return Pair(name ?: defaultName, duration)
+    }
+
+    suspend fun copyFileToLocal(context: Context, uri: Uri, outFile: File): File {
+        return withContext(Dispatchers.IO) {
+            return@withContext runCatching {
+                (context.contentResolver.openInputStream(uri) ?: run {
+                    throw Exception("copyFileToLocal: openInputStream returned null")
+                }).use { inputStream ->
+                    outFile.createNewFile()
+                    FileOutputStream(outFile).use { outputStream ->
+                        val buf = ByteArray(1024)
+                        var len: Int
+                        while (inputStream.read(buf).also { len = it } > 0) outputStream.write(buf, 0, len)
+                    }
+                }
+                return@runCatching outFile
+            }
+        }.getOrElse { throw Exception("copyFileToLocal threw exception", it) }
+    }
+
+    suspend fun copySoundFileToLocal(context: Context, soundFile: SoundFile): File {
+        val filename = soundFile.uri.lastPathSegment?.let { path ->
+            val (basename, ext) = getFilenameAndExtension(path)
+            val maxBasenameLength = 128 - (1 + soundFile.checksum.length + (ext?.let { 1 + ext.length } ?: 0))
+            if (basename.length > maxBasenameLength)
+                basename.substring(0, maxBasenameLength)
+            else basename + "-${soundFile.checksum}" + (ext?.let { ".$ext" } ?: "")
+        } ?: soundFile.checksum
+
+        return copyFileToLocal(
+            context,
+            soundFile.uri,
+            File(context.getDir(Constants.SOUND_DIRNAME, Context.MODE_PRIVATE), filename),
+        )
+    }
+
+    suspend fun extractChecksum(context: Context, uri: Uri): String = withContext(Dispatchers.IO) {
+        return@withContext runCatching {
+            (context.contentResolver.openInputStream(uri) ?: run {
+                throw Exception("extractChecksum: openInputStream returned null")
+            }).use { return@use MD5.calculate(it) }
+        }.getOrElse { throw Exception("extractChecksum threw exception", it) }
     }
 
     /** Tries to grab title from media tag. If that fails, use filename. */
@@ -89,7 +97,8 @@ object Functions {
 
     @Suppress("MemberVisibilityCanBePrivate")
     fun getFilenameAndExtension(path: String): Pair<String, String?> {
-        val filename = path.split("/").last()
+        // Should remove all ASCII 0x7F+ chars:
+        val filename = path.split("/").last().replace(Regex("[^\\x00-\\x7f]"), "")
         val parts = filename.reversed().split(".", limit = 2)
         return if (parts.size == 2)
             Pair(parts[1].reversed(), parts[0].reversed())

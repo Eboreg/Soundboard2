@@ -21,9 +21,6 @@ class CategoryDeleteFragment : BaseDialogFragment<FragmentDeleteCategoryBinding>
     @StringRes
     override val dialogTitle = R.string.delete_category
 
-    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
-        FragmentDeleteCategoryBinding.inflate(layoutInflater)
-
     override fun onBindingCreated(binding: FragmentDeleteCategoryBinding) {
         super.onBindingCreated(binding)
         binding.viewModel = viewModel
@@ -32,6 +29,9 @@ class CategoryDeleteFragment : BaseDialogFragment<FragmentDeleteCategoryBinding>
             binding.newCategory.adapter = CategorySpinnerAdapter(requireContext(), it)
         }
     }
+
+    override fun onCreateBinding(layoutInflater: LayoutInflater, savedInstanceState: Bundle?) =
+        FragmentDeleteCategoryBinding.inflate(layoutInflater)
 
     override fun onDialogCreated(dialog: AlertDialog) {
         super.onDialogCreated(dialog)

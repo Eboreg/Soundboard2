@@ -42,7 +42,7 @@ open class Category(
         other.collapsed == collapsed &&
         other.soundSorting == soundSorting
 
-    override fun toString() = name
     override fun equals(other: Any?) = other is Category && other.id == id
     override fun hashCode() = id
+    override fun toString() = name
 }

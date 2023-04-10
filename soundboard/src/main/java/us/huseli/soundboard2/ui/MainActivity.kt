@@ -11,12 +11,12 @@ import android.widget.SearchView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.ColorInt
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.view.ActionMode
 import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import com.google.android.material.snackbar.Snackbar
@@ -24,6 +24,7 @@ import com.google.android.material.textview.MaterialTextView
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.Functions
@@ -31,13 +32,12 @@ import us.huseli.soundboard2.R
 import us.huseli.soundboard2.data.repositories.SettingsRepository
 import us.huseli.soundboard2.databinding.ActivityMainBinding
 import us.huseli.soundboard2.helpers.LoggingObject
-import us.huseli.soundboard2.helpers.SnackbarTextListener
 import us.huseli.soundboard2.ui.fragments.*
 import us.huseli.soundboard2.viewmodels.*
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObject, SnackbarTextListener {
+class MainActivity : BaseActivity<ActivityMainBinding>(), ColorPickerDialogListener, LoggingObject {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
@@ -54,7 +54,7 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
     private val soundActionModeCallback = SoundActionModeCallback()
 
     private lateinit var soundActionModeCustomView: MaterialTextView
-    private lateinit var binding: ActivityMainBinding
+    // lateinit var binding: ActivityMainBinding
     private var actionMode: ActionMode? = null
     private var soundFilterTerm = ""
 
@@ -132,7 +132,6 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         initCategoryList()
 
-        appViewModel.setSnackbarTextListener(this)
         appViewModel.soundFilterTerm.observe(this) { soundFilterTerm = it }
 
         appViewModel.isSelectEnabled.observe(this) {
@@ -142,6 +141,24 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
 
         appViewModel.selectedAndTotalSoundCount.observe(this) { (selected, total) ->
             soundActionModeCustomView.text = getString(R.string.selected_sounds, selected, total)
+        }
+
+        watchFlow(appViewModel.syncWatchFolderResult) { (added, deleted) ->
+            showFragment(
+                WatchFolderSyncedFragment::class.java,
+                bundleOf(
+                    Pair("added", added.toTypedArray()),
+                    Pair("deleted", deleted.toTypedArray())
+                )
+            )
+        }
+        watchFlow(appViewModel.undoSignal) { setSnackbarText(R.string.undid) }
+        watchFlow(appViewModel.redoSignal) { setSnackbarText(R.string.redid) }
+        watchFlow(appViewModel.orphanSoundsDeletedSignal) { deleted ->
+            setSnackbarText(resources.getQuantityString(R.plurals.deleted_orphan_sounds, deleted, deleted))
+        }
+        watchFlow(appViewModel.orphanFilesDeletedSignal) { deleted ->
+            setSnackbarText(resources.getQuantityString(R.plurals.deleted_orphan_files, deleted, deleted))
         }
 
         appViewModel.deleteOrphanSoundFiles()
@@ -230,7 +247,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         settingsRepository.initialize()
 
         // If we are supposed to watch a folder, now is the time to sync it.
-        if (appViewModel.isWatchFolderEnabled) appViewModel.syncWatchFolder()
+        if (appViewModel.isWatchFolderEnabled) {
+            val snackbar = setSnackbarText(R.string.watch_folder_checking, Snackbar.LENGTH_INDEFINITE)
+            appViewModel.syncWatchFolder { snackbar?.dismiss() }
+        }
 
         val themeResId: Int?
         if (!appViewModel.isAnimationEnabled) {
@@ -247,16 +267,10 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         appViewModel.themeResId = themeResId
     }
 
-    override fun setSnackbarText(resId: Int) {
-        setSnackbarText(applicationContext.getText(resId))
-    }
-
-    override fun setSnackbarText(text: CharSequence) {
-        if (text.isNotEmpty()) Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
-    }
-
 
     /** PUBLIC METHODS *******************************************************/
+
+    fun setSnackbarText(text: CharSequence) = setSnackbarText(text, Snackbar.LENGTH_SHORT)
 
     fun showCategoryDeleteFragment(categoryId: Int) {
         categoryDeleteViewModel.initialize(categoryId)
@@ -372,6 +386,14 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         item.icon?.alpha = if (value) 255 else 128
     }
 
+    private fun setSnackbarText(text: CharSequence, duration: Int): Snackbar? =
+        if (text.isNotEmpty()) Snackbar.make(binding.root, text, duration).also { it.show() } else null
+
+    private fun setSnackbarText(resId: Int) = setSnackbarText(resId, Snackbar.LENGTH_SHORT)
+
+    private fun setSnackbarText(resId: Int, duration: Int) =
+        setSnackbarText(applicationContext.getText(resId), duration)
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setupEasterEggClickListener() {
         binding.actionBar.actionbarLogo.isClickable = true
@@ -387,11 +409,12 @@ class MainActivity : AppCompatActivity(), ColorPickerDialogListener, LoggingObje
         }
     }
 
-    internal fun showFragment(fragmentClass: Class<out Fragment>, args: Bundle? = null) {
-        supportFragmentManager
-            .beginTransaction()
-            .add(fragmentClass, args, null)
-            .commit()
+    private fun <T> watchFlow(flow: Flow<T>, callback: (data: T) -> Unit) {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                flow.collect { callback.invoke(it) }
+            }
+        }
     }
 
     internal fun zoomIn() {

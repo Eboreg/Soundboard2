@@ -97,6 +97,8 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         destroyParallelWrappers()
     }
 
+    fun play() = _wrapper.play()
+
     fun playParallel() {
         val wrapper = if (_wrapper.state != MediaPlayerWrapper.State.STARTED) _wrapper
         else _parallelWrappers.firstOrNull {
@@ -104,8 +106,6 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         } ?: createParallelWrapper()
         wrapper.play()
     }
-
-    fun play() = _wrapper.play()
 
     fun restart() {
         /** If playing, stop and start again from the beginning. Otherwise, just start. */
@@ -156,6 +156,16 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         else destroyParallelWrappers()
     }
 
+    /** OVERRIDDEN METHODS ***************************************************/
+
+    override fun onPermanentError(error: String) {
+        _playerEventListener?.onPermanentError(error)
+    }
+
+    override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
+        _playerEventListener?.onPlaybackPaused(currentPosition, duration)
+    }
+
     override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
         _playerEventListener?.onPlaybackStarted(currentPosition, duration)
     }
@@ -166,15 +176,7 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
             _playerEventListener?.onPlaybackStopped()
     }
 
-    override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
-        _playerEventListener?.onPlaybackPaused(currentPosition, duration)
-    }
-
     override fun onTemporaryError(error: String) {
         _playerEventListener?.onTemporaryError(error)
-    }
-
-    override fun onPermanentError(error: String) {
-        _playerEventListener?.onPermanentError(error)
     }
 }

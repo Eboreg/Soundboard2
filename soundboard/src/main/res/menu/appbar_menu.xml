@@ -52,7 +52,6 @@
         tools:ignore="AlwaysShowAction" />
 
     <item
-        android:id="@+id/actionOverflowMenu"
         android:icon="@drawable/icon_ellipsis_vertical"
         android:orderInCategory="4"
         android:title=""

@@ -110,6 +110,14 @@ class SoundViewModel @Inject constructor(
         }
     }
 
+    fun removePlaybackEventListener() {
+        playerEventListenerInternal = null
+    }
+
+    fun setPlaybackEventListener(listener: PlayerEventListener) {
+        playerEventListenerInternal = listener
+    }
+
     fun setSoundId(soundId: Int) {
         log("ADAPTERDEBUG setSoundId: soundId=$soundId, soundIdInternal=${soundIdInternal.value}")
         if (soundId != soundIdInternal.value) {
@@ -117,61 +125,15 @@ class SoundViewModel @Inject constructor(
         }
     }
 
-    fun setPlaybackEventListener(listener: PlayerEventListener) {
-        playerEventListenerInternal = listener
-    }
-
-    fun removePlaybackEventListener() {
-        playerEventListenerInternal = null
-    }
-
-    /** Player methods */
-
-    fun destroyPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.scheduleRelease() }
-    fun initPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.initialize() }
-    fun pause() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.pause() }
-    fun play() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.play() }
-    fun playParallel() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.playParallel() }
-    fun restart() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.restart() }
-    fun stop() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.stop() }
-    fun stopPaused() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.stopPaused() }
-    fun destroyParallelPlayers() =
-        viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.destroyParallelWrappers() }
-
-    /** Selection: */
-
-    fun enableSelect() = repository.enableSelect()
-
-    fun select() = viewModelScope.launch {
-        repository.select(soundInternal.stateIn(viewModelScope).value)
-    }
-
-    fun toggleSelect() = viewModelScope.launch {
-        if (isSelectedInternal.stateIn(this).value)
-            repository.unselect(soundInternal.stateIn(this).value)
-        else select()
-    }
-
-    fun selectAllFromLastSelected() = viewModelScope.launch(Dispatchers.IO) {
-        /** Select all sounds between this viewmodel's sound and the last selected one. */
-        val lastSelectedSound = repository.lastSelectedSound.stateIn(this).value
-
-        if (lastSelectedSound != null) {
-            val sounds = repository.visibleSounds.stateIn(this).value
-            val thisSound = soundInternal.stateIn(this).value
-            val thisPos = sounds.indexOf(thisSound)
-            val lastSelectedPos = sounds.indexOf(lastSelectedSound)
-
-            if (thisPos > -1 && lastSelectedPos > -1) {
-                sounds.subList(min(thisPos, lastSelectedPos), max(thisPos, lastSelectedPos) + 1).forEach { sound ->
-                    repository.select(sound)
-                }
-            }
-        }
-    }
+    /** OVERRIDDEN METHODS ***************************************************/
 
     override fun onCleared() {
         viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.destroy() }
+    }
+
+    override fun onPermanentError(error: String) {
+        isPlayerErrorInternal.value = true
+        playerEventListenerInternal?.onPermanentError(error)
     }
 
     override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
@@ -196,8 +158,49 @@ class SoundViewModel @Inject constructor(
         playerEventListenerInternal?.onTemporaryError(error)
     }
 
-    override fun onPermanentError(error: String) {
-        isPlayerErrorInternal.value = true
-        playerEventListenerInternal?.onPermanentError(error)
+    /** PLAYER METHODS *******************************************************/
+
+    fun destroyParallelPlayers() =
+        viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.destroyParallelWrappers() }
+
+    fun destroyPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.scheduleRelease() }
+    fun initPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.initialize() }
+    fun pause() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.pause() }
+    fun play() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.play() }
+    fun playParallel() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.playParallel() }
+    fun restart() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.restart() }
+    fun stop() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.stop() }
+    fun stopPaused() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.stopPaused() }
+
+    /** SELECTION ************************************************************/
+
+    fun enableSelect() = repository.enableSelect()
+
+    fun select() = viewModelScope.launch {
+        repository.select(soundInternal.stateIn(viewModelScope).value)
+    }
+
+    fun selectAllFromLastSelected() = viewModelScope.launch(Dispatchers.IO) {
+        /** Select all sounds between this viewmodel's sound and the last selected one. */
+        val lastSelectedSound = repository.lastSelectedSound.stateIn(this).value
+
+        if (lastSelectedSound != null) {
+            val sounds = repository.visibleSounds.stateIn(this).value
+            val thisSound = soundInternal.stateIn(this).value
+            val thisPos = sounds.indexOf(thisSound)
+            val lastSelectedPos = sounds.indexOf(lastSelectedSound)
+
+            if (thisPos > -1 && lastSelectedPos > -1) {
+                sounds.subList(min(thisPos, lastSelectedPos), max(thisPos, lastSelectedPos) + 1).forEach { sound ->
+                    repository.select(sound)
+                }
+            }
+        }
+    }
+
+    fun toggleSelect() = viewModelScope.launch {
+        if (isSelectedInternal.stateIn(this).value)
+            repository.unselect(soundInternal.stateIn(this).value)
+        else select()
     }
 }

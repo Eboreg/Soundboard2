@@ -47,10 +47,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setWatchFolderUri(value: Uri?) {
-        _watchFolderUri.value = value
-    }
-
     fun save() = viewModelScope.launch {
         val categories = categoryRepository.categories.stateIn(this).value
         val watchFolderCategory = categories.getOrNull(watchFolderCategoryPosition.value)
@@ -62,5 +58,9 @@ class SettingsViewModel @Inject constructor(
             watchFolderCategory?.id,
             watchFolderTrashMissing.value
         )
+    }
+
+    fun setWatchFolderUri(value: Uri?) {
+        _watchFolderUri.value = value
     }
 }

@@ -31,15 +31,18 @@ class CategoryRepository @Inject constructor(
         it.firstOrNull()
     }.filterNotNull()
 
-    suspend fun get(categoryId: Int): Category = categoryDao.get(categoryId)
-    suspend fun getRandomColor(@ColorInt vararg exclude: Int): Int =
-        colorHelper.getRandomColor(exclude = categoryDao.listUsedColors() + exclude.asList())
+    suspend fun applyState(categories: Collection<Category>) = categoryDao.applyState(categories)
 
-    suspend fun getSoundCount(categoryId: Int): Int = categoryDao.getSoundCount(categoryId)
-    suspend fun list(): List<Category> = categoryDao.list()
-    suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
     suspend fun create(name: CharSequence, @ColorInt backgroundColor: Int, soundSorting: SoundSorting) =
         categoryDao.create(name.toString(), backgroundColor, categoryDao.getNextPosition(), soundSorting)
+
+    suspend fun createDefault() = _defaultCategoryCreationMutex.withLock {
+        create(
+            "Dëfäult",
+            getRandomColor(),
+            SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
+        )
+    }
 
     suspend fun delete(category: Category, moveSoundsTo: Int?) {
         if (moveSoundsTo == null) soundDao.deleteByCategoryId(category.id)
@@ -49,13 +52,17 @@ class CategoryRepository @Inject constructor(
         categoryDao.delete(listOf(category))
     }
 
+    suspend fun get(categoryId: Int): Category = categoryDao.get(categoryId)
+
+    suspend fun getRandomColor(@ColorInt vararg exclude: Int): Int =
+        colorHelper.getRandomColor(exclude = categoryDao.listUsedColors() + exclude.asList())
+
+    suspend fun getSoundCount(categoryId: Int): Int = categoryDao.getSoundCount(categoryId)
+
+    suspend fun list(): List<Category> = categoryDao.list()
+
+    suspend fun toggleCollapsed(categoryId: Int) = categoryDao.toggleCollapsed(categoryId)
+
     suspend fun update(vararg categories: Category) = categoryDao.update(categories.asList())
 
-    suspend fun createDefault() = _defaultCategoryCreationMutex.withLock {
-        create(
-            "Dëfäult",
-            getRandomColor(),
-            SoundSorting(SoundSorting.Parameter.NAME, SoundSorting.Order.ASCENDING)
-        )
-    }
 }

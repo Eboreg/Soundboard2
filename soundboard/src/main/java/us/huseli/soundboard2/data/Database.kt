@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Color
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.RoomDatabase.QueryCallback
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -194,11 +193,14 @@ abstract class Database : RoomDatabase() {
                 .addMigrations(MIGRATION_6_7)
 
             if (BuildConfig.DEBUG) {
-                val callback = QueryCallback { sqlQuery, bindArgs ->
-                    log("$sqlQuery, bindArgs=$bindArgs")
+                class Callback : QueryCallback {
+                    override fun onQuery(sqlQuery: String, bindArgs: List<Any?>) {
+                        log("$sqlQuery, bindArgs=$bindArgs")
+                    }
                 }
+
                 val executor = Executors.newSingleThreadExecutor()
-                builder.setQueryCallback(callback, executor)
+                builder.setQueryCallback(Callback(), executor)
             }
 
             return builder.build()

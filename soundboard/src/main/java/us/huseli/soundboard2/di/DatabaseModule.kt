@@ -14,13 +14,13 @@ import javax.inject.Singleton
 object DatabaseModule {
     @Provides
     @Singleton
+    fun provideCategoryDao(database: Database) = database.categoryDao()
+
+    @Provides
+    @Singleton
     fun provideDatabase(@ApplicationContext context: Context) = Database.build(context)
 
     @Provides
     @Singleton
     fun provideSoundDao(database: Database) = database.soundDao()
-
-    @Provides
-    @Singleton
-    fun provideCategoryDao(database: Database) = database.categoryDao()
 }

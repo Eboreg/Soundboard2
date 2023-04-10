@@ -26,14 +26,14 @@ class SoundAdapter(private val activity: MainActivity) :
 
     override fun getItemViewType(position: Int) = R.id.soundContainer
 
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(getItem(position))
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = ViewHolder(
         ItemSoundBinding.inflate(LayoutInflater.from(parent.context), parent, false),
         activity,
     )
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
-    }
 
     class ViewHolder(private val binding: ItemSoundBinding, private val activity: MainActivity) :
         LoggingObject,
@@ -63,12 +63,34 @@ class SoundAdapter(private val activity: MainActivity) :
             binding.root.setOnClickListener(this)
         }
 
+        /** OVERRIDDEN METHODS ***********************************************/
+
         private fun addListeners() {
             viewModel?.setPlaybackEventListener(this)
         }
 
-        private fun removeListeners() {
-            viewModel?.removePlaybackEventListener()
+        override fun onAttach() {
+            log("onAttach: soundId=$soundId")
+            viewModel?.initPlayer()
+            addListeners()
+        }
+
+        override fun onClick(v: View?) {
+            if (isSelectEnabled) viewModel?.toggleSelect()
+            else if (repressMode == RepressMode.OVERLAP) viewModel?.playParallel()
+            else when (viewModel?.playerState) {
+                SoundPlayer.State.IDLE -> viewModel?.play()
+                SoundPlayer.State.STARTED -> when (repressMode) {
+                    RepressMode.STOP -> viewModel?.stop()
+                    RepressMode.RESTART -> viewModel?.restart()
+                    RepressMode.PAUSE -> viewModel?.pause()
+                    else -> {}
+                }
+                SoundPlayer.State.PAUSED -> viewModel?.play()
+                SoundPlayer.State.ERROR -> playerPermanentError?.let { activity.setSnackbarText(it) }
+                null -> {}
+            }
+            animateClick()
         }
 
         override fun onDetach() {
@@ -77,11 +99,43 @@ class SoundAdapter(private val activity: MainActivity) :
             removeListeners()
         }
 
-        override fun onAttach() {
-            log("onAttach: soundId=$soundId")
-            viewModel?.initPlayer()
-            addListeners()
+        override fun onLongClick(v: View?): Boolean {
+            animateClick()
+            viewModel?.let { viewModel ->
+                if (!isSelectEnabled) {
+                    // Select is not enabled; enable it and select sound.
+                    viewModel.enableSelect()
+                    viewModel.select()
+                } else {
+                    // Select is enabled; if this sound is not selected, select it
+                    // and all between it and the last selected one (if any).
+                    viewModel.selectAllFromLastSelected()
+                }
+            }
+            return true
         }
+
+        override fun onPermanentError(error: String) {
+            playerPermanentError = error
+        }
+
+        override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
+            pauseProgressAnimation(currentPosition, duration)
+        }
+
+        override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
+            startProgressAnimation(currentPosition, duration)
+        }
+
+        override fun onPlaybackStopped() {
+            stopProgressAnimation()
+        }
+
+        override fun onTemporaryError(error: String) {
+            if (BuildConfig.DEBUG) activity.setSnackbarText(error)
+        }
+
+        /** PRIVATE/INTERNAL METHODS *****************************************/
 
         internal fun bind(soundId: Int) {
             if (this.soundId != soundId) {
@@ -121,6 +175,18 @@ class SoundAdapter(private val activity: MainActivity) :
             }
         }
 
+        private fun pauseProgressAnimation(currentPosition: Int, duration: Int) = activity.runOnUiThread {
+            if (viewModel?.isAnimationEnabled == true) {
+                progressAnimator.pause()
+                val percent = if (duration > 0) ((currentPosition.toDouble() / duration) * 100).roundToInt() else 0
+                binding.soundProgressBar.progress = percent
+            }
+        }
+
+        private fun removeListeners() {
+            viewModel?.removePlaybackEventListener()
+        }
+
         private fun startProgressAnimation(currentPosition: Int, duration: Int) = activity.runOnUiThread {
             if (viewModel?.isAnimationEnabled == true) {
                 val startPercent =
@@ -136,68 +202,6 @@ class SoundAdapter(private val activity: MainActivity) :
                 progressAnimator.cancel()
                 binding.soundProgressBar.progress = volume
             }
-        }
-
-        private fun pauseProgressAnimation(currentPosition: Int, duration: Int) = activity.runOnUiThread {
-            if (viewModel?.isAnimationEnabled == true) {
-                progressAnimator.pause()
-                val percent = if (duration > 0) ((currentPosition.toDouble() / duration) * 100).roundToInt() else 0
-                binding.soundProgressBar.progress = percent
-            }
-        }
-
-        override fun onLongClick(v: View?): Boolean {
-            animateClick()
-            viewModel?.let { viewModel ->
-                if (!isSelectEnabled) {
-                    // Select is not enabled; enable it and select sound.
-                    viewModel.enableSelect()
-                    viewModel.select()
-                } else {
-                    // Select is enabled; if this sound is not selected, select it
-                    // and all between it and the last selected one (if any).
-                    viewModel.selectAllFromLastSelected()
-                }
-            }
-            return true
-        }
-
-        override fun onClick(v: View?) {
-            if (isSelectEnabled) viewModel?.toggleSelect()
-            else if (repressMode == RepressMode.OVERLAP) viewModel?.playParallel()
-            else when (viewModel?.playerState) {
-                SoundPlayer.State.IDLE -> viewModel?.play()
-                SoundPlayer.State.STARTED -> when (repressMode) {
-                    RepressMode.STOP -> viewModel?.stop()
-                    RepressMode.RESTART -> viewModel?.restart()
-                    RepressMode.PAUSE -> viewModel?.pause()
-                    else -> {}
-                }
-                SoundPlayer.State.PAUSED -> viewModel?.play()
-                SoundPlayer.State.ERROR -> playerPermanentError?.let { activity.setSnackbarText(it) }
-                null -> {}
-            }
-            animateClick()
-        }
-
-        override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
-            startProgressAnimation(currentPosition, duration)
-        }
-
-        override fun onPlaybackStopped() {
-            stopProgressAnimation()
-        }
-
-        override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
-            pauseProgressAnimation(currentPosition, duration)
-        }
-
-        override fun onTemporaryError(error: String) {
-            if (BuildConfig.DEBUG) activity.setSnackbarText(error)
-        }
-
-        override fun onPermanentError(error: String) {
-            playerPermanentError = error
         }
     }
 

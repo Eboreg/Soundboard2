@@ -19,9 +19,9 @@ class CategorySpinnerAdapter(context: Context, objects: List<Category>) :
         }
     }
 
-    override fun getView(position: Int, convertView: View?, parent: ViewGroup) =
-        super.getView(position, convertView, parent).also { setItemColor(it, position) }
-
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View =
         super.getDropDownView(position, convertView, parent).also { setItemColor(it, position) }
+
+    override fun getView(position: Int, convertView: View?, parent: ViewGroup) =
+        super.getView(position, convertView, parent).also { setItemColor(it, position) }
 }

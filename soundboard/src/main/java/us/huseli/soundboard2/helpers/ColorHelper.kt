@@ -37,16 +37,6 @@ class ColorHelper(private val context: Context) {
     @ColorInt
     val colors = colorResources.map { context.getColor(it) }.sorted()
 
-    @ColorInt
-    fun getColorOnBackground(@ColorInt backgroundColor: Int) =
-        context.getColor(if (Color.luminance(backgroundColor) >= 0.4) R.color.black else R.color.white)
-
-    @ColorInt
-    fun getRandomColor(@ColorInt exclude: Collection<Int> = emptyList()): Int {
-        val included = colors.filter { it !in exclude.toSet() }
-        return if (included.isNotEmpty()) included.random() else colors.random()
-    }
-
     /**
      * For a dark colour (luminance < 0.4), return a lighter shade by
      * decreasing saturation and increasing value.
@@ -80,5 +70,15 @@ class ColorHelper(private val context: Context) {
                 )
             )
         }
+    }
+
+    @ColorInt
+    fun getColorOnBackground(@ColorInt backgroundColor: Int) =
+        context.getColor(if (Color.luminance(backgroundColor) >= 0.4) R.color.black else R.color.white)
+
+    @ColorInt
+    fun getRandomColor(@ColorInt exclude: Collection<Int> = emptyList()): Int {
+        val included = colors.filter { it !in exclude.toSet() }
+        return if (included.isNotEmpty()) included.random() else colors.random()
     }
 }

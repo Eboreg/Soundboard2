@@ -39,6 +39,17 @@ class CategoryDeleteViewModel @Inject constructor(
     val showSoundAction: LiveData<Boolean> = showSoundActionInternal.asLiveData()
     val isSaveEnabled: LiveData<Boolean> = isSaveEnabledInternal.asLiveData()
 
+    fun delete() {
+        categoryIdInternal?.let { categoryId ->
+            viewModelScope.launch(Dispatchers.IO) {
+                val (category, otherCategories) = getCategories(categoryId)
+                val newCategoryId = if (soundActionMove.value) otherCategories[newCategoryPosition.value].id else null
+                repository.delete(category, newCategoryId)
+                stateRepository.push()
+            }
+        }
+    }
+
     private suspend fun getCategories(categoryId: Int): Pair<Category, List<Category>> =
         Pair(repository.get(categoryId), repository.list().filter { it.id != categoryId })
 
@@ -60,17 +71,6 @@ class CategoryDeleteViewModel @Inject constructor(
             isLastCategoryInternal.value = isLastCategory
             showSoundActionInternal.value = soundCount > 0 && !isLastCategory
             isSaveEnabledInternal.value = true
-        }
-    }
-
-    fun delete() {
-        categoryIdInternal?.let { categoryId ->
-            viewModelScope.launch(Dispatchers.IO) {
-                val (category, otherCategories) = getCategories(categoryId)
-                val newCategoryId = if (soundActionMove.value) otherCategories[newCategoryPosition.value].id else null
-                repository.delete(category, newCategoryId)
-                stateRepository.push()
-            }
         }
     }
 }

@@ -8,19 +8,15 @@ import java.util.*
 object Converters {
     @TypeConverter
     @JvmStatic
-    fun longToDate(value: Long): Date = Date(value)
-
-    @TypeConverter
-    @JvmStatic
     fun dateToLong(value: Date): Long = value.time
 
     @TypeConverter
     @JvmStatic
-    fun uriToString(value: Uri): String = value.toString()
+    fun intToSoundSorting(value: Int): SoundSorting = SoundSorting.fromInt(value)
 
     @TypeConverter
     @JvmStatic
-    fun stringToUri(value: String): Uri = Uri.parse(value)
+    fun longToDate(value: Long): Date = Date(value)
 
     @TypeConverter
     @JvmStatic
@@ -28,5 +24,9 @@ object Converters {
 
     @TypeConverter
     @JvmStatic
-    fun intToSoundSorting(value: Int): SoundSorting = SoundSorting.fromInt(value)
+    fun stringToUri(value: String): Uri = Uri.parse(value)
+
+    @TypeConverter
+    @JvmStatic
+    fun uriToString(value: Uri): String = value.toString()
 }

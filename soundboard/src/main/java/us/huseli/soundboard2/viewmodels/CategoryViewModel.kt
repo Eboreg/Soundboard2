@@ -35,14 +35,6 @@ class CategoryViewModel @Inject constructor(
     @ColorInt
     val textColor: LiveData<Int> = _backgroundColor.map { colorHelper.getColorOnBackground(it) }.asLiveData()
 
-    fun setCategoryId(categoryId: Int) {
-        _categoryId.value = categoryId
-    }
-
-    fun toggleCollapsed() = viewModelScope.launch(Dispatchers.IO) {
-        _categoryId.value?.let { categoryId -> repository.toggleCollapsed(categoryId) }
-    }
-
     /** Switch places of this category and the next one, if any. */
     fun moveDown() = viewModelScope.launch(Dispatchers.IO) {
         val categories = repository.categories.stateIn(viewModelScope).value
@@ -67,5 +59,13 @@ class CategoryViewModel @Inject constructor(
                 categories[idx - 1].clone(position = categories[idx - 1].position + 1),
             )
         }
+    }
+
+    fun setCategoryId(categoryId: Int) {
+        _categoryId.value = categoryId
+    }
+
+    fun toggleCollapsed() = viewModelScope.launch(Dispatchers.IO) {
+        _categoryId.value?.let { categoryId -> repository.toggleCollapsed(categoryId) }
     }
 }

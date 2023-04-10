@@ -10,6 +10,6 @@ class InfoDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         MaterialAlertDialogBuilder(requireContext())
             .setPositiveButton(R.string.ok) { _, _ -> dismiss() }
-            .setMessage(savedInstanceState?.getCharSequence("message"))
+            .setMessage(requireArguments().getCharSequence("message"))
             .create()
 }

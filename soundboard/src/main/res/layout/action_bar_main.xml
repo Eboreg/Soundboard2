@@ -29,6 +29,7 @@
         app:layout_constraintStart_toEndOf="@+id/actionbarLogo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/appbar_menu" />
+        app:menu="@menu/appbar_menu"
+        tools:ignore="UnusedIds" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

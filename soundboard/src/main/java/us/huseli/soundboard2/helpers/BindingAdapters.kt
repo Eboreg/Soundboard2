@@ -17,21 +17,6 @@ fun setBackground(view: View, @ColorInt color: Int?) {
     color?.let { view.setBackgroundColor(it) }
 }
 
-@BindingAdapter("progressTintColor")
-fun setProgressTintColor(view: ProgressBar, @ColorInt color: Int?) {
-    color?.let { view.progressTintList = ColorStateList.valueOf(color) }
-}
-
-@BindingAdapter("progressBackgroundTintColor")
-fun setProgressBackgroundTintColor(view: ProgressBar, @ColorInt color: Int?) {
-    color?.let { view.progressBackgroundTintList = ColorStateList.valueOf(color) }
-}
-
-@BindingAdapter("visible")
-fun setVisible(view: View, value: Boolean?) {
-    value?.let { view.visibility = if (it) View.VISIBLE else View.GONE }
-}
-
 @BindingAdapter("drawableColor")
 fun setDrawableColor(view: ImageView, @ColorInt color: Int?) {
     if (color != null) {
@@ -44,4 +29,19 @@ fun setDrawableColor(view: ImageView, @ColorInt color: Int?) {
             else -> (view.drawable as Drawable).colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN)
         }
     }
+}
+
+@BindingAdapter("progressBackgroundTintColor")
+fun setProgressBackgroundTintColor(view: ProgressBar, @ColorInt color: Int?) {
+    color?.let { view.progressBackgroundTintList = ColorStateList.valueOf(color) }
+}
+
+@BindingAdapter("progressTintColor")
+fun setProgressTintColor(view: ProgressBar, @ColorInt color: Int?) {
+    color?.let { view.progressTintList = ColorStateList.valueOf(color) }
+}
+
+@BindingAdapter("visible")
+fun setVisible(view: View, value: Boolean?) {
+    value?.let { view.visibility = if (it) View.VISIBLE else View.GONE }
 }

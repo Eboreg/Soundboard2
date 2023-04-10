@@ -58,30 +58,12 @@ import java.io.IOException
 class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
     enum class State { NONE, IDLE, INITIALIZED, PREPARING, PREPARED, STARTED, PAUSED, STOPPED, PLAYBACK_COMPLETED, ERROR }
 
-    private inner class StateCallback(var states: List<State>, val callback: () -> Unit) {
-        fun tryRun(): Boolean {
-            _state.let { state ->
-                if (states.contains(state)) {
-                    try {
-                        callback.invoke()
-                        return true
-                    } catch (e: Exception) {
-                        log("StateCallback.run: e=$e", Log.ERROR)
-                        states = states.minus(state)
-                    }
-                }
-            }
-            return false
-        }
-    }
-
     fun interface StateListener {
         fun onStateChange(mp: MediaPlayerWrapper, state: State)
     }
 
     private var _mp: MediaPlayer? = null
     private var _state = State.NONE
-    private val _stateCallbacks = mutableListOf<StateCallback>()
     private var _hasPermanentError = false
     private var _stateListener: StateListener? = null
     private var _playerEventListener: PlayerEventListener? = null
@@ -160,11 +142,6 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
         }
     }
 
-    fun stop() {
-        if (_state in listOf(State.STARTED, State.PAUSED)) wrapStop()
-        wrapReset()
-    }
-
     fun setPlaybackEventListener(listener: PlayerEventListener) {
         _playerEventListener = listener
     }
@@ -185,7 +162,12 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
         _volume = value
     }
 
-    /** PRIVATE METHODS *****************************************************/
+    fun stop() {
+        if (_state in listOf(State.STARTED, State.PAUSED)) wrapStop()
+        wrapReset()
+    }
+
+    /** PRIVATE METHODS ******************************************************/
 
     private fun changeState(state: State) {
         log("changeState(): old=${_state}, new=$state, _path=${_path}")
@@ -203,10 +185,6 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
                     State.NONE
                 ) -> _playerEventListener?.onPlaybackStopped()
                 else -> {}
-            }
-
-            _stateCallbacks.forEach { stateCallback ->
-                if (stateCallback.tryRun() || stateCallback.states.isEmpty()) _stateCallbacks.remove(stateCallback)
             }
 
             _stateListener?.onStateChange(this, _state)
@@ -383,7 +361,6 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
             setTemporaryError("Error on wrapStop(): $e")
         }
     }
-
 
     /** OVERRIDDEN METHODS ***************************************************/
 
