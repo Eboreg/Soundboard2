@@ -75,11 +75,11 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), ColorPickerDialogListe
         override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
             when (item.itemId) {
                 R.id.selectAll -> appViewModel.selectAllSounds()
+                R.id.delete -> showFragment(SoundDeleteFragment::class.java)
                 R.id.edit -> {
                     soundEditViewModel.initialize()
                     showFragment(SoundEditFragment::class.java)
                 }
-                R.id.delete -> showFragment(SoundDeleteFragment::class.java)
             }
             return true
         }
@@ -219,10 +219,12 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), ColorPickerDialogListe
                     )
                 } else addSoundLauncher.launch("audio/*")
             }
+
             R.id.actionAddCategory -> {
                 categoryAddViewModel.initialize()
                 showFragment(CategoryAddFragment::class.java)
             }
+
             R.id.actionZoomIn -> zoomIn()
             R.id.actionZoomOut -> zoomOut()
             R.id.actionRepressModeOverlap -> appViewModel.setRepressMode(RepressMode.OVERLAP)
@@ -233,6 +235,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), ColorPickerDialogListe
                 startActivity(Intent(this, SettingsActivity::class.java))
                 overridePendingTransition(0, 0)
             }
+
             R.id.actionUndo -> appViewModel.undo()
             R.id.actionRedo -> appViewModel.redo()
             R.id.actionDeleteOrphans -> appViewModel.deleteOrphanSoundObjects()
@@ -328,6 +331,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(), ColorPickerDialogListe
                     view.performClick()
                     return@setOnTouchListener false
                 }
+
                 MotionEvent.ACTION_MOVE -> {
                     if (event.pointerCount == 1) return@setOnTouchListener false
                 }

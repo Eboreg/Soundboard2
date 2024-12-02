@@ -3,10 +3,19 @@ package us.huseli.soundboard2.viewmodels
 import android.graphics.Color
 import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import us.huseli.soundboard2.Enums.RepressMode
 import us.huseli.soundboard2.data.entities.SoundExtended
@@ -53,6 +62,7 @@ class SoundViewModel @Inject constructor(
     val backgroundColor: LiveData<Int?> = soundInternal.map {
         if (it.backgroundColor == Color.TRANSPARENT) it.categoryColor else it.backgroundColor
     }.asLiveData()
+    val duration = soundInternal.map { it.duration }.asLiveData()
     val durationString: LiveData<String?> = soundInternal.map { sound ->
         when {
             sound.duration > -1 && sound.duration < 950 -> decimalFormatInternal.format(sound.duration.toDouble() / 1000) + "s"
@@ -136,10 +146,10 @@ class SoundViewModel @Inject constructor(
         playerEventListenerInternal?.onPermanentError(error)
     }
 
-    override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
+    override fun onPlaybackStarted() {
         isPlayerStartedInternal.value = true
         isPlayerPausedInternal.value = false
-        playerEventListenerInternal?.onPlaybackStarted(currentPosition, duration)
+        playerEventListenerInternal?.onPlaybackStarted()
     }
 
     override fun onPlaybackStopped() {
@@ -148,10 +158,10 @@ class SoundViewModel @Inject constructor(
         playerEventListenerInternal?.onPlaybackStopped()
     }
 
-    override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
+    override fun onPlaybackPaused() {
         isPlayerStartedInternal.value = false
         isPlayerPausedInternal.value = true
-        playerEventListenerInternal?.onPlaybackPaused(currentPosition, duration)
+        playerEventListenerInternal?.onPlaybackPaused()
     }
 
     override fun onTemporaryError(error: String) {
@@ -159,9 +169,6 @@ class SoundViewModel @Inject constructor(
     }
 
     /** PLAYER METHODS *******************************************************/
-
-    fun destroyParallelPlayers() =
-        viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.destroyParallelWrappers() }
 
     fun destroyPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.scheduleRelease() }
     fun initPlayer() = viewModelScope.launch(Dispatchers.Default) { soundPlayerInternal?.initialize() }

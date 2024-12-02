@@ -129,6 +129,7 @@ class AppViewModel @Inject constructor(
     }
 
     fun setRepressMode(value: Enums.RepressMode) = settingsRepository.setRepressMode(value)
+
     fun setSoundFilterTerm(value: String) = settingsRepository.setSoundFilterTerm(value)
 
     fun stopAllSounds() = viewModelScope.launch {

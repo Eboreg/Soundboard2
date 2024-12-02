@@ -17,7 +17,6 @@ import us.huseli.soundboard2.helpers.LoggingObject
 import us.huseli.soundboard2.helpers.PlayerEventListener
 import us.huseli.soundboard2.helpers.SoundPlayer
 import us.huseli.soundboard2.viewmodels.SoundViewModel
-import kotlin.math.roundToInt
 
 class SoundAdapter(private val activity: MainActivity) :
     LifecycleListAdapter<Int, SoundAdapter.ViewHolder>(Comparator()), LoggingObject {
@@ -45,8 +44,9 @@ class SoundAdapter(private val activity: MainActivity) :
 
         private val clickAnimator = ObjectAnimator.ofFloat(binding.soundCardBorder, "alpha", 0f)
         private val progressAnimator = ObjectAnimator().apply {
-            this.interpolator = LinearInterpolator()
+            interpolator = LinearInterpolator()
             target = binding.soundProgressBar
+            setIntValues(0, 100)
             setPropertyName("progress")
         }
 
@@ -119,12 +119,12 @@ class SoundAdapter(private val activity: MainActivity) :
             playerPermanentError = error
         }
 
-        override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
-            pauseProgressAnimation(currentPosition, duration)
+        override fun onPlaybackPaused() {
+            pauseProgressAnimation()
         }
 
-        override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
-            startProgressAnimation(currentPosition, duration)
+        override fun onPlaybackStarted() {
+            startProgressAnimation()
         }
 
         override fun onPlaybackStopped() {
@@ -153,11 +153,11 @@ class SoundAdapter(private val activity: MainActivity) :
                         repressMode = it
                         // If changing to anything but PAUSE, make sure any paused sounds are stopped:
                         if (it != RepressMode.PAUSE) viewModel.stopPaused()
-                        // If changing to anything but OVERLAP, destroy any existing parallel players:
-                        if (it != RepressMode.OVERLAP) viewModel.destroyParallelPlayers()
                     }
 
                     viewModel.isSelectEnabled.observe(this) { isSelectEnabled = it }
+
+                    viewModel.duration.observe(this) { progressAnimator.duration = it }
 
                     viewModel.volume.observe(this) {
                         if (!progressAnimator.isPaused && !progressAnimator.isStarted)
@@ -175,11 +175,9 @@ class SoundAdapter(private val activity: MainActivity) :
             }
         }
 
-        private fun pauseProgressAnimation(currentPosition: Int, duration: Int) = activity.runOnUiThread {
+        private fun pauseProgressAnimation() = activity.runOnUiThread {
             if (viewModel?.isAnimationEnabled == true) {
                 progressAnimator.pause()
-                val percent = if (duration > 0) ((currentPosition.toDouble() / duration) * 100).roundToInt() else 0
-                binding.soundProgressBar.progress = percent
             }
         }
 
@@ -187,13 +185,10 @@ class SoundAdapter(private val activity: MainActivity) :
             viewModel?.removePlaybackEventListener()
         }
 
-        private fun startProgressAnimation(currentPosition: Int, duration: Int) = activity.runOnUiThread {
+        private fun startProgressAnimation() = activity.runOnUiThread {
             if (viewModel?.isAnimationEnabled == true) {
-                val startPercent =
-                    if (duration > 0) ((currentPosition.toDouble() / duration) * 100).roundToInt() else 0
-                progressAnimator.setIntValues(startPercent, 100)
-                progressAnimator.duration = (duration - currentPosition).toLong()
-                progressAnimator.start()
+                if (progressAnimator.isPaused) progressAnimator.resume()
+                else progressAnimator.start()
             }
         }
 

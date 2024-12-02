@@ -43,31 +43,7 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         }
     }
 
-    private fun createParallelWrapper(): MediaPlayerWrapper {
-        val wrapper = MediaPlayerWrapper()
-        wrapper.setPlaybackEventListener(this)
-
-        wrapper.setStateListener { wr, state ->
-            log("onStateChange: wrapper=$wr, state=$state")
-            if (
-                state in listOf(
-                    MediaPlayerWrapper.State.ERROR,
-                    MediaPlayerWrapper.State.STOPPED,
-                    MediaPlayerWrapper.State.PAUSED,
-                    MediaPlayerWrapper.State.PLAYBACK_COMPLETED,
-                )
-            ) {
-                wr.destroy()
-                _parallelWrappers -= wr
-                log("onStateChange: destroyed and removed wrapper $wr. _parallelWrappers after=$_parallelWrappers")
-            }
-        }
-
-        _parallelWrappers += wrapper
-        wrapper.setPath(_path)
-        _volume?.let { wrapper.setVolume(it) }
-        return wrapper
-    }
+    /** PUBLIC METHODS *******************************************************/
 
     fun destroy() {
         // This should already have been done, but just in case:
@@ -75,20 +51,9 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         _wrapper.destroy()
     }
 
-    fun destroyParallelWrappers() {
-        _parallelWrappers.forEach { it.destroy() }
-        _parallelWrappers.clear()
-    }
-
     fun initialize() {
         _wrapper.initialize()
-        if (state == State.STARTED) {
-            // If playback is already started, call listener callback.
-            val startedWrappers = (_parallelWrappers + _wrapper).filter { it.state == MediaPlayerWrapper.State.STARTED }
-            val currentPosition = startedWrappers.minOfOrNull { it.currentPosition }
-            val duration = startedWrappers.maxOfOrNull { it.duration }
-            if (currentPosition != null && duration != null) onPlaybackStarted(currentPosition, duration)
-        }
+        if (state == State.STARTED) onPlaybackStarted()
     }
 
     fun pause() {
@@ -147,13 +112,46 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
     fun stopPaused() {
         /** Only stop if paused. */
         if (_wrapper.state == MediaPlayerWrapper.State.PAUSED) stop()
-        else destroyParallelWrappers()
+        destroyParallelWrappers()
     }
 
     fun stopStartedOrPaused() {
         /** Only stop if started or pauseed. */
         if (_wrapper.state in listOf(MediaPlayerWrapper.State.PAUSED, MediaPlayerWrapper.State.STARTED)) stop()
-        else destroyParallelWrappers()
+        destroyParallelWrappers()
+    }
+
+    /** PRIVATE METHODS ******************************************************/
+
+    private fun createParallelWrapper(): MediaPlayerWrapper {
+        val wrapper = MediaPlayerWrapper()
+        wrapper.setPlaybackEventListener(this)
+
+        wrapper.setStateListener { wr, state ->
+            log("onStateChange: wrapper=$wr, state=$state")
+            if (
+                state in listOf(
+                    MediaPlayerWrapper.State.ERROR,
+                    MediaPlayerWrapper.State.STOPPED,
+                    MediaPlayerWrapper.State.PAUSED,
+                    MediaPlayerWrapper.State.PLAYBACK_COMPLETED,
+                )
+            ) {
+                wr.destroy()
+                _parallelWrappers -= wr
+                log("onStateChange: destroyed and removed wrapper $wr. _parallelWrappers after=$_parallelWrappers")
+            }
+        }
+
+        _parallelWrappers += wrapper
+        wrapper.setPath(_path)
+        _volume?.let { wrapper.setVolume(it) }
+        return wrapper
+    }
+
+    private fun destroyParallelWrappers() {
+        _parallelWrappers.forEach { it.destroy() }
+        _parallelWrappers.clear()
     }
 
     /** OVERRIDDEN METHODS ***************************************************/
@@ -162,12 +160,12 @@ class SoundPlayer(private val coroutineScope: CoroutineScope) : LoggingObject, P
         _playerEventListener?.onPermanentError(error)
     }
 
-    override fun onPlaybackPaused(currentPosition: Int, duration: Int) {
-        _playerEventListener?.onPlaybackPaused(currentPosition, duration)
+    override fun onPlaybackPaused() {
+        _playerEventListener?.onPlaybackPaused()
     }
 
-    override fun onPlaybackStarted(currentPosition: Int, duration: Int) {
-        _playerEventListener?.onPlaybackStarted(currentPosition, duration)
+    override fun onPlaybackStarted() {
+        _playerEventListener?.onPlaybackStarted()
     }
 
     override fun onPlaybackStopped() {

@@ -43,7 +43,7 @@
             app:layout_constraintEnd_toEndOf="@+id/soundCardBorder"
             app:layout_constraintStart_toStartOf="@+id/soundCardBorder"
             app:layout_constraintTop_toTopOf="@+id/soundCardBorder"
-            tools:cardBackgroundColor="@color/purple_500">
+            tools:cardBackgroundColor="@color/orange_500">
 
         </androidx.cardview.widget.CardView>
 
@@ -96,6 +96,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isPlayerStarted}"
+                tools:tint="@color/white"
                 tools:ignore="ContentDescription" />
 
             <ImageView
@@ -133,6 +134,9 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:visible="@{viewModel.isSelected}"
+                tools:visibility="visible"
+                tools:tint="@color/white"
+                tools:backgroundTint="#A0B2EBF2"
                 tools:ignore="ContentDescription" />
 
             <ProgressBar

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <issue id="ConvertToWebp">
+        <ignore path="/home/klaatu/kod/Soundboard2/soundboard/src/debug/res/mipmap-xxxhdpi/ic_launcher_round.png" />
+        <ignore path="/home/klaatu/kod/Soundboard2/soundboard/src/debug/res/mipmap-xxxhdpi/ic_launcher_round.png" />
+        <ignore path="/home/klaatu/kod/Soundboard2/soundboard/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" />
+        <ignore path="/home/klaatu/kod/Soundboard2/soundboard/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" />
+    </issue>
+</lint>

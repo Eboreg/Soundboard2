@@ -71,18 +71,6 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
     @IntRange(from = 0, to = 100)
     private var _volume = 100
 
-    val currentPosition: Int
-        get() = try {
-            _mp?.currentPosition ?: 0
-        } catch (e: Exception) {
-            0
-        }
-    val duration: Int
-        get() = try {
-            _mp?.duration ?: 0
-        } catch (e: Exception) {
-            0
-        }
     val hasPermanentError: Boolean
         get() = _hasPermanentError
     private val mediaPlayer: MediaPlayer
@@ -135,7 +123,7 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
         /** Meaning: play from the beginning, even if we're already playing. */
         if (_state == State.STARTED) {
             mediaPlayer.seekTo(0)
-            _playerEventListener?.onPlaybackStarted(mediaPlayer.currentPosition, mediaPlayer.duration)
+            _playerEventListener?.onPlaybackStarted()
         } else {
             renderStartable()
             wrapStart()
@@ -175,9 +163,9 @@ class MediaPlayerWrapper : LoggingObject, MediaPlayer.OnCompletionListener, Medi
             _state = state
             when (state) {
                 State.STARTED ->
-                    _playerEventListener?.onPlaybackStarted(mediaPlayer.currentPosition, mediaPlayer.duration)
+                    _playerEventListener?.onPlaybackStarted()
                 State.PAUSED ->
-                    _playerEventListener?.onPlaybackPaused(mediaPlayer.currentPosition, mediaPlayer.duration)
+                    _playerEventListener?.onPlaybackPaused()
                 in listOf(
                     State.STOPPED,
                     State.ERROR,
